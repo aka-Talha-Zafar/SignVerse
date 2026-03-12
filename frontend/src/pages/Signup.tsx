@@ -1,0 +1,160 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Hand, Eye, EyeOff, ArrowRight, ArrowLeft, Mail, Lock, User } from "lucide-react";
+import FloatingOrbs from "@/components/landing/FloatingOrbs";
+
+const Signup = () => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => setLoading(false), 2000);
+  };
+
+  const strength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
+  const strengthColors = ["", "bg-destructive", "bg-yellow-500", "bg-green-500"];
+  const strengthLabels = ["", "Weak", "Fair", "Strong"];
+
+  return (
+    <div className="min-h-screen bg-background relative flex items-center justify-center overflow-hidden">
+      <FloatingOrbs />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Back button - top left */}
+      <div className="absolute top-6 left-6 z-20 animate-fade-up" style={{ animationDelay: "0.05s", animationFillMode: "both" }}>
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          Back to home
+        </Link>
+      </div>
+
+        <div className="relative z-10 w-full max-w-md px-6 mt-16">
+        <div className="text-center mb-8 animate-fade-up" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
+          <Link to="/" className="inline-flex items-center gap-2.5 group mb-6">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300">
+              <Hand className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-2xl font-bold text-foreground tracking-tight">
+              Sign<span className="text-primary">Verse</span>
+            </span>
+          </Link>
+          <h1 className="text-2xl font-bold text-foreground mt-4">Create your account</h1>
+          <p className="text-muted-foreground text-sm mt-2">Start breaking communication barriers today</p>
+        </div>
+
+        <div
+          className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-8 glow-border animate-fade-up"
+          style={{ animationDelay: "0.2s", animationFillMode: "both" }}
+        >
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Full Name</label>
+              <div className="relative group">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="John Doe"
+                  className="w-full h-11 pl-10 pr-4 rounded-lg bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Email</label>
+              <div className="relative group">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full h-11 pl-10 pr-4 rounded-lg bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Password</label>
+              <div className="relative group">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full h-11 pl-10 pr-11 rounded-lg bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {/* Password strength */}
+              {password.length > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex gap-1 flex-1">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-all duration-500 ${
+                          i <= strength ? strengthColors[strength] : "bg-border"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs text-muted-foreground">{strengthLabels[strength]}</span>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] disabled:opacity-50 disabled:scale-100 shimmer"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <p className="text-xs text-muted-foreground text-center mt-4">
+            By signing up, you agree to our{" "}
+            <a href="#" className="text-primary hover:underline">Terms</a> and{" "}
+            <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+          </p>
+        </div>
+
+        <p
+          className="text-center text-sm text-muted-foreground mt-6 animate-fade-up"
+          style={{ animationDelay: "0.4s", animationFillMode: "both" }}
+        >
+          Already have an account?{" "}
+          <Link to="/login" className="text-primary hover:text-primary/80 font-medium transition-colors">
+            Sign in
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default Signup;

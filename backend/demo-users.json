@@ -1,0 +1,34 @@
+{
+  "users": [
+    {
+      "id": "demo-user-001",
+      "email": "admin@gmail.com",
+      "password": "admin123",
+      "firstName": "Admin",
+      "lastName": "User",
+      "role": "admin",
+      "createdAt": "2026-03-12T00:00:00Z",
+      "isActive": true
+    },
+    {
+      "id": "demo-user-002",
+      "email": "user@gmail.com",
+      "password": "user123",
+      "firstName": "Demo",
+      "lastName": "User",
+      "role": "user",
+      "createdAt": "2026-03-12T00:00:00Z",
+      "isActive": true
+    },
+    {
+      "id": "demo-user-003",
+      "email": "test@gmail.com",
+      "password": "test123",
+      "firstName": "Test",
+      "lastName": "Account",
+      "role": "user",
+      "createdAt": "2026-03-12T00:00:00Z",
+      "isActive": true
+    }
+  ]
+}
