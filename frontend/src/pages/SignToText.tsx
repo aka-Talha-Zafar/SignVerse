@@ -91,7 +91,12 @@ const SignToText = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        videoRef.current.setAttribute('autoplay', '');
+        videoRef.current.setAttribute('playsinline', '');
+        videoRef.current.muted = true;
+        await videoRef.current.play().catch(() => {
+        videoRef.current?.play();
+        });
       }
       streamRef.current = stream;
       framesRef.current = [];
