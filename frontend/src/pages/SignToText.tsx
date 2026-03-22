@@ -194,12 +194,13 @@ const SignToText = () => {
                 <canvas ref={canvasRef} className="hidden" />
 
                 {cameraOn ? (
-                  <div className="absolute inset-0 w-full h-full">
+                  <div className="absolute inset-0 w-full h-full bg-black">
                     <video
                       ref={videoRef}
                       className="w-full h-full object-cover"
                       muted
                       playsInline
+                      autoPlay
                     />
                     {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/10 pointer-events-none" />
