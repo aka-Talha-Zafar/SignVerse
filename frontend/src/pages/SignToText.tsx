@@ -82,36 +82,34 @@ const SignToText = () => {
 
   // ── Start camera ─────────────────────────────────────────
   const startCamera = async () => {
-    try {
-      setError("");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: "user" },
-        audio: false,
-      });
+  try {
+    setError("");
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: "user" },
+      audio: false,
+    });
 
+    streamRef.current = stream;
+    framesRef.current = [];
+    setCameraOn(true);  // set state FIRST so video element renders
+    setStatus("Camera active — signing...");
+
+    // Wait for React to render the video element, then attach stream
+    setTimeout(() => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute('autoplay', '');
-        videoRef.current.setAttribute('playsinline', '');
         videoRef.current.muted = true;
-        await videoRef.current.play().catch(() => {
-        videoRef.current?.play();
-        });
+        videoRef.current.play().catch(console.error);
       }
-      streamRef.current = stream;
-      framesRef.current = [];
-
-      // Start frame capture timer
+      // Start timers after stream is attached
       captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
-      // Start API send timer
       sendTimerRef.current = setInterval(sendFrames, SEND_INTERVAL_MS);
+    }, 100);
 
-      setCameraOn(true);
-      setStatus("Camera active — signing...");
-    } catch (err: any) {
-      setError("Could not access camera. Please allow camera permission.");
-    }
-  };
+  } catch (err: any) {
+    setError("Could not access camera. Please allow camera permission.");
+  }
+};
 
   // ── Stop camera ──────────────────────────────────────────
   const stopCamera = () => {
