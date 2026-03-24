@@ -24,6 +24,10 @@ const SignToText = () => {
   const framesRef   = useRef<string[]>([]);
   const captureTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sendTimerRef    = useRef<NodeJS.Timeout | null>(null);
+  // Ref-based guard to avoid stale closure issues with the isTranslating state
+  const isTranslatingRef = useRef(false);
+  // Always-current sendFrames so the interval never calls a stale closure
+  const sendFramesRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
   // ── Capture one frame from webcam ────────────────────────
   const captureFrame = useCallback(() => {
@@ -49,11 +53,14 @@ const SignToText = () => {
 
   // ── Send frames to API ───────────────────────────────────
   const sendFrames = useCallback(async () => {
-    if (framesRef.current.length === 0 || isTranslating) return;
+    // Use the ref-based guard so every call sees the live value,
+    // regardless of when the interval closure was created.
+    if (framesRef.current.length === 0 || isTranslatingRef.current) return;
 
     const frames = framesRef.current.slice(-MAX_FRAMES_PER_SEND);
     framesRef.current = [];
 
+    isTranslatingRef.current = true;
     setIsTranslating(true);
     setStatus("Translating...");
 
@@ -68,17 +75,25 @@ const SignToText = () => {
       const data = await res.json();
 
       if (data.translation) {
-        setTranslatedText(data.translation);
+        // Append each new translation so the session accumulates text.
+        setTranslatedText(prev => prev ? `${prev} ${data.translation}` : data.translation);
         setError("");
       }
       setStatus(`Ready — confidence: ${Math.round((data.confidence || 0) * 100)}%`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError("Translation failed. Check if backend is running.");
       setStatus("Error");
     } finally {
+      isTranslatingRef.current = false;
       setIsTranslating(false);
     }
-  }, [language, isTranslating]);
+  }, [language]);  // isTranslating removed — guard uses the ref instead
+
+  // Keep the ref in sync with the latest sendFrames so the interval
+  // always dispatches the current closure (picks up language changes etc.)
+  useEffect(() => {
+    sendFramesRef.current = sendFrames;
+  }, [sendFrames]);
 
   // ── Start camera ─────────────────────────────────────────
   const startCamera = async () => {
@@ -101,12 +116,13 @@ const SignToText = () => {
         videoRef.current.muted = true;
         videoRef.current.play().catch(console.error);
       }
-      // Start timers after stream is attached
+      // Use the ref so the interval always calls the latest sendFrames,
+      // picking up language changes without needing to re-register.
       captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
-      sendTimerRef.current = setInterval(sendFrames, SEND_INTERVAL_MS);
+      sendTimerRef.current    = setInterval(() => sendFramesRef.current(), SEND_INTERVAL_MS);
     }, 100);
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     setError("Could not access camera. Please allow camera permission.");
   }
 };
@@ -151,14 +167,6 @@ const SignToText = () => {
 
   // Cleanup on unmount
   useEffect(() => () => stopCamera(), []);
-
-  // Re-register sendFrames when language changes
-  useEffect(() => {
-    if (cameraOn && sendTimerRef.current) {
-      clearInterval(sendTimerRef.current);
-      sendTimerRef.current = setInterval(sendFrames, SEND_INTERVAL_MS);
-    }
-  }, [language]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -326,7 +334,7 @@ const SignToText = () => {
             <span>Landmarks: <span className="text-foreground font-medium">MediaPipe Pose (99)</span></span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${cameraOn ? "bg-green-500 animate-pulse" : "bg-green-500"}`} />
+            <span className={`w-2 h-2 rounded-full ${cameraOn ? "bg-green-500 animate-pulse" : "bg-muted-foreground"}`} />
             <span className="text-xs text-muted-foreground">{status}</span>
           </div>
         </div>

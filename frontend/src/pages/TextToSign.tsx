@@ -54,7 +54,7 @@ const TextToSign = () => {
       const data = await res.json();
       setKeyframes(data.keyframes || []);
       totalDurRef.current = data.duration_seconds || 0;
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError("Failed to get signing animation. Check if backend is running.");
     } finally {
       setLoading(false);
@@ -165,7 +165,7 @@ const TextToSign = () => {
   useEffect(() => {
     if (keyframes.length === 0) drawFrame(null);
     else drawFrame(keyframes[0]);
-  }, [keyframes]);
+  }, [keyframes, drawFrame]);
 
   // Cleanup
   useEffect(() => () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); }, []);
@@ -181,7 +181,7 @@ const TextToSign = () => {
   // Auto-start animation after fetch
   useEffect(() => {
     if (!loading && keyframes.length > 0) startAnimation();
-  }, [loading, keyframes]);
+  }, [loading, keyframes, startAnimation]);
 
   return (
     <div className="min-h-screen bg-background">
