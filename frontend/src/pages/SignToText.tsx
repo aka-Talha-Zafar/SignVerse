@@ -2,337 +2,336 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Hand, ArrowLeft, Camera, CameraOff, Volume2, Copy,
-  RefreshCw, Settings, Maximize2, Languages, Loader2,
+  RefreshCw, Settings, Maximize2, Languages, Loader2, AlertCircle,
 } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:7860";
-const FRAME_INTERVAL_MS  = 100;   // capture frame every 100ms
-const SEND_INTERVAL_MS   = 3000;  // send batch to API every 3 seconds
-const MAX_FRAMES_PER_SEND = 30;   // max frames per request
+const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
 
-const SignToText = () => {
-  const [cameraOn, setCameraOn]         = useState(false);
-  const [translatedText, setTranslatedText] = useState("");
-  const [language, setLanguage]         = useState("en");
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [error, setError]               = useState("");
-  const [status, setStatus]             = useState("Ready");
+const FRAME_INTERVAL_MS = 150;   // capture a frame every 150ms
+const SEND_INTERVAL_MS  = 3500;  // send batch every 3.5 seconds
 
-  const videoRef    = useRef<HTMLVideoElement>(null);
-  const canvasRef   = useRef<HTMLCanvasElement>(null);
-  const streamRef   = useRef<MediaStream | null>(null);
-  const framesRef   = useRef<string[]>([]);
-  const captureTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const sendTimerRef    = useRef<NodeJS.Timeout | null>(null);
+const LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "ur", label: "Urdu" },
+  { code: "ar", label: "Arabic" },
+  { code: "fr", label: "French" },
+  { code: "es", label: "Spanish" },
+  { code: "de", label: "German" },
+  { code: "zh", label: "Chinese" },
+];
 
-  // ── Capture one frame from webcam ────────────────────────
+export default function SignToText() {
+  const [cameraOn,     setCameraOn]     = useState(false);
+  const [translation,  setTranslation]  = useState("");
+  const [confidence,   setConfidence]   = useState<number | null>(null);
+  const [status,       setStatus]       = useState("Camera off");
+  const [error,        setError]        = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [language,     setLanguage]     = useState("en");
+  const [history,      setHistory]      = useState<string[]>([]);
+  const [backendReady, setBackendReady] = useState<boolean | null>(null);
+
+  const videoRef        = useRef<HTMLVideoElement>(null);
+  const canvasRef       = useRef<HTMLCanvasElement>(null);
+  const streamRef       = useRef<MediaStream | null>(null);
+  const framesRef       = useRef<string[]>([]);
+  const captureTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sendTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Check backend health on mount ─────────────────────────────────────────
+  useEffect(() => {
+    fetch(`${API_BASE}/api/health`)
+      .then(r => r.json())
+      .then(d => setBackendReady(d.sign2text === true))
+      .catch(() => setBackendReady(false));
+  }, []);
+
+  // ── Capture a frame from webcam ────────────────────────────────────────────
   const captureFrame = useCallback(() => {
     const video  = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas || video.readyState < 2) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     canvas.width  = video.videoWidth  || 320;
     canvas.height = video.videoHeight || 240;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const b64 = canvas.toDataURL("image/jpeg", 0.7);
-    framesRef.current.push(b64);
-
-    // Keep buffer bounded
-    if (framesRef.current.length > MAX_FRAMES_PER_SEND * 2) {
-      framesRef.current = framesRef.current.slice(-MAX_FRAMES_PER_SEND);
+    framesRef.current.push(canvas.toDataURL("image/jpeg", 0.6));
+    // Keep max 40 frames to avoid huge payloads
+    if (framesRef.current.length > 40) {
+      framesRef.current = framesRef.current.slice(-40);
     }
   }, []);
 
-  // ── Send frames to API ───────────────────────────────────
+  // ── Send accumulated frames to backend ────────────────────────────────────
   const sendFrames = useCallback(async () => {
-    if (framesRef.current.length === 0 || isTranslating) return;
+    if (framesRef.current.length === 0) return;
+    if (isProcessing) return;
 
-    const frames = framesRef.current.slice(-MAX_FRAMES_PER_SEND);
+    const frames = [...framesRef.current];
     framesRef.current = [];
 
-    setIsTranslating(true);
-    setStatus("Translating...");
+    setIsProcessing(true);
+    setError("");
 
     try {
       const res = await fetch(`${API_BASE}/api/sign-to-text`, {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames, language }),
+        body:    JSON.stringify({ frames, language }),
       });
 
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
+
       const data = await res.json();
 
       if (data.translation) {
-        setTranslatedText(data.translation);
-        setError("");
+        setTranslation(data.translation);
+        setConfidence(data.confidence ?? null);
+        setStatus("Translating your signs...");
+        setHistory(prev => [data.translation, ...prev.slice(0, 9)]);
+
+        // Play audio if available and not English
+        if (data.audio_url && language !== "en") {
+          new Audio(data.audio_url).play().catch(() => {});
+        }
       }
-      setStatus(`Ready — confidence: ${Math.round((data.confidence || 0) * 100)}%`);
-    } catch (err: any) {
-      setError("Translation failed. Check if backend is running.");
-      setStatus("Error");
+    } catch (e: any) {
+      setError(`Translation error: ${e.message}`);
+      setStatus("Error — retrying next batch");
     } finally {
-      setIsTranslating(false);
+      setIsProcessing(false);
     }
-  }, [language, isTranslating]);
+  }, [isProcessing, language]);
 
-  // ── Start camera ─────────────────────────────────────────
+  // ── Start camera ──────────────────────────────────────────────────────────
   const startCamera = async () => {
-  try {
     setError("");
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480, facingMode: "user" },
-      audio: false,
-    });
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+        audio: false,
+      });
+      streamRef.current = stream;
+      framesRef.current = [];
+      setCameraOn(true);
+      setStatus("Camera active — signing...");
 
-    streamRef.current = stream;
-    framesRef.current = [];
-    setCameraOn(true);  // set state FIRST so video element renders
-    setStatus("Camera active — signing...");
+      // Wait one tick so React renders the <video> element, then attach
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.muted     = true;
+          videoRef.current.playsInline = true;
+          videoRef.current.play().catch(console.error);
+        }
+        captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
+        sendTimerRef.current    = setInterval(sendFrames,  SEND_INTERVAL_MS);
+      }, 150);
+    } catch (e: any) {
+      setError("Camera access denied. Please allow camera permission in your browser.");
+      setCameraOn(false);
+    }
+  };
 
-    // Wait for React to render the video element, then attach stream
-    setTimeout(() => {
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        videoRef.current.play().catch(console.error);
-      }
-      // Start timers after stream is attached
-      captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
-      sendTimerRef.current = setInterval(sendFrames, SEND_INTERVAL_MS);
-    }, 100);
-
-  } catch (err: any) {
-    setError("Could not access camera. Please allow camera permission.");
-  }
-};
-
-  // ── Stop camera ──────────────────────────────────────────
+  // ── Stop camera ───────────────────────────────────────────────────────────
   const stopCamera = () => {
     if (captureTimerRef.current) clearInterval(captureTimerRef.current);
     if (sendTimerRef.current)    clearInterval(sendTimerRef.current);
-
     streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-
-    framesRef.current = [];
+    streamRef.current   = null;
+    framesRef.current   = [];
     setCameraOn(false);
-    setIsTranslating(false);
-    setStatus("Ready");
-  };
-
-  const handleToggleCamera = () => {
-    if (cameraOn) stopCamera();
-    else startCamera();
-  };
-
-  const handleCopy = () => {
-    if (translatedText) navigator.clipboard.writeText(translatedText);
-  };
-
-  const handleSpeak = () => {
-    if (!translatedText) return;
-    const utter = new SpeechSynthesisUtterance(translatedText);
-    utter.lang = language === "ur" ? "ur-PK"
-               : language === "es" ? "es-ES"
-               : language === "fr" ? "fr-FR"
-               : language === "ar" ? "ar-SA"
-               : "en-US";
-    speechSynthesis.speak(utter);
+    setIsProcessing(false);
+    setStatus("Camera off");
   };
 
   // Cleanup on unmount
   useEffect(() => () => stopCamera(), []);
 
-  // Re-register sendFrames when language changes
-  useEffect(() => {
-    if (cameraOn && sendTimerRef.current) {
-      clearInterval(sendTimerRef.current);
-      sendTimerRef.current = setInterval(sendFrames, SEND_INTERVAL_MS);
-    }
-  }, [language]);
+  // ── Speak current translation ─────────────────────────────────────────────
+  const speakText = () => {
+    if (!translation) return;
+    window.speechSynthesis?.cancel();
+    const utt = new SpeechSynthesisUtterance(translation);
+    utt.lang  = language;
+    window.speechSynthesis?.speak(utt);
+  };
+
+  const copyText = () => { if (translation) navigator.clipboard.writeText(translation); };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass-solid">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <Camera className="w-5 h-5 text-primary" />
-              <h1 className="text-lg font-semibold text-foreground">Sign to Text</h1>
-            </div>
-          </div>
-          <button className="text-muted-foreground hover:text-foreground transition-colors">
-            <Settings className="w-5 h-5" />
-          </button>
+      <header className="border-b border-gray-800 px-6 py-4 flex items-center gap-4">
+        <Link to="/dashboard" className="text-gray-400 hover:text-white transition-colors">
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <Hand className="w-6 h-6 text-purple-400" />
+        <h1 className="text-xl font-bold">Sign to Text</h1>
+        <div className="ml-auto flex items-center gap-2 text-sm">
+          {backendReady === false && (
+            <span className="text-yellow-400 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              Backend waking up…
+            </span>
+          )}
+          {backendReady === true && (
+            <span className="text-green-400 text-xs">● Backend ready</span>
+          )}
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Error banner */}
-        {error && (
-          <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-            {error}
-          </div>
-        )}
-
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Camera Feed */}
-          <div className="animate-fade-up">
-            <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-sm overflow-hidden">
-              <div className="aspect-video bg-secondary/30 relative flex items-center justify-center">
-                {/* Hidden canvas for frame capture */}
+      <div className="max-w-6xl mx-auto p-6 grid lg:grid-cols-2 gap-6">
+        {/* Camera panel */}
+        <div className="space-y-4">
+          <div className="relative bg-gray-900 rounded-2xl overflow-hidden aspect-video">
+            {cameraOn ? (
+              <>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                  style={{ transform: "scaleX(-1)" }}
+                />
                 <canvas ref={canvasRef} className="hidden" />
-
-                {cameraOn ? (
-                  <div className="absolute inset-0 w-full h-full bg-black">
-                    <video
-                      ref={videoRef}
-                      className="w-full h-full object-cover"
-                      muted
-                      playsInline
-                      autoPlay
-                    />
-                    {/* Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/10 pointer-events-none" />
-                    <div className="absolute top-4 left-4 flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                      <span className="text-xs text-white font-mono bg-black/40 px-2 py-0.5 rounded">LIVE</span>
-                    </div>
-                    {isTranslating && (
-                      <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg">
-                        <Loader2 className="w-3 h-3 text-primary animate-spin" />
-                        <span className="text-xs text-white font-mono">Translating...</span>
-                      </div>
-                    )}
-                    <div className="absolute bottom-4 left-4 text-xs text-white/80 font-mono bg-black/40 px-2 py-0.5 rounded">
-                      MediaPipe · {MAX_FRAMES_PER_SEND}fps · Tracking
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <CameraOff className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">Camera is off</p>
-                    <p className="text-xs text-muted-foreground/70 mt-1">Click the button below to start</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Controls */}
-              <div className="p-4 flex items-center justify-center gap-3 border-t border-border">
-                <button
-                  onClick={handleToggleCamera}
-                  className={`px-6 py-2.5 rounded-lg font-medium text-sm flex items-center gap-2 transition-all duration-300 ${
-                    cameraOn
-                      ? "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20"
-                      : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25"
-                  }`}
-                >
-                  {cameraOn ? <CameraOff className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
-                  {cameraOn ? "Stop" : "Start Camera"}
-                </button>
-                <button className="p-2.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
-                  <Maximize2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Translation Output */}
-          <div className="animate-fade-up" style={{ animationDelay: "0.15s", animationFillMode: "both" }}>
-            <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-sm h-full flex flex-col">
-              {/* Language selector */}
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Languages className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-foreground">Output Language</span>
+                <div className="absolute top-3 left-3 flex items-center gap-2
+                                bg-red-500/80 rounded-full px-3 py-1 text-xs font-semibold">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  LIVE
                 </div>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="bg-secondary/50 border border-border text-foreground text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="en">English</option>
-                  <option value="ur">Urdu</option>
-                  <option value="es">Spanish</option>
-                  <option value="fr">French</option>
-                  <option value="ar">Arabic</option>
-                </select>
-              </div>
-
-              {/* Translation area */}
-              <div className="flex-1 p-6 flex items-center justify-center min-h-[200px]">
-                {isTranslating ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    <p className="text-sm text-muted-foreground">Translating your signs...</p>
+                {isProcessing && (
+                  <div className="absolute bottom-3 right-3 flex items-center gap-2
+                                  bg-black/60 rounded-full px-3 py-1 text-xs">
+                    <Loader2 className="w-3 h-3 animate-spin text-purple-400" />
+                    Processing…
                   </div>
-                ) : translatedText ? (
-                  <p className="text-2xl font-semibold text-foreground text-center animate-fade-up leading-relaxed">
-                    "{translatedText}"
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center">
-                    Start the camera and begin signing. Translation appears every 3 seconds.
-                  </p>
                 )}
+              </>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-gray-500">
+                <Camera className="w-16 h-16 opacity-30" />
+                <p className="text-sm">Click "Start Camera" to begin</p>
               </div>
+            )}
+          </div>
 
-              {/* Action buttons */}
-              <div className="p-4 border-t border-border flex items-center justify-center gap-3">
-                <button
-                  onClick={handleCopy}
-                  disabled={!translatedText}
-                  className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 flex items-center gap-2 transition-all disabled:opacity-40"
-                >
-                  <Copy className="w-4 h-4" /> Copy
-                </button>
-                <button
-                  onClick={handleSpeak}
-                  disabled={!translatedText}
-                  className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 flex items-center gap-2 transition-all disabled:opacity-40"
-                >
-                  <Volume2 className="w-4 h-4" /> Speak
-                </button>
-                <button
-                  onClick={() => setTranslatedText("")}
-                  className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 flex items-center gap-2 transition-all"
-                >
-                  <RefreshCw className="w-4 h-4" /> Clear
-                </button>
-              </div>
+          {/* Controls */}
+          <div className="flex gap-3">
+            <button
+              onClick={cameraOn ? stopCamera : startCamera}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold
+                transition-all ${cameraOn
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-purple-600 hover:bg-purple-700"}`}
+            >
+              {cameraOn ? <><CameraOff className="w-5 h-5" />Stop</> : <><Camera className="w-5 h-5" />Start Camera</>}
+            </button>
+
+            {/* Language selector */}
+            <div className="relative">
+              <select
+                value={language}
+                onChange={e => setLanguage(e.target.value)}
+                className="appearance-none bg-gray-800 border border-gray-700 rounded-xl
+                           px-4 py-3 pr-8 text-sm focus:outline-none focus:border-purple-500"
+              >
+                {LANGUAGES.map(l => (
+                  <option key={l.code} value={l.code}>{l.label}</option>
+                ))}
+              </select>
+              <Languages className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
           </div>
+
+          {/* Status / error */}
+          <div className={`rounded-xl px-4 py-2 text-sm ${
+            error
+              ? "bg-red-900/40 border border-red-700 text-red-300"
+              : "bg-gray-800/60 text-gray-400"}`}>
+            {error
+              ? <span className="flex items-center gap-2"><AlertCircle className="w-4 h-4" />{error}</span>
+              : status}
+          </div>
         </div>
 
-        {/* Info bar */}
-        <div className="mt-6 rounded-xl border border-border bg-card/60 p-4 flex flex-wrap items-center justify-between gap-4 animate-fade-up"
-             style={{ animationDelay: "0.3s", animationFillMode: "both" }}>
-          <div className="flex items-center gap-6 text-xs text-muted-foreground">
-            <span>Model: <span className="text-foreground font-medium">3D CNN + Transformer</span></span>
-            <span>NLP: <span className="text-foreground font-medium">Beam Search + BERT</span></span>
-            <span>Landmarks: <span className="text-foreground font-medium">MediaPipe Pose (99)</span></span>
+        {/* Translation panel */}
+        <div className="space-y-4">
+          <div className="bg-gray-900 rounded-2xl p-5 min-h-[12rem] flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Translation</h2>
+              {confidence !== null && (
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                  confidence > 0.7 ? "bg-green-900/50 text-green-400"
+                  : confidence > 0.5 ? "bg-yellow-900/50 text-yellow-400"
+                  : "bg-red-900/50 text-red-400"}`}>
+                  {Math.round(confidence * 100)}% conf
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1">
+              {translation ? (
+                <p className="text-2xl font-medium leading-relaxed text-white">{translation}</p>
+              ) : (
+                <p className="text-gray-600 italic text-sm mt-4">
+                  {cameraOn ? "Sign in front of the camera — translation will appear here…" : "Start the camera and begin signing"}
+                </p>
+              )}
+            </div>
+
+            {translation && (
+              <div className="flex gap-2 mt-4 pt-4 border-t border-gray-800">
+                <button onClick={speakText}
+                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors">
+                  <Volume2 className="w-4 h-4" />Speak
+                </button>
+                <button onClick={copyText}
+                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors">
+                  <Copy className="w-4 h-4" />Copy
+                </button>
+                <button onClick={() => { setTranslation(""); setConfidence(null); }}
+                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-400 transition-colors ml-auto">
+                  <RefreshCw className="w-4 h-4" />Clear
+                </button>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${cameraOn ? "bg-green-500 animate-pulse" : "bg-green-500"}`} />
-            <span className="text-xs text-muted-foreground">{status}</span>
+
+          {/* History */}
+          {history.length > 0 && (
+            <div className="bg-gray-900 rounded-2xl p-4">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Recent</h3>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {history.map((h, i) => (
+                  <div key={i}
+                    onClick={() => setTranslation(h)}
+                    className="text-sm text-gray-300 hover:text-white px-3 py-2
+                               bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors">
+                    {h}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Hint */}
+          <div className="bg-purple-900/20 border border-purple-800/40 rounded-xl p-4 text-sm text-purple-300">
+            <p className="font-semibold mb-1">💡 Tips for better results</p>
+            <ul className="text-purple-400 space-y-1 text-xs list-disc list-inside">
+              <li>Good lighting on your face and hands</li>
+              <li>Keep arms visible in frame</li>
+              <li>Sign clearly and at a steady pace</li>
+              <li>First translation may be slow (backend waking up)</li>
+            </ul>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
-};
-
-export default SignToText;
+}
