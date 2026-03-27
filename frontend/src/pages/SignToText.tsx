@@ -25,6 +25,7 @@ export default function SignToText() {
   const [translation,  setTranslation]  = useState("");
   const [confidence,   setConfidence]   = useState<number | null>(null);
   const [status,       setStatus]       = useState("Camera off");
+  const [idleStatus,   setIdleStatus]   = useState("");   // shown when no motion
   const [error,        setError]        = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [language,     setLanguage]     = useState("en");
@@ -37,6 +38,8 @@ export default function SignToText() {
   const framesRef       = useRef<string[]>([]);
   const captureTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sendTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Track whether we are currently in "idle" state to avoid spamming
+  const isIdleRef       = useRef(false);
 
   // ── Check backend health on mount ─────────────────────────────────────────
   useEffect(() => {
@@ -88,13 +91,31 @@ export default function SignToText() {
 
       const data = await res.json();
 
-      if (data.translation) {
+      // ── "Still" response — no motion detected ─────────────────────────────
+      // method="still" means the backend saw no wrist movement.
+      // Show a status message once, then stay quiet until motion resumes.
+      if (data.method === "still" || data.translation === "...") {
+        if (!isIdleRef.current) {
+          // First time going idle — show the idle indicator
+          isIdleRef.current = true;
+          setIdleStatus("👋 Ready — start signing to translate");
+          setConfidence(null);
+        }
+        // Do NOT add to history, do NOT update translation panel
+        return;
+      }
+
+      // ── Real translation received ──────────────────────────────────────────
+      isIdleRef.current = false;
+      setIdleStatus("");
+
+      if (data.translation && data.translation.trim()) {
         setTranslation(data.translation);
         setConfidence(data.confidence ?? null);
         setStatus("Translating your signs...");
+        // Only add meaningful translations to history (not empty/dots)
         setHistory(prev => [data.translation, ...prev.slice(0, 9)]);
 
-        // Play audio if available and not English
         if (data.audio_url && language !== "en") {
           new Audio(data.audio_url).play().catch(() => {});
         }
@@ -265,7 +286,7 @@ export default function SignToText() {
           <div className="bg-gray-900 rounded-2xl p-5 min-h-[12rem] flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Translation</h2>
-              {confidence !== null && (
+              {confidence !== null && !idleStatus && (
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                   confidence > 0.7 ? "bg-green-900/50 text-green-400"
                   : confidence > 0.5 ? "bg-yellow-900/50 text-yellow-400"
@@ -276,7 +297,13 @@ export default function SignToText() {
             </div>
 
             <div className="flex-1">
-              {translation ? (
+              {/* Idle state — show once, don't update repeatedly */}
+              {idleStatus && !translation ? (
+                <div className="flex items-center gap-3 mt-4">
+                  <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                  <p className="text-gray-400 text-sm">{idleStatus}</p>
+                </div>
+              ) : translation ? (
                 <p className="text-2xl font-medium leading-relaxed text-white">{translation}</p>
               ) : (
                 <p className="text-gray-600 italic text-sm mt-4">
@@ -285,7 +312,7 @@ export default function SignToText() {
               )}
             </div>
 
-            {translation && (
+            {translation && !idleStatus && (
               <div className="flex gap-2 mt-4 pt-4 border-t border-gray-800">
                 <button onClick={speakText}
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors">
@@ -295,7 +322,7 @@ export default function SignToText() {
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors">
                   <Copy className="w-4 h-4" />Copy
                 </button>
-                <button onClick={() => { setTranslation(""); setConfidence(null); }}
+                <button onClick={() => { setTranslation(""); setConfidence(null); setIdleStatus(""); }}
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-400 transition-colors ml-auto">
                   <RefreshCw className="w-4 h-4" />Clear
                 </button>
@@ -303,14 +330,14 @@ export default function SignToText() {
             )}
           </div>
 
-          {/* History */}
+          {/* History — only real translations, no dots */}
           {history.length > 0 && (
             <div className="bg-gray-900 rounded-2xl p-4">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Recent</h3>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {history.map((h, i) => (
                   <div key={i}
-                    onClick={() => setTranslation(h)}
+                    onClick={() => { setTranslation(h); setIdleStatus(""); }}
                     className="text-sm text-gray-300 hover:text-white px-3 py-2
                                bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors">
                     {h}
