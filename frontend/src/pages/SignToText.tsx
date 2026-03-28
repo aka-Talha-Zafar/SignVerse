@@ -77,6 +77,11 @@ export default function SignToText() {
     setIsProcessing(true);
     setError("");
 
+    // Optimistically clear idle state when we're about to send a new batch.
+    // This prevents getting permanently stuck in the "Ready" state.
+    // If the backend returns "still" again, we'll re-enter idle below.
+    isIdleRef.current = false;
+
     try {
       const res = await fetch(`${API_BASE}/api/sign-to-text`, {
         method:  "POST",
@@ -92,28 +97,21 @@ export default function SignToText() {
       const data = await res.json();
 
       // ── "Still" response — no motion detected ─────────────────────────────
-      // method="still" means the backend saw no wrist movement.
-      // Show a status message once, then stay quiet until motion resumes.
       if (data.method === "still" || data.translation === "...") {
-        if (!isIdleRef.current) {
-          // First time going idle — show the idle indicator
-          isIdleRef.current = true;
-          setIdleStatus("👋 Ready — start signing to translate");
-          setConfidence(null);
-        }
-        // Do NOT add to history, do NOT update translation panel
+        isIdleRef.current = true;
+        setIdleStatus("👋 Ready — start signing to translate");
+        setConfidence(null);
+        // Do NOT update translation or history
         return;
       }
 
       // ── Real translation received ──────────────────────────────────────────
-      isIdleRef.current = false;
       setIdleStatus("");
 
       if (data.translation && data.translation.trim()) {
         setTranslation(data.translation);
         setConfidence(data.confidence ?? null);
         setStatus("Translating your signs...");
-        // Only add meaningful translations to history (not empty/dots)
         setHistory(prev => [data.translation, ...prev.slice(0, 9)]);
 
         if (data.audio_url && language !== "en") {
