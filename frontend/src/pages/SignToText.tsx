@@ -2,13 +2,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Hand, ArrowLeft, Camera, CameraOff, Volume2, Copy,
-  RefreshCw, Settings, Maximize2, Languages, Loader2, AlertCircle,
+  RefreshCw, Languages, Loader2, AlertCircle,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
 
-const FRAME_INTERVAL_MS = 150;   // capture a frame every 150ms
-const SEND_INTERVAL_MS  = 3500;  // send batch every 3.5 seconds
+const FRAME_INTERVAL_MS = 150;  // capture a frame every 150 ms
+const SEND_INTERVAL_MS  = 3000; // send batch every 3 s (slightly faster than before)
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -25,23 +25,34 @@ export default function SignToText() {
   const [translation,  setTranslation]  = useState("");
   const [confidence,   setConfidence]   = useState<number | null>(null);
   const [status,       setStatus]       = useState("Camera off");
-  const [idleStatus,   setIdleStatus]   = useState("");   // shown when no motion
   const [error,        setError]        = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [language,     setLanguage]     = useState("en");
   const [history,      setHistory]      = useState<string[]>([]);
   const [backendReady, setBackendReady] = useState<boolean | null>(null);
 
-  const videoRef        = useRef<HTMLVideoElement>(null);
-  const canvasRef       = useRef<HTMLCanvasElement>(null);
-  const streamRef       = useRef<MediaStream | null>(null);
-  const framesRef       = useRef<string[]>([]);
-  const captureTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sendTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Track whether we are currently in "idle" state to avoid spamming
-  const isIdleRef       = useRef(false);
+  const videoRef  = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  // ── Check backend health on mount ─────────────────────────────────────────
+  // ── Refs that hold mutable state accessed by intervals ────────────────────
+  // STALE CLOSURE FIX:
+  // The old code used setInterval(sendFrames, SEND_INTERVAL_MS) where sendFrames
+  // was a useCallback that captured isProcessing via closure. The interval held
+  // the initial function reference and never saw isProcessing updates, so the
+  // guard `if (isProcessing) return` never fired — multiple concurrent requests
+  // all fired simultaneously, racing each other.
+  //
+  // Fix: store all mutable state that intervals need in refs instead of closures.
+  // Refs always give the current value; they don't get stale inside intervals.
+  const framesRef       = useRef<string[]>([]);
+  const isProcessingRef = useRef(false);
+  const languageRef     = useRef(language);
+
+  // Keep languageRef in sync with language state
+  useEffect(() => { languageRef.current = language; }, [language]);
+
+  // ── Backend health check ──────────────────────────────────────────────────
   useEffect(() => {
     fetch(`${API_BASE}/api/health`)
       .then(r => r.json())
@@ -49,7 +60,7 @@ export default function SignToText() {
       .catch(() => setBackendReady(false));
   }, []);
 
-  // ── Capture a frame from webcam ────────────────────────────────────────────
+  // ── Capture one frame from webcam ─────────────────────────────────────────
   const captureFrame = useCallback(() => {
     const video  = videoRef.current;
     const canvas = canvasRef.current;
@@ -60,33 +71,30 @@ export default function SignToText() {
     canvas.height = video.videoHeight || 240;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     framesRef.current.push(canvas.toDataURL("image/jpeg", 0.6));
-    // Keep max 40 frames to avoid huge payloads
     if (framesRef.current.length > 40) {
       framesRef.current = framesRef.current.slice(-40);
     }
-  }, []);
+  }, []); // no dependencies — only reads refs
 
-  // ── Send accumulated frames to backend ────────────────────────────────────
+  // ── Send accumulated frames ───────────────────────────────────────────────
+  // Uses refs for all guards — never goes stale inside setInterval.
   const sendFrames = useCallback(async () => {
+    // Guard via ref — always reflects the current value (no stale closure)
+    if (isProcessingRef.current) return;
     if (framesRef.current.length === 0) return;
-    if (isProcessing) return;
 
     const frames = [...framesRef.current];
     framesRef.current = [];
 
+    isProcessingRef.current = true;
     setIsProcessing(true);
     setError("");
-
-    // Optimistically clear idle state when we're about to send a new batch.
-    // This prevents getting permanently stuck in the "Ready" state.
-    // If the backend returns "still" again, we'll re-enter idle below.
-    isIdleRef.current = false;
 
     try {
       const res = await fetch(`${API_BASE}/api/sign-to-text`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ frames, language }),
+        body:    JSON.stringify({ frames, language: languageRef.current }),
       });
 
       if (!res.ok) {
@@ -96,37 +104,47 @@ export default function SignToText() {
 
       const data = await res.json();
 
-      // ── "Still" response — no motion detected ─────────────────────────────
-      if (data.method === "still" || data.translation === "...") {
-        isIdleRef.current = true;
-        setIdleStatus("👋 Ready — start signing to translate");
-        setConfidence(null);
-        // Do NOT update translation or history
+      // ── No movement detected ──────────────────────────────────────────────
+      if (data.method === "still" || data.no_sign_detected === true && !data.confidence) {
+        setStatus("👋 Ready — start signing to translate");
         return;
       }
 
-      // ── Real translation received ──────────────────────────────────────────
-      setIdleStatus("");
+      // ── Sign unclear — show hint in status bar ────────────────────────────
+      if (data.no_sign_detected === true && data.message) {
+        setStatus(data.message);
+        return;
+      }
 
+      // ── Successful translation ────────────────────────────────────────────
       if (data.translation && data.translation.trim()) {
         setTranslation(data.translation);
         setConfidence(data.confidence ?? null);
         setStatus("Translating your signs...");
-        setHistory(prev => [data.translation, ...prev.slice(0, 9)]);
+        setHistory(prev => {
+          // Avoid adding the same translation back-to-back
+          if (prev[0] === data.translation) return prev;
+          return [data.translation, ...prev.slice(0, 9)];
+        });
 
-        if (data.audio_url && language !== "en") {
+        if (data.audio_url && languageRef.current !== "en") {
           new Audio(data.audio_url).play().catch(() => {});
         }
       }
+
     } catch (e: any) {
       setError(`Translation error: ${e.message}`);
       setStatus("Error — retrying next batch");
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
-  }, [isProcessing, language]);
+  }, []); // no dependencies — reads everything through refs
 
   // ── Start camera ──────────────────────────────────────────────────────────
+  const captureTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sendTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const startCamera = async () => {
     setError("");
     try {
@@ -136,21 +154,22 @@ export default function SignToText() {
       });
       streamRef.current = stream;
       framesRef.current = [];
+      isProcessingRef.current = false;
       setCameraOn(true);
       setStatus("Camera active — signing...");
 
-      // Wait one tick so React renders the <video> element, then attach
       setTimeout(() => {
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.muted     = true;
+          videoRef.current.srcObject  = stream;
+          videoRef.current.muted      = true;
           videoRef.current.playsInline = true;
           videoRef.current.play().catch(console.error);
         }
+        // captureFrame and sendFrames are stable refs — safe to use in intervals
         captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
-        sendTimerRef.current    = setInterval(sendFrames,  SEND_INTERVAL_MS);
+        sendTimerRef.current    = setInterval(sendFrames,   SEND_INTERVAL_MS);
       }, 150);
-    } catch (e: any) {
+    } catch {
       setError("Camera access denied. Please allow camera permission in your browser.");
       setCameraOn(false);
     }
@@ -161,17 +180,17 @@ export default function SignToText() {
     if (captureTimerRef.current) clearInterval(captureTimerRef.current);
     if (sendTimerRef.current)    clearInterval(sendTimerRef.current);
     streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current   = null;
-    framesRef.current   = [];
+    streamRef.current       = null;
+    framesRef.current       = [];
+    isProcessingRef.current = false;
     setCameraOn(false);
     setIsProcessing(false);
     setStatus("Camera off");
   };
 
-  // Cleanup on unmount
   useEffect(() => () => stopCamera(), []);
 
-  // ── Speak current translation ─────────────────────────────────────────────
+  // ── Speak / copy helpers ──────────────────────────────────────────────────
   const speakText = () => {
     if (!translation) return;
     window.speechSynthesis?.cancel();
@@ -179,8 +198,13 @@ export default function SignToText() {
     utt.lang  = language;
     window.speechSynthesis?.speak(utt);
   };
-
   const copyText = () => { if (translation) navigator.clipboard.writeText(translation); };
+
+  // ── Confidence colour helper ──────────────────────────────────────────────
+  const confColour = (c: number) =>
+    c > 0.7 ? "bg-green-900/50 text-green-400"
+    : c > 0.5 ? "bg-yellow-900/50 text-yellow-400"
+    : "bg-red-900/50 text-red-400";
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -194,8 +218,7 @@ export default function SignToText() {
         <div className="ml-auto flex items-center gap-2 text-sm">
           {backendReady === false && (
             <span className="text-yellow-400 flex items-center gap-1">
-              <AlertCircle className="w-4 h-4" />
-              Backend waking up…
+              <AlertCircle className="w-4 h-4" />Backend waking up…
             </span>
           )}
           {backendReady === true && (
@@ -205,30 +228,26 @@ export default function SignToText() {
       </header>
 
       <div className="max-w-6xl mx-auto p-6 grid lg:grid-cols-2 gap-6">
-        {/* Camera panel */}
+
+        {/* ── Camera panel ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div className="relative bg-gray-900 rounded-2xl overflow-hidden aspect-video">
             {cameraOn ? (
               <>
                 <video
-                  ref={videoRef}
-                  autoPlay
-                  muted
-                  playsInline
+                  ref={videoRef} autoPlay muted playsInline
                   className="w-full h-full object-cover"
                   style={{ transform: "scaleX(-1)" }}
                 />
                 <canvas ref={canvasRef} className="hidden" />
                 <div className="absolute top-3 left-3 flex items-center gap-2
                                 bg-red-500/80 rounded-full px-3 py-1 text-xs font-semibold">
-                  <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                  LIVE
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse" />LIVE
                 </div>
                 {isProcessing && (
                   <div className="absolute bottom-3 right-3 flex items-center gap-2
                                   bg-black/60 rounded-full px-3 py-1 text-xs">
-                    <Loader2 className="w-3 h-3 animate-spin text-purple-400" />
-                    Processing…
+                    <Loader2 className="w-3 h-3 animate-spin text-purple-400" />Processing…
                   </div>
                 )}
               </>
@@ -249,10 +268,11 @@ export default function SignToText() {
                   ? "bg-red-600 hover:bg-red-700"
                   : "bg-purple-600 hover:bg-purple-700"}`}
             >
-              {cameraOn ? <><CameraOff className="w-5 h-5" />Stop</> : <><Camera className="w-5 h-5" />Start Camera</>}
+              {cameraOn
+                ? <><CameraOff className="w-5 h-5" />Stop</>
+                : <><Camera   className="w-5 h-5" />Start Camera</>}
             </button>
 
-            {/* Language selector */}
             <div className="relative">
               <select
                 value={language}
@@ -260,9 +280,7 @@ export default function SignToText() {
                 className="appearance-none bg-gray-800 border border-gray-700 rounded-xl
                            px-4 py-3 pr-8 text-sm focus:outline-none focus:border-purple-500"
               >
-                {LANGUAGES.map(l => (
-                  <option key={l.code} value={l.code}>{l.label}</option>
-                ))}
+                {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
               </select>
               <Languages className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
@@ -279,38 +297,33 @@ export default function SignToText() {
           </div>
         </div>
 
-        {/* Translation panel */}
+        {/* ── Translation panel ───────────────────────────────────────────── */}
         <div className="space-y-4">
           <div className="bg-gray-900 rounded-2xl p-5 min-h-[12rem] flex flex-col">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Translation</h2>
-              {confidence !== null && !idleStatus && (
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  confidence > 0.7 ? "bg-green-900/50 text-green-400"
-                  : confidence > 0.5 ? "bg-yellow-900/50 text-yellow-400"
-                  : "bg-red-900/50 text-red-400"}`}>
+              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+                Translation
+              </h2>
+              {confidence !== null && (
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${confColour(confidence)}`}>
                   {Math.round(confidence * 100)}% conf
                 </span>
               )}
             </div>
 
             <div className="flex-1">
-              {/* Idle state — show once, don't update repeatedly */}
-              {idleStatus && !translation ? (
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                  <p className="text-gray-400 text-sm">{idleStatus}</p>
-                </div>
-              ) : translation ? (
+              {translation ? (
                 <p className="text-2xl font-medium leading-relaxed text-white">{translation}</p>
               ) : (
                 <p className="text-gray-600 italic text-sm mt-4">
-                  {cameraOn ? "Sign in front of the camera — translation will appear here…" : "Start the camera and begin signing"}
+                  {cameraOn
+                    ? "Sign in front of the camera — translation will appear here…"
+                    : "Start the camera and begin signing"}
                 </p>
               )}
             </div>
 
-            {translation && !idleStatus && (
+            {translation && (
               <div className="flex gap-2 mt-4 pt-4 border-t border-gray-800">
                 <button onClick={speakText}
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors">
@@ -320,7 +333,7 @@ export default function SignToText() {
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors">
                   <Copy className="w-4 h-4" />Copy
                 </button>
-                <button onClick={() => { setTranslation(""); setConfidence(null); setIdleStatus(""); }}
+                <button onClick={() => { setTranslation(""); setConfidence(null); }}
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-400 transition-colors ml-auto">
                   <RefreshCw className="w-4 h-4" />Clear
                 </button>
@@ -328,14 +341,14 @@ export default function SignToText() {
             )}
           </div>
 
-          {/* History — only real translations, no dots */}
+          {/* History */}
           {history.length > 0 && (
             <div className="bg-gray-900 rounded-2xl p-4">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Recent</h3>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {history.map((h, i) => (
                   <div key={i}
-                    onClick={() => { setTranslation(h); setIdleStatus(""); }}
+                    onClick={() => setTranslation(h)}
                     className="text-sm text-gray-300 hover:text-white px-3 py-2
                                bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors">
                     {h}
@@ -345,14 +358,15 @@ export default function SignToText() {
             </div>
           )}
 
-          {/* Hint */}
+          {/* Tips */}
           <div className="bg-purple-900/20 border border-purple-800/40 rounded-xl p-4 text-sm text-purple-300">
             <p className="font-semibold mb-1">💡 Tips for better results</p>
             <ul className="text-purple-400 space-y-1 text-xs list-disc list-inside">
-              <li>Good lighting on your face and hands</li>
-              <li>Keep arms visible in frame</li>
-              <li>Sign clearly and at a steady pace</li>
-              <li>First translation may be slow (backend waking up)</li>
+              <li>Good lighting on your hands — avoid backlight</li>
+              <li>Keep your full arm visible in frame</li>
+              <li>Sign clearly and hold each sign for ~2 seconds</li>
+              <li>Make sure hands are clearly separated from background</li>
+              <li>First translation may take a few seconds (backend waking up)</li>
             </ul>
           </div>
         </div>
