@@ -7,8 +7,11 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
 
-const FRAME_INTERVAL_MS = 150;  // capture a frame every 150 ms
-const SEND_INTERVAL_MS  = 3000; // send batch every 3 s (slightly faster than before)
+const FRAME_INTERVAL_MS = 300;
+const SEND_INTERVAL_MS  = 4000;
+const MAX_FRAMES_PER_BATCH = 12;
+const TRANSLATION_HOLD_MS  = 5000;
+const CLIENT_MOTION_THRESHOLD = 5;
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -35,19 +38,12 @@ export default function SignToText() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // ── Refs that hold mutable state accessed by intervals ────────────────────
-  // STALE CLOSURE FIX:
-  // The old code used setInterval(sendFrames, SEND_INTERVAL_MS) where sendFrames
-  // was a useCallback that captured isProcessing via closure. The interval held
-  // the initial function reference and never saw isProcessing updates, so the
-  // guard `if (isProcessing) return` never fired — multiple concurrent requests
-  // all fired simultaneously, racing each other.
-  //
-  // Fix: store all mutable state that intervals need in refs instead of closures.
-  // Refs always give the current value; they don't get stale inside intervals.
   const framesRef       = useRef<string[]>([]);
   const isProcessingRef = useRef(false);
   const languageRef     = useRef(language);
+  const lastTranslationTimeRef = useRef(0);
+  const prevFrameDataRef = useRef<ImageData | null>(null);
+  const motionDetectedRef = useRef(false);
 
   // Keep languageRef in sync with language state
   useEffect(() => { languageRef.current = language; }, [language]);
@@ -60,7 +56,6 @@ export default function SignToText() {
       .catch(() => setBackendReady(false));
   }, []);
 
-  // ── Capture one frame from webcam ─────────────────────────────────────────
   const captureFrame = useCallback(() => {
     const video  = videoRef.current;
     const canvas = canvasRef.current;
@@ -70,21 +65,44 @@ export default function SignToText() {
     canvas.width  = video.videoWidth  || 320;
     canvas.height = video.videoHeight || 240;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    framesRef.current.push(canvas.toDataURL("image/jpeg", 0.6));
-    if (framesRef.current.length > 40) {
-      framesRef.current = framesRef.current.slice(-40);
-    }
-  }, []); // no dependencies — only reads refs
 
-  // ── Send accumulated frames ───────────────────────────────────────────────
-  // Uses refs for all guards — never goes stale inside setInterval.
+    const currentData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    if (prevFrameDataRef.current) {
+      const prev = prevFrameDataRef.current.data;
+      const curr = currentData.data;
+      let totalDiff = 0;
+      let count = 0;
+      const step = 16;
+      for (let i = 0; i < curr.length; i += 4 * step) {
+        totalDiff += Math.abs(curr[i] - prev[i])
+                   + Math.abs(curr[i + 1] - prev[i + 1])
+                   + Math.abs(curr[i + 2] - prev[i + 2]);
+        count++;
+      }
+      if (count > 0 && totalDiff / (count * 3) > CLIENT_MOTION_THRESHOLD) {
+        motionDetectedRef.current = true;
+      }
+    }
+    prevFrameDataRef.current = currentData;
+
+    framesRef.current.push(canvas.toDataURL("image/jpeg", 0.6));
+    if (framesRef.current.length > MAX_FRAMES_PER_BATCH * 2) {
+      framesRef.current = framesRef.current.slice(-MAX_FRAMES_PER_BATCH);
+    }
+  }, []);
+
   const sendFrames = useCallback(async () => {
-    // Guard via ref — always reflects the current value (no stale closure)
     if (isProcessingRef.current) return;
     if (framesRef.current.length === 0) return;
 
-    const frames = [...framesRef.current];
+    if (!motionDetectedRef.current) {
+      framesRef.current = framesRef.current.slice(-4);
+      return;
+    }
+
+    const frames = framesRef.current.slice(-MAX_FRAMES_PER_BATCH);
     framesRef.current = [];
+    motionDetectedRef.current = false;
 
     isProcessingRef.current = true;
     setIsProcessing(true);
@@ -104,25 +122,18 @@ export default function SignToText() {
 
       const data = await res.json();
 
-      // ── No movement detected ──────────────────────────────────────────────
-      if (data.method === "still" || data.no_sign_detected === true && !data.confidence) {
-        setStatus("👋 Ready — start signing to translate");
+      if (data.no_sign_detected) {
+        if (Date.now() - lastTranslationTimeRef.current < TRANSLATION_HOLD_MS) return;
+        setStatus(data.message || "\uD83D\uDC4B Ready \u2014 start signing to translate");
         return;
       }
 
-      // ── Sign unclear — show hint in status bar ────────────────────────────
-      if (data.no_sign_detected === true && data.message) {
-        setStatus(data.message);
-        return;
-      }
-
-      // ── Successful translation ────────────────────────────────────────────
       if (data.translation && data.translation.trim()) {
         setTranslation(data.translation);
         setConfidence(data.confidence ?? null);
         setStatus("Translating your signs...");
+        lastTranslationTimeRef.current = Date.now();
         setHistory(prev => {
-          // Avoid adding the same translation back-to-back
           if (prev[0] === data.translation) return prev;
           return [data.translation, ...prev.slice(0, 9)];
         });
@@ -134,12 +145,12 @@ export default function SignToText() {
 
     } catch (e: any) {
       setError(`Translation error: ${e.message}`);
-      setStatus("Error — retrying next batch");
+      setStatus("Error \u2014 retrying next batch");
     } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
     }
-  }, []); // no dependencies — reads everything through refs
+  }, []);
 
   // ── Start camera ──────────────────────────────────────────────────────────
   const captureTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -155,6 +166,9 @@ export default function SignToText() {
       streamRef.current = stream;
       framesRef.current = [];
       isProcessingRef.current = false;
+      motionDetectedRef.current = false;
+      prevFrameDataRef.current = null;
+      lastTranslationTimeRef.current = 0;
       setCameraOn(true);
       setStatus("Camera active — signing...");
 
@@ -183,6 +197,9 @@ export default function SignToText() {
     streamRef.current       = null;
     framesRef.current       = [];
     isProcessingRef.current = false;
+    motionDetectedRef.current = false;
+    prevFrameDataRef.current  = null;
+    lastTranslationTimeRef.current = 0;
     setCameraOn(false);
     setIsProcessing(false);
     setStatus("Camera off");
