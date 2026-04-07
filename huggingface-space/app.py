@@ -41,8 +41,9 @@ SEQ_LEN    = 64
 N_FEAT     = 225
 TYPE_OFFSET = {"right_hand": 0, "left_hand": 63, "pose": 126}
 
-MOTION_THRESHOLD = 0.045
-CONF_THRESHOLD   = 0.35
+MOTION_THRESHOLD = 0.03
+CONF_THRESHOLD   = 0.20
+HAND_PRESENCE_MIN = 0.15
 SMOOTH_WINDOW    = 1
 
 asl_model     = None
@@ -495,13 +496,12 @@ def sign_to_text(req: SignToTextRequest):
     try:
         n_frames = len(req.frames)
 
-        # ── 1.  Single MediaPipe pass — landmarks, hand count, wrist positions
         landmark_vecs, hand_count, wrist_positions = extract_landmarks_batch(req.frames)
-        log.info(f"Frames={n_frames} | hands_detected={hand_count}/{n_frames}")
-
-        # ── 2.  Hand-presence gate
         hand_ratio = hand_count / n_frames if n_frames else 0
-        if hand_ratio < 0.3:
+        log.info(f"Frames={n_frames} | hands={hand_count}/{n_frames} ({hand_ratio:.0%})")
+
+        # ── Hand-presence gate (very lenient — 15 % = 2 out of 12 frames)
+        if hand_ratio < HAND_PRESENCE_MIN:
             return {
                 "translation": None, "no_sign_detected": True,
                 "method": "no_hands",
@@ -509,11 +509,13 @@ def sign_to_text(req: SignToTextRequest):
                 "confidence": 0.0, "motion": 0.0,
             }
 
-        # ── 3.  Motion gate (re-uses wrist positions from step 1)
+        # ── Motion gate — SKIPPED when hands are in >= 50 % of frames.
+        # Many ASL signs involve holding a position; requiring motion blocks them.
+        # Strong hand-presence is sufficient proof of intentional signing.
         motion = compute_motion_from_positions(wrist_positions)
-        log.info(f"Motion={motion:.5f} (threshold={MOTION_THRESHOLD})")
 
-        if motion < MOTION_THRESHOLD:
+        if hand_ratio < 0.5 and motion < MOTION_THRESHOLD:
+            log.info(f"Motion={motion:.5f} < {MOTION_THRESHOLD} (hands too few to skip)")
             return {
                 "translation": None, "no_sign_detected": True,
                 "method": "still",
@@ -521,7 +523,9 @@ def sign_to_text(req: SignToTextRequest):
                 "confidence": 0.0, "motion": round(motion, 5),
             }
 
-        # ── 4.  Resample + normalize (NO second MediaPipe pass)
+        log.info(f"Motion={motion:.5f} | skip_motion_gate={hand_ratio >= 0.5}")
+
+        # ── Classify
         feat = resample_and_normalize(landmark_vecs)
         src  = torch.tensor(feat, dtype=torch.float32).unsqueeze(0).to(DEVICE)
         with torch.no_grad():
@@ -539,7 +543,8 @@ def sign_to_text(req: SignToTextRequest):
         ]
         log.info(f"Prediction: {top3_result} | motion={motion:.4f}")
 
-        # ── 5.  Confidence gate
+        # ── Confidence gate (lowered to 0.20 — real webcam data has lower
+        #    confidence than offline validation; the client already gates motion)
         if best_conf < CONF_THRESHOLD:
             return {
                 "translation": None, "no_sign_detected": True,
@@ -548,7 +553,6 @@ def sign_to_text(req: SignToTextRequest):
                 "motion": round(motion, 4),
             }
 
-        # ── 6.  Return result immediately
         translation = sign_to_sentence(best_sign)
         audio_url   = None
         if req.language and req.language != "en":

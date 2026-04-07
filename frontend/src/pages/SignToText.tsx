@@ -11,7 +11,7 @@ const FRAME_INTERVAL_MS = 300;
 const SEND_INTERVAL_MS  = 4000;
 const MAX_FRAMES_PER_BATCH = 12;
 const TRANSLATION_HOLD_MS  = 5000;
-const CLIENT_MOTION_THRESHOLD = 5;
+const CLIENT_MOTION_THRESHOLD = 3;
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -85,7 +85,7 @@ export default function SignToText() {
     }
     prevFrameDataRef.current = currentData;
 
-    framesRef.current.push(canvas.toDataURL("image/jpeg", 0.6));
+    framesRef.current.push(canvas.toDataURL("image/jpeg", 0.75));
     if (framesRef.current.length > MAX_FRAMES_PER_BATCH * 2) {
       framesRef.current = framesRef.current.slice(-MAX_FRAMES_PER_BATCH);
     }
