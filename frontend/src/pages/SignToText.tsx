@@ -9,11 +9,14 @@ import {
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
 
 /* ── Word-mode timing ─────────────────────────────────────────────────────── */
-const FRAME_INTERVAL_MS = 300;
-const SEND_INTERVAL_MS  = 4000;
-const MAX_FRAMES_PER_BATCH = 12;
+const FRAME_INTERVAL_MS = 150;          // was 300 — 2× frame rate for better temporal data
+const SEND_INTERVAL_MS  = 3500;         // was 4000 — slightly faster feedback loop
+const MAX_FRAMES_PER_BATCH = 20;        // was 12 — more context per classification
+const MIN_FRAMES_TO_SEND = 8;           // never send fewer than this
 const TRANSLATION_HOLD_MS  = 5000;
 const CLIENT_MOTION_THRESHOLD = 3;
+const MOTION_MEMORY_MS = 2500;          // keep "in-motion" state for 2.5s after last movement
+const IDLE_BUFFER_KEEP = 10;            // keep last N frames when idle (context for sign start)
 
 /* ── Sentence-mode timing ─────────────────────────────────────────────────── */
 const SENTENCE_FRAME_INTERVAL = 200;   // faster capture for boundary detection
@@ -66,7 +69,7 @@ export default function SignToText() {
   const languageRef     = useRef(language);
   const lastTranslationTimeRef = useRef(0);
   const prevFrameDataRef = useRef<ImageData | null>(null);
-  const motionDetectedRef = useRef(false);
+  const lastMotionTimeRef = useRef(0);
 
   const sentenceFramesRef  = useRef<string[]>([]);
   const sentenceTimerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -113,7 +116,7 @@ export default function SignToText() {
         count++;
       }
       if (count > 0 && totalDiff / (count * 3) > CLIENT_MOTION_THRESHOLD) {
-        motionDetectedRef.current = true;
+        lastMotionTimeRef.current = Date.now();
       }
     }
     prevFrameDataRef.current = currentData;
@@ -128,14 +131,25 @@ export default function SignToText() {
     if (isProcessingRef.current) return;
     if (framesRef.current.length === 0) return;
 
-    if (!motionDetectedRef.current) {
-      framesRef.current = framesRef.current.slice(-4);
+    const hasRecentMotion =
+      Date.now() - lastMotionTimeRef.current < MOTION_MEMORY_MS;
+
+    if (!hasRecentMotion) {
+      // No recent motion — keep a rolling context buffer (not just 4 frames)
+      // so when the user starts signing, pre-sign frames are available
+      if (framesRef.current.length > IDLE_BUFFER_KEEP) {
+        framesRef.current = framesRef.current.slice(-IDLE_BUFFER_KEEP);
+      }
+      return;
+    }
+
+    // Motion detected recently, but wait until we have enough frames
+    if (framesRef.current.length < MIN_FRAMES_TO_SEND) {
       return;
     }
 
     const frames = framesRef.current.slice(-MAX_FRAMES_PER_BATCH);
     framesRef.current = [];
-    motionDetectedRef.current = false;
 
     isProcessingRef.current = true;
     setIsProcessing(true);
@@ -305,7 +319,7 @@ export default function SignToText() {
       framesRef.current = [];
       sentenceFramesRef.current = [];
       isProcessingRef.current = false;
-      motionDetectedRef.current = false;
+      lastMotionTimeRef.current = 0;
       prevFrameDataRef.current = null;
       lastTranslationTimeRef.current = 0;
       setCameraOn(true);
@@ -341,7 +355,7 @@ export default function SignToText() {
     framesRef.current       = [];
     sentenceFramesRef.current = [];
     isProcessingRef.current = false;
-    motionDetectedRef.current = false;
+    lastMotionTimeRef.current = 0;
     prevFrameDataRef.current  = null;
     lastTranslationTimeRef.current = 0;
     setCameraOn(false);

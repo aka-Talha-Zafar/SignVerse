@@ -880,6 +880,9 @@ def sign_to_text(req: SignToTextRequest):
     try:
         n_frames = len(req.frames)
 
+        if n_frames < 6:
+            log.warning(f"Very few frames ({n_frames}) — client may be sending too early")
+
         landmark_vecs, hand_count, wrist_positions = extract_landmarks_batch(req.frames)
         hand_ratio = hand_count / n_frames if n_frames else 0
         log.info(f"Frames={n_frames} | hands={hand_count}/{n_frames} ({hand_ratio:.0%})")

@@ -1,128 +1,319 @@
-I have implemented this model succesfully for word level translations but now I wnated it to expand on sentence level (not exact raw sentences just 3/4 words sentences made from common daily used words present in this Googles dataset on which I have trained the word level model) I think I can achieve this by using common techniques like Bert refinement and etc and make possible the generation of the small 3/4 words sentence possible like I need water, Bring me water and etc
-First of all tell me is this possible to achieve 3/4 words sentence level accuracy from this dataset 
-Secondly if this is possible so tell me the exact flow and structure/pipeline of exact steps to be done to do this
+===== Application Startup at 2026-04-08 09:52:05 =====
 
-Apr 7
-
-Prepared comprehensive responses addressing feasibility and implementation pipeline
-Prepared comprehensive responses addressing feasibility and implementation pipeline
-Yes — this is genuinely achievable, and the path is clearer than it might seem. Let me walk through both answers properly.
-
-
-
-Answer 1 — Is it possible?
-Yes, definitively. Here is why the vocabulary is sufficient despite missing obvious words like "want" and "need":
-
-ASL grammar is topic-comment based, not subject-verb-object. A native ASL sentence for "I want water" is more naturally signed as THIRSTY GIVE WATER PLEASE or simply WATER PLEASE — and every one of those words is in your 250-class dataset. You don't need "want" or "need" because the language structure doesn't require them. Common daily sentences like MOM GIVE MILK, MINEMY HUNGRY FOOD PLEASE, WE GO HOME NOW, HESHEIT SICK SLEEP, PLEASE GIVE WATER are all fully constructible from your existing vocabulary. You realistically have the ingredients for 200+ distinct meaningful sentences.
-
-The one honest limitation: you cannot do continuous unrestricted signing. Someone cannot sign freely and expect arbitrary sentences. The system works within the vocabulary boundary — but for a daily communication aid (which is SignVerse's goal), that boundary is exactly where the most useful sentences live anyway.
-
-Answer 2 — The exact pipeline, step by step
-Stage 1 — Sign boundary detection (the only truly new ML piece)
-This is the critical new component. You need to split a continuous stream of landmarks into individual word segments. The approach that works without new training data:
-
-Compute the wrist velocity at each frame — the Euclidean distance between the right-hand wrist position (features[0:3]) in frame t and frame t-1. When a signer finishes one sign and prepares for the next, the hands briefly return to a neutral "rest position" near the hips, and velocity drops to near-zero. Threshold this: if velocity stays below 0.03 (in normalized wrist-relative coordinates) for more than 4 consecutive frames, mark a boundary. This gives you a clean segment per word with no additional training required.
-
-As a fallback for signs that don't have a clear rest (like fast continuous signing), also use a fixed sliding window of 64 frames with 32-frame stride, run the classifier on each window, and apply temporal NMS to collapse repeated adjacent predictions into one.
-
-Stage 2 — Run the existing classifier, keep top-3
-This is your existing model, completely frozen and unchanged. The only difference: instead of returning just the top-1 prediction, you return the top-3 predictions plus their softmax confidence scores for each detected segment. This gives the downstream language model room to correct low-confidence word-level mistakes.
-
-Stage 3 — Temporal deduplication
-Because the classifier runs on overlapping windows, you'll often see the same word predicted 3–5 times in a row for a single sign. Collapse consecutive identical top-1 predictions into a single word. Keep only the instance with the highest confidence score. This is a simple 4-line function — not ML, just logic.
-
-Stage 4 — Language model refinement (the intelligence layer)
-This is where BERT fits in, and you have two options depending on how much time you want to spend:
-
-Option A — Bigram language model (1 day of work, works immediately). Build a lookup table of bigram and trigram probabilities from a handcrafted corpus of ~500 ASL sentences composed from your 250-word vocabulary. Given the sequence of top-3 candidates per word slot, use Viterbi decoding to find the most likely word sequence given both the classifier confidence and the language model probability. This corrects mistakes like DUCK being predicted when DRINK was signed, because THIRSTY → DRINK → WATER has much higher bigram probability than THIRSTY → DUCK → WATER. The corpus takes a few hours to write; the model trains in seconds.
-
-Option B — Fine-tuned BERT MLM (3–4 days of work, more robust). Take bert-base-uncased and fine-tune it on masked sentences composed entirely from your 250-word vocabulary. Because the vocabulary is tiny, you constrain BERT's output head to only consider tokens that map to your 250 ASL words — this is called a constrained vocabulary mask applied at the logits layer before softmax. During inference, you fill in the sentence with your top-1 word classifier predictions, randomly mask the lowest-confidence word, let BERT predict what it should be, and iterate 2–3 times. This is exactly masked language model correction and it handles multi-word context rather than just pairwise bigrams.
-
-For your FYP deadline, Option A is the right call. It's demonstrably correct, explainable to your supervisor, and produces clean results. Option B is what you'd add in a post-submission sprint.
-
-Stage 5 — Synthetic training data (optional but powerful)
-One additional technique that costs almost nothing: since you have isolated clips for all 250 classes in the Google dataset, you can synthetically construct sentence-level training examples by concatenating .npy arrays. Take the cached .npy files you already generated (cache_v5/), pick 3–4 words that form a valid sentence, concatenate their arrays with a short zero-padding "rest" segment between them (8–12 zero frames to simulate the inter-sign gap), and save it as a sentence-level sample. You can generate thousands of synthetic sentence examples in an afternoon. These can then be used to fine-tune a small sequence model on top of your frozen word classifier if you want to add a proper CTC or attention decoder layer later.
-
-Practical recommendation for your timeline
-Given you just hit your submission deadline, the path is: implement Stage 1 (boundary detection) and Stage 3 (deduplication) in your FastAPI backend this week — they're pure Python, no training. Then use Option A (bigram LM) to add refinement. This gets you to a working sentence-level demo very quickly. The BERT fine-tuning approach can be the "future work" section of your FYP report, which reviewers expect and appreciate anyway.
-
-
-Can you plz confirm me or clear me things more deeply, How should the sentence generation should be handeled using word level trained model, Like till now when I perform a single sign it takes 4/5 sec then translate it in english. If I make it to sentence level How should it would be handeling it, Like in sentence I would perform 3/4 signs in one go and model will not get enough time to process and clearly understand each word so I think it may can skip words and got messed up. What do you think about this, Am I right or would this model can handel it if implemented technically.
-Also you can tell me any possible approach to make model for 3/4 words sentence level from this googles word level dataset it can be any possibility either finetunning, or implementing any technique like BERT or any other thing you can also define that as well if required.
-
-7:28 AM
-
-Prepared to compose detailed technical explanation
-Prepared to compose detailed technical explanation
-Your concern is completely valid and it's the most important engineering question for this feature. Let me clear it up properly — because the 4–5 second delay is actually a misunderstanding of where that time comes from, and once you understand that, the path forward becomes clear.
-
-First, the most important thing to understand: the 4–5 second delay is not the model thinking — it's your system waiting to collect enough frames. The model itself runs in under 100ms. Once you understand that, the whole problem reframes itself.
-
-Why does it currently take 4–5 seconds?
-The delay is not the model being slow. It breaks down like this for a single word sign:
-Frame collection
-~2.1 sec (64 frames @ 30fps)
-Model inference
-< 80ms
-Display result
-instant
-Buffer wait
-~2 sec overhead
-The model takes under 80 milliseconds to classify a sign. The 4–5 second total delay comes from your current system waiting until it has a full 64-frame buffer before sending anything. This is a system design choice, not a model limitation — and it can be changed.
-
-Your concern is correct — naively, it would break
-If you just let the user sign 3–4 words continuously and then run the existing word classifier on the whole stream, yes — it would fail. The classifier expects exactly one isolated sign in a 64-frame window. Giving it two overlapping signs will confuse it. The words would be skipped or merged. Your instinct is right.
-The fix is sign boundary detection — splitting the continuous stream into individual word segments before the classifier ever sees them. This one piece unlocks everything else.
-The classifier itself needs zero changes. You only add logic that cuts the stream into segments, then feed each segment to the same model you already have.
-
-How sign boundaries work in practice
-Every ASL signer naturally returns their hands toward a neutral rest position between words — even when signing quickly. You can detect this from the wrist velocity you already compute in MediaPipe:
-PLEASE
-active signing
-rest
-velocity drop
-GIVE
-active signing
-rest
-velocity drop
-WATER
-active signing
-When wrist velocity (the distance between `features[0:3]` in frame t and t-1) stays below 0.03 in normalized coordinates for 4+ consecutive frames, that is a boundary. You now have three isolated segments — one per word — each gets classified independently.
-
-What the full sentence pipeline looks like in real time
-The whole sentence completes as fast as the user signs it — there is no extra waiting:
-User signs "please"
-micro-pause (4 frames)
-→ "please" classified
-User signs "give"
-micro-pause
-→ "give" classified
-User signs "water"
-pause / end gesture
-→ "water" classified
-Language model refines sequence → "please give water"
-Total time = time to sign the sentence + 80ms per word for inference. No extra delay at all compared to what the user already experiences sign-by-sign.
-
-Three approaches — pick based on your timeline
-Approach A — boundary detection + bigram LM recommended
-Velocity-based segmentation + your frozen model + a small bigram language model trained on handcrafted ASL sentences. No new model training needed. 2–3 days of work. Works immediately and is fully explainable to your supervisor.
-Approach B — BERT masked LM correction post-FYP
-Fine-tune BERT on sentences made from your 250-word vocabulary. At inference, BERT re-ranks the top-3 classifier candidates using sentence context. More powerful but requires 3–4 days of training setup and GPU time.
-Approach C — synthetic sentence training post-FYP
-Concatenate your cached .npy files with rest-frame padding to create synthetic sentence-level clips. Train a small CTC or attention decoder on top of your frozen encoder. Best long-term accuracy but requires significant new training data generation.
-Approach D — sliding window + dedup fallback
-Run the classifier on overlapping 64-frame windows every 16 frames. Collapse repeated adjacent predictions. Works when boundary detection fails (fast signers with no clear rest). Use as a fallback layer alongside Approach A.
-
-
-Direct answers to your questions
-You are right that the naive approach would fail. If you just let someone sign 3–4 words back to back and threw that whole stream at your current classifier, it would either classify one word that happens to dominate the window, skip words, or output garbage. The classifier was trained on isolated 64-frame segments of single signs — that's its expectation. Violating it produces nonsense.
-But the model itself does not need to change at all. The solution is entirely about how you feed data to it. The boundary detection layer cuts the continuous stream into individual word segments before the classifier ever sees them — so from the model's perspective, it's still doing exactly what it was trained to do: classify one isolated sign at a time.
-
-The one thing that changes your intuition: where the 4–5 seconds actually come from
-Your current system works like this: camera runs, frames accumulate into a buffer, once you have 64 frames the buffer is sent to the model, result is displayed. That buffer-filling step is what takes 2+ seconds. The model inference itself takes under 80ms — it's nearly instantaneous.
-In a sentence-level system you don't wait to collect frames first. Instead you run MediaPipe continuously in real time, detect the boundary the moment a sign ends (which you know from the velocity drop), extract the 64-frame window backward from that boundary, and run inference on it immediately. The classification happens in the same moment the signer begins their micro-pause. By the time they start the next sign, the previous word is already classified and sitting in the word buffer. There is genuinely no added latency.
-
-The concrete implementation for Approach A (what to build for your FYP)
-The boundary detector is about 30 lines of Python. You maintain a rolling buffer of the last 80 frames of MediaPipe output. At each new frame you compute velocity = norm(wrist_pos[t] - wrist_pos[t-1]). You maintain a counter of how many consecutive frames have had velocity below 0.03. When that counter crosses 4, you have a boundary — you slice the buffer from frame boundary_start to boundary_end, resample it to 64 frames using your existing interpolation code from asl_v5.py, apply normalize_landmarks(), and fire an async inference call. The result comes back in under 100ms and gets appended to the sentence buffer.
-The sentence buffer holds the top-3 predictions and confidence scores for each detected word. When the user signals end-of-sentence (a timeout of 2 seconds with no new signs, or a button press), you run the bigram LM over the buffer to pick the best-scoring word sequence and display the sentence.
-The bigram LM itself is just a Python dictionary of {(word_a, word_b): probability} entries estimated from a few hundred hand-written ASL-grammar sentences using your 250-word vocabulary. The Viterbi decoding over 3–4 words with top-3 candidates per slot runs in microseconds.
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2026-04-08 09:53:18,401 [INFO] signverse — Downloading asl_best.pt...
+2026-04-08 09:53:18,548 [INFO] signverse —   asl_best.pt downloaded
+2026-04-08 09:53:18,548 [INFO] signverse — Downloading sign_to_idx.json...
+2026-04-08 09:53:18,605 [INFO] signverse —   sign_to_idx.json downloaded
+2026-04-08 09:53:18,605 [INFO] signverse — Downloading signverse_asl_classifier.pt...
+2026-04-08 09:53:18,695 [INFO] signverse —   signverse_asl_classifier.pt downloaded
+2026-04-08 09:53:18,695 [INFO] signverse — Downloading class_mapping.json...
+2026-04-08 09:53:18,743 [INFO] signverse —   class_mapping.json downloaded
+/usr/local/lib/python3.11/site-packages/torch/nn/modules/transformer.py:286: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
+2026-04-08 09:53:18,772 [INFO] signverse — ASL v5 loaded — 250 classes
+2026-04-08 09:53:18,784 [INFO] signverse — Alphabet classifier loaded
+2026-04-08 09:53:18,804 [INFO] signverse — MediaPipe Holistic ready (static_image_mode=True)
+2026-04-08 09:53:18,805 [INFO] signverse — Bigram LM ready — 164 sentences, 63 vocab, 127 bigrams
+2026-04-08 09:53:18,805 [INFO] signverse — Startup complete | asl=True | holistic=True | bigram_lm=True
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:7860 (Press CTRL+C to quit)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1775641998.881052      21 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775641998.905069      24 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775641998.906580      32 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775641998.906644      29 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775641998.907357      33 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775641998.914414      34 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775641998.923830      24 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775641998.925455      32 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+INFO:     10.16.11.193:20885 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.11.193:20885 - "GET /?logs=container HTTP/1.1" 200 OK
+2026-04-08 09:55:26,783 [INFO] signverse — [sentence] Received 42 frames
+/usr/local/lib/python3.11/site-packages/google/protobuf/symbol_database.py:55: UserWarning: SymbolDatabase.GetPrototype() is deprecated. Please use message_factory.GetMessageClass() instead. SymbolDatabase.GetPrototype() will be removed soon.
+  warnings.warn('SymbolDatabase.GetPrototype() is deprecated. Please '
+2026-04-08 09:55:29,432 [INFO] signverse — [sentence] Boundary detection found 4 segments
+2026-04-08 09:55:29,457 [INFO] signverse — [sentence] After dedup: 3 words (from 3 raw)
+2026-04-08 09:55:29,458 [INFO] signverse — [sentence] Result: 'Police fast give.' (conf=0.292)
+INFO:     10.16.11.193:64332 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 09:55:47,353 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:37841 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:55:51,418 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:37841 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.46.123:58880 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:55:59,896 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+2026-04-08 09:56:03,784 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.8.212:47090 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:15,400 [INFO] signverse — Frames=12 | hands=4/12 (33%)
+2026-04-08 09:56:15,400 [INFO] signverse — Motion=0.13739 | skip_motion_gate=False
+2026-04-08 09:56:15,407 [INFO] signverse — Prediction: [{'sign': 'there', 'confidence': 0.138}, {'sign': 'police', 'confidence': 0.125}, {'sign': 'puzzle', 'confidence': 0.081}] | motion=0.1374
+INFO:     10.16.24.44:1141 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:23,058 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.24.44:38767 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:25,937 [INFO] signverse — Frames=4 | hands=0/4 (0%)
+INFO:     10.16.46.123:35013 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:29,985 [INFO] signverse — Frames=4 | hands=0/4 (0%)
+INFO:     10.16.24.44:40797 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:34,038 [INFO] signverse — Frames=4 | hands=0/4 (0%)
+INFO:     10.16.11.193:54818 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:38,020 [INFO] signverse — Frames=4 | hands=0/4 (0%)
+INFO:     10.16.11.193:9823 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:42,059 [INFO] signverse — Frames=4 | hands=1/4 (25%)
+2026-04-08 09:56:42,060 [INFO] signverse — Motion=0.21749 | skip_motion_gate=False
+2026-04-08 09:56:42,072 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.258}, {'sign': 'pajamas', 'confidence': 0.07}, {'sign': 'gift', 'confidence': 0.04}] | motion=0.2175
+INFO:     10.16.46.123:38411 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:47,973 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.8.212:24932 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:51,026 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.24.44:56443 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:55,996 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:4713 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:56:59,659 [INFO] signverse — Frames=12 | hands=3/12 (25%)
+2026-04-08 09:56:59,660 [INFO] signverse — Motion=0.16235 | skip_motion_gate=False
+2026-04-08 09:56:59,666 [INFO] signverse — Prediction: [{'sign': 'fast', 'confidence': 0.126}, {'sign': 'all', 'confidence': 0.117}, {'sign': 'not', 'confidence': 0.086}] | motion=0.1624
+INFO:     10.16.37.110:4713 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:04,218 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.46.123:25794 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:07,968 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:33090 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.11.193:26839 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:10,433 [INFO] signverse — Frames=5 | hands=0/5 (0%)
+2026-04-08 09:57:14,311 [INFO] signverse — Frames=4 | hands=0/4 (0%)
+INFO:     10.16.46.123:52437 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:19,427 [INFO] signverse — Frames=6 | hands=0/6 (0%)
+INFO:     10.16.8.212:25055 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:26,155 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:30658 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:32,627 [INFO] signverse — Frames=12 | hands=5/12 (42%)
+2026-04-08 09:57:32,627 [INFO] signverse — Motion=0.13540 | skip_motion_gate=False
+2026-04-08 09:57:32,635 [INFO] signverse — Prediction: [{'sign': 'arm', 'confidence': 0.184}, {'sign': 'thirsty', 'confidence': 0.168}, {'sign': 'say', 'confidence': 0.061}] | motion=0.1354
+INFO:     10.16.11.193:59142 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:41,575 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.46.123:14830 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:47,046 [INFO] signverse — Frames=8 | hands=0/8 (0%)
+INFO:     10.16.46.123:32866 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:49,985 [INFO] signverse — Frames=4 | hands=2/4 (50%)
+2026-04-08 09:57:49,985 [INFO] signverse — Motion=0.24808 | skip_motion_gate=True
+2026-04-08 09:57:49,992 [INFO] signverse — Prediction: [{'sign': 'arm', 'confidence': 0.465}, {'sign': 'toy', 'confidence': 0.104}, {'sign': 'weus', 'confidence': 0.069}] | motion=0.2481
+INFO:     10.16.46.123:32866 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:54,158 [INFO] signverse — Frames=4 | hands=3/4 (75%)
+2026-04-08 09:57:54,158 [INFO] signverse — Motion=0.22641 | skip_motion_gate=True
+2026-04-08 09:57:54,167 [INFO] signverse — Prediction: [{'sign': 'arm', 'confidence': 0.248}, {'sign': 'thirsty', 'confidence': 0.179}, {'sign': 'say', 'confidence': 0.065}] | motion=0.2264
+INFO:     10.16.46.123:32146 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:57:58,134 [INFO] signverse — Frames=4 | hands=0/4 (0%)
+INFO:     10.16.24.44:2344 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:58:03,369 [INFO] signverse — Frames=9 | hands=0/9 (0%)
+INFO:     10.16.46.123:41606 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:58:07,299 [INFO] signverse — Frames=12 | hands=7/12 (58%)
+2026-04-08 09:58:07,299 [INFO] signverse — Motion=0.06428 | skip_motion_gate=True
+2026-04-08 09:58:07,307 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.547}, {'sign': 'say', 'confidence': 0.11}, {'sign': 'chin', 'confidence': 0.06}] | motion=0.0643
+INFO:     10.16.24.44:54595 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:58:12,990 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.46.123:18884 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:58:19,052 [INFO] signverse — Frames=12 | hands=3/12 (25%)
+2026-04-08 09:58:19,053 [INFO] signverse — Motion=0.07024 | skip_motion_gate=False
+2026-04-08 09:58:19,061 [INFO] signverse — Prediction: [{'sign': 'balloon', 'confidence': 0.201}, {'sign': 'hate', 'confidence': 0.066}, {'sign': 'there', 'confidence': 0.051}] | motion=0.0702
+INFO:     10.16.46.123:50062 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:58:22,972 [INFO] signverse — Frames=12 | hands=1/12 (8%)
+INFO:     10.16.37.110:39313 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:58:27,079 [INFO] signverse — Frames=12 | hands=2/12 (17%)
+2026-04-08 09:58:27,080 [INFO] signverse — Motion=0.09615 | skip_motion_gate=False
+2026-04-08 09:58:27,086 [INFO] signverse — Prediction: [{'sign': 'hate', 'confidence': 0.374}, {'sign': 'who', 'confidence': 0.048}, {'sign': 'hesheit', 'confidence': 0.032}] | motion=0.0961
+INFO:     10.16.8.212:36969 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:58:31,032 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.24.44:4853 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:58:58,423 [INFO] signverse — Frames=12 | hands=5/12 (42%)
+2026-04-08 09:58:58,423 [INFO] signverse — Motion=0.11292 | skip_motion_gate=False
+2026-04-08 09:58:58,430 [INFO] signverse — Prediction: [{'sign': 'who', 'confidence': 0.296}, {'sign': 'hesheit', 'confidence': 0.242}, {'sign': 'police', 'confidence': 0.041}] | motion=0.1129
+INFO:     10.16.8.212:2469 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:59:02,138 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:46827 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:59:06,202 [INFO] signverse — Frames=12 | hands=4/12 (33%)
+2026-04-08 09:59:06,202 [INFO] signverse — Motion=0.11346 | skip_motion_gate=False
+2026-04-08 09:59:06,211 [INFO] signverse — Prediction: [{'sign': 'who', 'confidence': 0.239}, {'sign': 'hesheit', 'confidence': 0.166}, {'sign': 'there', 'confidence': 0.05}] | motion=0.1135
+INFO:     10.16.37.110:46827 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:59:10,365 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.11.193:60731 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:59:18,122 [INFO] signverse — Frames=12 | hands=2/12 (17%)
+2026-04-08 09:59:18,122 [INFO] signverse — Motion=0.11615 | skip_motion_gate=False
+2026-04-08 09:59:18,133 [INFO] signverse — Prediction: [{'sign': 'who', 'confidence': 0.116}, {'sign': 'garbage', 'confidence': 0.072}, {'sign': 'person', 'confidence': 0.048}] | motion=0.1161
+INFO:     10.16.8.212:63365 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:59:22,567 [INFO] signverse — Frames=12 | hands=3/12 (25%)
+2026-04-08 09:59:22,568 [INFO] signverse — Motion=0.08424 | skip_motion_gate=False
+2026-04-08 09:59:22,575 [INFO] signverse — Prediction: [{'sign': 'time', 'confidence': 0.075}, {'sign': 'hesheit', 'confidence': 0.067}, {'sign': 'person', 'confidence': 0.058}] | motion=0.0842
+INFO:     10.16.11.193:16586 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:59:26,734 [INFO] signverse — Frames=8 | hands=0/8 (0%)
+INFO:     10.16.8.212:54658 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:59:30,165 [INFO] signverse — Frames=5 | hands=0/5 (0%)
+INFO:     10.16.46.123:6995 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:59:32,941 [INFO] signverse — Frames=4 | hands=0/4 (0%)
+INFO:     10.16.24.44:34901 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 09:59:50,663 [INFO] signverse — [sentence] Received 29 frames
+2026-04-08 09:59:52,546 [INFO] signverse — [sentence] Boundary detection found 4 segments
+2026-04-08 09:59:52,579 [INFO] signverse — [sentence] After dedup: 2 words (from 3 raw)
+2026-04-08 09:59:52,580 [INFO] signverse — [sentence] Result: 'Garbage thirsty.' (conf=0.695)
+INFO:     10.16.8.212:6566 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:00:36,979 [INFO] signverse — [sentence] Received 20 frames
+2026-04-08 10:00:38,160 [INFO] signverse — [sentence] Boundary detection found 2 segments
+2026-04-08 10:00:38,172 [INFO] signverse — [sentence] After dedup: 1 words (from 1 raw)
+2026-04-08 10:00:38,172 [INFO] signverse — [sentence] Result: 'Garbage.' (conf=0.449)
+INFO:     10.16.37.110:49446 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:00:52,500 [INFO] signverse — [sentence] Received 28 frames
+2026-04-08 10:00:54,176 [INFO] signverse — [sentence] Boundary detection found 3 segments
+2026-04-08 10:00:54,198 [INFO] signverse — [sentence] After dedup: 2 words (from 2 raw)
+2026-04-08 10:00:54,198 [INFO] signverse — [sentence] Result: 'Hat stuck.' (conf=0.504)
+INFO:     10.16.24.44:33356 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:01:18,357 [INFO] signverse — [sentence] Received 32 frames
+2026-04-08 10:01:20,252 [INFO] signverse — [sentence] Boundary detection found 3 segments
+2026-04-08 10:01:20,269 [INFO] signverse — [sentence] After dedup: 1 words (from 1 raw)
+2026-04-08 10:01:20,269 [INFO] signverse — [sentence] Result: 'Down.' (conf=0.975)
+INFO:     10.16.37.110:11149 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:01:42,976 [INFO] signverse — [sentence] Received 28 frames
+2026-04-08 10:01:44,529 [INFO] signverse — [sentence] Boundary detection found 4 segments
+2026-04-08 10:01:44,551 [INFO] signverse — [sentence] After dedup: 2 words (from 3 raw)
+2026-04-08 10:01:44,552 [INFO] signverse — [sentence] Result: 'Hello thirsty.' (conf=0.826)
+INFO:     10.16.8.212:12904 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:02:27,120 [INFO] signverse — [sentence] Received 45 frames
+2026-04-08 10:02:29,708 [INFO] signverse — [sentence] Boundary detection found 4 segments
+2026-04-08 10:02:29,729 [INFO] signverse — [sentence] After dedup: 1 words (from 3 raw)
+2026-04-08 10:02:29,730 [INFO] signverse — [sentence] Result: 'Down.' (conf=0.963)
+INFO:     10.16.8.212:14949 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:03:02,565 [INFO] signverse — [sentence] Received 40 frames
+2026-04-08 10:03:04,974 [INFO] signverse — [sentence] Boundary detection found 3 segments
+2026-04-08 10:03:04,992 [INFO] signverse — [sentence] After dedup: 2 words (from 2 raw)
+2026-04-08 10:03:04,992 [INFO] signverse — [sentence] Result: 'Down hat.' (conf=0.916)
+INFO:     10.16.24.44:12519 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+INFO:     10.16.47.45:7038 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.46.237:19313 - "GET /api/health HTTP/1.1" 200 OK
+2026-04-08 10:18:53,168 [INFO] signverse — [sentence] Received 35 frames
+2026-04-08 10:18:55,362 [INFO] signverse — [sentence] Boundary detection found 3 segments
+2026-04-08 10:18:55,379 [INFO] signverse — [sentence] After dedup: 3 words (from 3 raw)
+2026-04-08 10:18:55,379 [INFO] signverse — [sentence] Result: 'Zipper hat down.' (conf=0.722)
+INFO:     10.16.37.110:49869 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+INFO:     10.16.37.110:38177 - "GET / HTTP/1.1" 200 OK
+2026-04-08 10:19:33,786 [INFO] signverse — [sentence] Received 36 frames
+2026-04-08 10:19:36,030 [INFO] signverse — [sentence] Boundary detection found 3 segments
+2026-04-08 10:19:36,047 [INFO] signverse — [sentence] After dedup: 1 words (from 1 raw)
+2026-04-08 10:19:36,047 [INFO] signverse — [sentence] Result: 'Cute.' (conf=0.349)
+INFO:     10.16.47.45:33832 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:22:03,749 [INFO] signverse — [sentence] Received 42 frames
+2026-04-08 10:22:06,397 [INFO] signverse — [sentence] Boundary detection found 3 segments
+2026-04-08 10:22:06,416 [INFO] signverse — [sentence] After dedup: 2 words (from 2 raw)
+2026-04-08 10:22:06,416 [INFO] signverse — [sentence] Result: 'Down hat.' (conf=0.948)
+INFO:     10.16.47.45:39198 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:23:31,685 [INFO] signverse — [sentence] Received 47 frames
+2026-04-08 10:23:34,623 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 10:23:34,652 [INFO] signverse — [sentence] After dedup: 3 words (from 4 raw)
+2026-04-08 10:23:34,652 [INFO] signverse — [sentence] Result: 'Yes hat down.' (conf=0.753)
+INFO:     10.16.46.237:10390 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:24:37,473 [INFO] signverse — [sentence] Received 54 frames
+2026-04-08 10:24:40,902 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 10:24:40,929 [INFO] signverse — [sentence] After dedup: 4 words (from 5 raw)
+2026-04-08 10:24:40,929 [INFO] signverse — [sentence] Result: 'On down hat sun.' (conf=0.667)
+INFO:     10.16.11.193:34550 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 10:48:56,810 [INFO] signverse — Frames=12 | hands=4/12 (33%)
+2026-04-08 10:48:56,811 [INFO] signverse — Motion=0.15556 | skip_motion_gate=False
+2026-04-08 10:48:56,848 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.81}, {'sign': 'hat', 'confidence': 0.028}, {'sign': 'morning', 'confidence': 0.024}] | motion=0.1556
+INFO:     10.16.47.45:44976 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:49:02,488 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.11.193:47461 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:49:05,889 [INFO] signverse — Frames=12 | hands=6/12 (50%)
+2026-04-08 10:49:05,889 [INFO] signverse — Motion=0.08207 | skip_motion_gate=True
+2026-04-08 10:49:05,896 [INFO] signverse — Prediction: [{'sign': 'head', 'confidence': 0.726}, {'sign': 'giraffe', 'confidence': 0.05}, {'sign': 'home', 'confidence': 0.027}] | motion=0.0821
+INFO:     10.16.12.178:7215 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:49:10,012 [INFO] signverse — Frames=12 | hands=2/12 (17%)
+2026-04-08 10:49:10,012 [INFO] signverse — Motion=0.08891 | skip_motion_gate=False
+2026-04-08 10:49:10,018 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.255}, {'sign': 'person', 'confidence': 0.192}, {'sign': 'morning', 'confidence': 0.148}] | motion=0.0889
+INFO:     10.16.12.178:7215 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:49:14,729 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.12.178:7215 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:49:18,303 [INFO] signverse — Frames=12 | hands=3/12 (25%)
+2026-04-08 10:49:18,303 [INFO] signverse — Motion=0.15115 | skip_motion_gate=False
+2026-04-08 10:49:18,310 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.457}, {'sign': 'morning', 'confidence': 0.109}, {'sign': 'person', 'confidence': 0.07}] | motion=0.1512
+INFO:     10.16.11.193:59977 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:49:21,880 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.47.45:30773 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:49:25,918 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.47.45:30773 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.46.237:29050 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.37.110:51853 - "GET /api/health HTTP/1.1" 200 OK
+2026-04-08 10:50:23,342 [INFO] signverse — Frames=12 | hands=4/12 (33%)
+2026-04-08 10:50:23,342 [INFO] signverse — Motion=0.11251 | skip_motion_gate=False
+2026-04-08 10:50:23,348 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.625}, {'sign': 'man', 'confidence': 0.097}, {'sign': 'brother', 'confidence': 0.049}] | motion=0.1125
+INFO:     10.16.47.45:54982 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:50:27,838 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.11.193:54667 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:50:36,923 [INFO] signverse — Frames=12 | hands=5/12 (42%)
+2026-04-08 10:50:36,923 [INFO] signverse — Motion=0.15453 | skip_motion_gate=False
+2026-04-08 10:50:36,930 [INFO] signverse — Prediction: [{'sign': 'dad', 'confidence': 0.424}, {'sign': 'hat', 'confidence': 0.299}, {'sign': 'man', 'confidence': 0.074}] | motion=0.1545
+INFO:     10.16.37.110:1706 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:50:42,809 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.11.193:8176 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:50:47,936 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.47.45:37083 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:50:54,420 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.47.45:29390 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:50:59,241 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.46.237:11825 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:02,879 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:7916 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:07,250 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.47.45:1705 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:15,119 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:38693 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:20,336 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.47.45:57189 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:24,942 [INFO] signverse — Frames=12 | hands=3/12 (25%)
+2026-04-08 10:51:24,942 [INFO] signverse — Motion=0.22409 | skip_motion_gate=False
+2026-04-08 10:51:24,949 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.317}, {'sign': 'blow', 'confidence': 0.134}, {'sign': 'goose', 'confidence': 0.104}] | motion=0.2241
+INFO:     10.16.12.178:58890 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:29,341 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:36097 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:29,585 [INFO] signverse — Frames=12 | hands=5/12 (42%)
+2026-04-08 10:51:29,585 [INFO] signverse — Motion=0.14823 | skip_motion_gate=False
+2026-04-08 10:51:29,592 [INFO] signverse — Prediction: [{'sign': 'boy', 'confidence': 0.197}, {'sign': 'dad', 'confidence': 0.073}, {'sign': 'cat', 'confidence': 0.053}] | motion=0.1482
+INFO:     10.16.12.178:51532 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:35,232 [INFO] signverse — Frames=12 | hands=2/12 (17%)
+2026-04-08 10:51:35,233 [INFO] signverse — Motion=0.29199 | skip_motion_gate=False
+2026-04-08 10:51:35,239 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.396}, {'sign': 'grandpa', 'confidence': 0.172}, {'sign': 'hat', 'confidence': 0.134}] | motion=0.2920
+INFO:     10.16.47.45:3054 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:35,928 [INFO] signverse — Frames=12 | hands=4/12 (33%)
+2026-04-08 10:51:35,928 [INFO] signverse — Motion=0.14782 | skip_motion_gate=False
+2026-04-08 10:51:35,934 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.838}, {'sign': 'bedroom', 'confidence': 0.035}, {'sign': 'will', 'confidence': 0.029}] | motion=0.1478
+INFO:     10.16.37.110:36097 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:43,399 [INFO] signverse — Frames=12 | hands=4/12 (33%)
+2026-04-08 10:51:43,399 [INFO] signverse — Motion=0.23890 | skip_motion_gate=False
+2026-04-08 10:51:43,406 [INFO] signverse — Prediction: [{'sign': 'tree', 'confidence': 0.269}, {'sign': 'hat', 'confidence': 0.23}, {'sign': 'morning', 'confidence': 0.204}] | motion=0.2389
+INFO:     10.16.12.178:42234 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:49,760 [INFO] signverse — Frames=12 | hands=2/12 (17%)
+2026-04-08 10:51:49,760 [INFO] signverse — Motion=0.09540 | skip_motion_gate=False
+2026-04-08 10:51:49,766 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.656}, {'sign': 'grass', 'confidence': 0.1}, {'sign': 'bedroom', 'confidence': 0.02}] | motion=0.0954
+INFO:     10.16.37.110:1428 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:55,946 [INFO] signverse — Frames=12 | hands=10/12 (83%)
+2026-04-08 10:51:55,947 [INFO] signverse — Motion=0.07604 | skip_motion_gate=True
+2026-04-08 10:51:55,954 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.801}, {'sign': 'nap', 'confidence': 0.084}, {'sign': 'bedroom', 'confidence': 0.03}] | motion=0.0760
+INFO:     10.16.12.178:27823 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:51:57,029 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.12.178:64209 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:52:02,221 [INFO] signverse — Frames=12 | hands=1/12 (8%)
+INFO:     10.16.12.178:64209 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:52:06,251 [INFO] signverse — Frames=12 | hands=8/12 (67%)
+2026-04-08 10:52:06,251 [INFO] signverse — Motion=0.07034 | skip_motion_gate=True
+2026-04-08 10:52:06,257 [INFO] signverse — Prediction: [{'sign': 'nap', 'confidence': 0.514}, {'sign': 'bed', 'confidence': 0.373}, {'sign': 'bedroom', 'confidence': 0.019}] | motion=0.0703
+INFO:     10.16.11.193:7702 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:52:08,286 [INFO] signverse — Frames=12 | hands=4/12 (33%)
+2026-04-08 10:52:08,286 [INFO] signverse — Motion=0.08429 | skip_motion_gate=False
+2026-04-08 10:52:08,292 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.366}, {'sign': 'bedroom', 'confidence': 0.246}, {'sign': 'grass', 'confidence': 0.083}] | motion=0.0843
+INFO:     10.16.46.237:11173 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:52:09,801 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:1478 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:52:14,211 [INFO] signverse — Frames=12 | hands=5/12 (42%)
+2026-04-08 10:52:14,211 [INFO] signverse — Motion=0.21696 | skip_motion_gate=False
+2026-04-08 10:52:14,218 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.949}, {'sign': 'bedroom', 'confidence': 0.009}, {'sign': 'nap', 'confidence': 0.008}] | motion=0.2170
+INFO:     10.16.37.110:1478 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:52:17,363 [INFO] signverse — Frames=12 | hands=1/12 (8%)
+INFO:     10.16.12.178:4702 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 10:52:22,831 [INFO] signverse — Frames=12 | hands=0/12 (0%)
+INFO:     10.16.37.110:35585 - "POST /api/sign-to-text HTTP/1.1" 200 OK
