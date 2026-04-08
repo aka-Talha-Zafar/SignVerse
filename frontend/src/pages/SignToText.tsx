@@ -2,16 +2,23 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Hand, ArrowLeft, Camera, CameraOff, Volume2, Copy,
-  RefreshCw, Languages, Loader2, AlertCircle,
+  RefreshCw, Languages, Loader2, AlertCircle, MessageSquare, Type,
+  Square,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
 
+/* ── Word-mode timing ─────────────────────────────────────────────────────── */
 const FRAME_INTERVAL_MS = 300;
 const SEND_INTERVAL_MS  = 4000;
 const MAX_FRAMES_PER_BATCH = 12;
 const TRANSLATION_HOLD_MS  = 5000;
 const CLIENT_MOTION_THRESHOLD = 3;
+
+/* ── Sentence-mode timing ─────────────────────────────────────────────────── */
+const SENTENCE_FRAME_INTERVAL = 200;   // faster capture for boundary detection
+const SENTENCE_MAX_DURATION   = 12000; // 12s max recording
+const SENTENCE_JPEG_QUALITY   = 0.65;
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -23,7 +30,15 @@ const LANGUAGES = [
   { code: "zh", label: "Chinese" },
 ];
 
+type RecognitionMode = "word" | "sentence";
+
+interface SentenceWord {
+  sign: string;
+  confidence: number;
+}
+
 export default function SignToText() {
+  /* ── Shared state ───────────────────────────────────────────────────────── */
   const [cameraOn,     setCameraOn]     = useState(false);
   const [translation,  setTranslation]  = useState("");
   const [confidence,   setConfidence]   = useState<number | null>(null);
@@ -33,7 +48,15 @@ export default function SignToText() {
   const [language,     setLanguage]     = useState("en");
   const [history,      setHistory]      = useState<string[]>([]);
   const [backendReady, setBackendReady] = useState<boolean | null>(null);
+  const [mode,         setMode]         = useState<RecognitionMode>("word");
 
+  /* ── Sentence-mode state ────────────────────────────────────────────────── */
+  const [sentenceRecording, setSentenceRecording] = useState(false);
+  const [sentenceElapsed,   setSentenceElapsed]   = useState(0);
+  const [sentenceWords,     setSentenceWords]     = useState<SentenceWord[]>([]);
+  const [sentenceReady,     setSentenceReady]     = useState<boolean | null>(null);
+
+  /* ── Refs ────────────────────────────────────────────────────────────────── */
   const videoRef  = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -45,17 +68,27 @@ export default function SignToText() {
   const prevFrameDataRef = useRef<ImageData | null>(null);
   const motionDetectedRef = useRef(false);
 
-  // Keep languageRef in sync with language state
+  const sentenceFramesRef  = useRef<string[]>([]);
+  const sentenceTimerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sentenceElapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sentenceStartRef   = useRef(0);
+
   useEffect(() => { languageRef.current = language; }, [language]);
 
-  // ── Backend health check ──────────────────────────────────────────────────
+  /* ── Backend health check ───────────────────────────────────────────────── */
   useEffect(() => {
     fetch(`${API_BASE}/api/health`)
       .then(r => r.json())
-      .then(d => setBackendReady(d.sign2text === true))
-      .catch(() => setBackendReady(false));
+      .then(d => {
+        setBackendReady(d.sign2text === true);
+        setSentenceReady(d.sign2sentence === true);
+      })
+      .catch(() => { setBackendReady(false); setSentenceReady(false); });
   }, []);
 
+  /* ══════════════════════════════════════════════════════════════════════════
+     WORD MODE — existing logic, unchanged
+     ══════════════════════════════════════════════════════════════════════════ */
   const captureFrame = useCallback(() => {
     const video  = videoRef.current;
     const canvas = canvasRef.current;
@@ -124,7 +157,7 @@ export default function SignToText() {
 
       if (data.no_sign_detected) {
         if (Date.now() - lastTranslationTimeRef.current < TRANSLATION_HOLD_MS) return;
-        setStatus(data.message || "\uD83D\uDC4B Ready \u2014 start signing to translate");
+        setStatus(data.message || "Ready — start signing to translate");
         return;
       }
 
@@ -145,14 +178,119 @@ export default function SignToText() {
 
     } catch (e: any) {
       setError(`Translation error: ${e.message}`);
-      setStatus("Error \u2014 retrying next batch");
+      setStatus("Error — retrying next batch");
     } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
     }
   }, []);
 
-  // ── Start camera ──────────────────────────────────────────────────────────
+  /* ══════════════════════════════════════════════════════════════════════════
+     SENTENCE MODE — new logic
+     ══════════════════════════════════════════════════════════════════════════ */
+  const captureSentenceFrame = useCallback(() => {
+    const video  = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.readyState < 2) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    canvas.width  = video.videoWidth  || 320;
+    canvas.height = video.videoHeight || 240;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    sentenceFramesRef.current.push(canvas.toDataURL("image/jpeg", SENTENCE_JPEG_QUALITY));
+  }, []);
+
+  const stopSentenceRecording = useCallback(() => {
+    if (sentenceTimerRef.current)   clearInterval(sentenceTimerRef.current);
+    if (sentenceElapsedRef.current) clearInterval(sentenceElapsedRef.current);
+    sentenceTimerRef.current   = null;
+    sentenceElapsedRef.current = null;
+    setSentenceRecording(false);
+  }, []);
+
+  const sendSentenceFrames = useCallback(async () => {
+    stopSentenceRecording();
+
+    const frames = sentenceFramesRef.current;
+    sentenceFramesRef.current = [];
+
+    if (frames.length < 5) {
+      setError("Too few frames captured — try signing for longer");
+      return;
+    }
+
+    setIsProcessing(true);
+    isProcessingRef.current = true;
+    setStatus("Analyzing sentence...");
+    setError("");
+    setSentenceWords([]);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/sign-to-sentence`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ frames, language: languageRef.current }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      if (data.no_sign_detected) {
+        setStatus(data.message || "No signs detected — try again");
+        return;
+      }
+
+      if (data.sentence) {
+        setTranslation(data.sentence);
+        setConfidence(data.confidence ?? null);
+        setSentenceWords(data.words || []);
+        setStatus(`Detected ${data.words?.length || 0} signs → sentence`);
+        setHistory(prev => {
+          if (prev[0] === data.sentence) return prev;
+          return [data.sentence, ...prev.slice(0, 9)];
+        });
+
+        if (data.audio_url && languageRef.current !== "en") {
+          new Audio(data.audio_url).play().catch(() => {});
+        }
+      }
+    } catch (e: any) {
+      setError(`Sentence error: ${e.message}`);
+      setStatus("Error processing sentence");
+    } finally {
+      isProcessingRef.current = false;
+      setIsProcessing(false);
+    }
+  }, [stopSentenceRecording]);
+
+  const startSentenceRecording = useCallback(() => {
+    sentenceFramesRef.current = [];
+    sentenceStartRef.current  = Date.now();
+    setSentenceRecording(true);
+    setSentenceElapsed(0);
+    setSentenceWords([]);
+    setTranslation("");
+    setConfidence(null);
+    setStatus("Recording sentence — sign your words, then press Done");
+
+    sentenceTimerRef.current = setInterval(captureSentenceFrame, SENTENCE_FRAME_INTERVAL);
+
+    sentenceElapsedRef.current = setInterval(() => {
+      const elapsed = Date.now() - sentenceStartRef.current;
+      setSentenceElapsed(elapsed);
+      if (elapsed >= SENTENCE_MAX_DURATION) {
+        sendSentenceFrames();
+      }
+    }, 200);
+  }, [captureSentenceFrame, sendSentenceFrames]);
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     CAMERA START / STOP
+     ══════════════════════════════════════════════════════════════════════════ */
   const captureTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sendTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -165,12 +303,15 @@ export default function SignToText() {
       });
       streamRef.current = stream;
       framesRef.current = [];
+      sentenceFramesRef.current = [];
       isProcessingRef.current = false;
       motionDetectedRef.current = false;
       prevFrameDataRef.current = null;
       lastTranslationTimeRef.current = 0;
       setCameraOn(true);
-      setStatus("Camera active — signing...");
+      setStatus(mode === "word"
+        ? "Camera active — signing..."
+        : "Camera active — press Record to start sentence");
 
       setTimeout(() => {
         if (videoRef.current) {
@@ -179,9 +320,10 @@ export default function SignToText() {
           videoRef.current.playsInline = true;
           videoRef.current.play().catch(console.error);
         }
-        // captureFrame and sendFrames are stable refs — safe to use in intervals
-        captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
-        sendTimerRef.current    = setInterval(sendFrames,   SEND_INTERVAL_MS);
+        if (mode === "word") {
+          captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
+          sendTimerRef.current    = setInterval(sendFrames,   SEND_INTERVAL_MS);
+        }
       }, 150);
     } catch {
       setError("Camera access denied. Please allow camera permission in your browser.");
@@ -189,25 +331,54 @@ export default function SignToText() {
     }
   };
 
-  // ── Stop camera ───────────────────────────────────────────────────────────
-  const stopCamera = () => {
-    if (captureTimerRef.current) clearInterval(captureTimerRef.current);
-    if (sendTimerRef.current)    clearInterval(sendTimerRef.current);
+  const stopCamera = useCallback(() => {
+    if (captureTimerRef.current)    clearInterval(captureTimerRef.current);
+    if (sendTimerRef.current)       clearInterval(sendTimerRef.current);
+    if (sentenceTimerRef.current)   clearInterval(sentenceTimerRef.current);
+    if (sentenceElapsedRef.current) clearInterval(sentenceElapsedRef.current);
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current       = null;
     framesRef.current       = [];
+    sentenceFramesRef.current = [];
     isProcessingRef.current = false;
     motionDetectedRef.current = false;
     prevFrameDataRef.current  = null;
     lastTranslationTimeRef.current = 0;
     setCameraOn(false);
     setIsProcessing(false);
+    setSentenceRecording(false);
+    setSentenceElapsed(0);
     setStatus("Camera off");
+  }, []);
+
+  useEffect(() => () => stopCamera(), [stopCamera]);
+
+  /* ── Mode switch (stop timers, restart appropriate ones) ────────────────── */
+  const handleModeSwitch = (newMode: RecognitionMode) => {
+    if (newMode === mode) return;
+    stopSentenceRecording();
+    if (captureTimerRef.current) { clearInterval(captureTimerRef.current); captureTimerRef.current = null; }
+    if (sendTimerRef.current)    { clearInterval(sendTimerRef.current);    sendTimerRef.current = null; }
+    framesRef.current = [];
+    sentenceFramesRef.current = [];
+    setTranslation("");
+    setConfidence(null);
+    setSentenceWords([]);
+    setError("");
+
+    setMode(newMode);
+    if (cameraOn) {
+      if (newMode === "word") {
+        captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
+        sendTimerRef.current    = setInterval(sendFrames,   SEND_INTERVAL_MS);
+        setStatus("Camera active — signing...");
+      } else {
+        setStatus("Camera active — press Record to start sentence");
+      }
+    }
   };
 
-  useEffect(() => () => stopCamera(), []);
-
-  // ── Speak / copy helpers ──────────────────────────────────────────────────
+  /* ── Speak / copy helpers ───────────────────────────────────────────────── */
   const speakText = () => {
     if (!translation) return;
     window.speechSynthesis?.cancel();
@@ -217,11 +388,13 @@ export default function SignToText() {
   };
   const copyText = () => { if (translation) navigator.clipboard.writeText(translation); };
 
-  // ── Confidence colour helper ──────────────────────────────────────────────
+  /* ── Confidence colour helper ───────────────────────────────────────────── */
   const confColour = (c: number) =>
     c > 0.7 ? "bg-green-900/50 text-green-400"
     : c > 0.5 ? "bg-yellow-900/50 text-yellow-400"
     : "bg-red-900/50 text-red-400";
+
+  const progressPct = Math.min(100, (sentenceElapsed / SENTENCE_MAX_DURATION) * 100);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -248,6 +421,30 @@ export default function SignToText() {
 
         {/* ── Camera panel ───────────────────────────────────────────────── */}
         <div className="space-y-4">
+          {/* Mode toggle */}
+          <div className="flex bg-gray-900 rounded-xl p-1">
+            <button
+              onClick={() => handleModeSwitch("word")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg
+                text-sm font-medium transition-all ${
+                mode === "word"
+                  ? "bg-purple-600 text-white shadow-lg"
+                  : "text-gray-400 hover:text-white"}`}
+            >
+              <Type className="w-4 h-4" />Word Mode
+            </button>
+            <button
+              onClick={() => handleModeSwitch("sentence")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg
+                text-sm font-medium transition-all ${
+                mode === "sentence"
+                  ? "bg-purple-600 text-white shadow-lg"
+                  : "text-gray-400 hover:text-white"}`}
+            >
+              <MessageSquare className="w-4 h-4" />Sentence Mode
+            </button>
+          </div>
+
           <div className="relative bg-gray-900 rounded-2xl overflow-hidden aspect-video">
             {cameraOn ? (
               <>
@@ -257,10 +454,25 @@ export default function SignToText() {
                   style={{ transform: "scaleX(-1)" }}
                 />
                 <canvas ref={canvasRef} className="hidden" />
-                <div className="absolute top-3 left-3 flex items-center gap-2
-                                bg-red-500/80 rounded-full px-3 py-1 text-xs font-semibold">
-                  <span className="w-2 h-2 bg-white rounded-full animate-pulse" />LIVE
+
+                {/* Live / recording badge */}
+                <div className={`absolute top-3 left-3 flex items-center gap-2
+                  rounded-full px-3 py-1 text-xs font-semibold ${
+                  sentenceRecording ? "bg-orange-500/90" : "bg-red-500/80"}`}>
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  {sentenceRecording ? "REC SENTENCE" : "LIVE"}
                 </div>
+
+                {/* Sentence recording progress bar */}
+                {sentenceRecording && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-800/80">
+                    <div
+                      className="h-full bg-orange-500 transition-all duration-200"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                )}
+
                 {isProcessing && (
                   <div className="absolute bottom-3 right-3 flex items-center gap-2
                                   bg-black/60 rounded-full px-3 py-1 text-xs">
@@ -271,7 +483,7 @@ export default function SignToText() {
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-gray-500">
                 <Camera className="w-16 h-16 opacity-30" />
-                <p className="text-sm">Click "Start Camera" to begin</p>
+                <p className="text-sm">Click &quot;Start Camera&quot; to begin</p>
               </div>
             )}
           </div>
@@ -289,6 +501,28 @@ export default function SignToText() {
                 ? <><CameraOff className="w-5 h-5" />Stop</>
                 : <><Camera   className="w-5 h-5" />Start Camera</>}
             </button>
+
+            {/* Sentence record / done buttons */}
+            {mode === "sentence" && cameraOn && !isProcessing && (
+              sentenceRecording ? (
+                <button
+                  onClick={sendSentenceFrames}
+                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
+                    font-semibold bg-orange-600 hover:bg-orange-700 transition-all"
+                >
+                  <Square className="w-4 h-4" />
+                  Done ({Math.ceil((SENTENCE_MAX_DURATION - sentenceElapsed) / 1000)}s)
+                </button>
+              ) : (
+                <button
+                  onClick={startSentenceRecording}
+                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
+                    font-semibold bg-green-600 hover:bg-green-700 transition-all"
+                >
+                  <Camera className="w-4 h-4" />Record
+                </button>
+              )
+            )}
 
             <div className="relative">
               <select
@@ -319,7 +553,7 @@ export default function SignToText() {
           <div className="bg-gray-900 rounded-2xl p-5 min-h-[12rem] flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-                Translation
+                {mode === "sentence" ? "Sentence" : "Translation"}
               </h2>
               {confidence !== null && (
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${confColour(confidence)}`}>
@@ -333,12 +567,31 @@ export default function SignToText() {
                 <p className="text-2xl font-medium leading-relaxed text-white">{translation}</p>
               ) : (
                 <p className="text-gray-600 italic text-sm mt-4">
-                  {cameraOn
-                    ? "Sign in front of the camera — translation will appear here…"
-                    : "Start the camera and begin signing"}
+                  {!cameraOn
+                    ? "Start the camera and begin signing"
+                    : mode === "word"
+                      ? "Sign in front of the camera — translation will appear here…"
+                      : "Press Record, sign 2–4 words with brief pauses, then press Done"}
                 </p>
               )}
             </div>
+
+            {/* Detected words (sentence mode) */}
+            {mode === "sentence" && sentenceWords.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-800">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Detected Signs</p>
+                <div className="flex flex-wrap gap-2">
+                  {sentenceWords.map((w, i) => (
+                    <span key={i}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
+                        font-medium ${confColour(w.confidence)}`}>
+                      {w.sign}
+                      <span className="text-xs opacity-70">{Math.round(w.confidence * 100)}%</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {translation && (
               <div className="flex gap-2 mt-4 pt-4 border-t border-gray-800">
@@ -350,7 +603,7 @@ export default function SignToText() {
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors">
                   <Copy className="w-4 h-4" />Copy
                 </button>
-                <button onClick={() => { setTranslation(""); setConfidence(null); }}
+                <button onClick={() => { setTranslation(""); setConfidence(null); setSentenceWords([]); }}
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-400 transition-colors ml-auto">
                   <RefreshCw className="w-4 h-4" />Clear
                 </button>
@@ -377,14 +630,26 @@ export default function SignToText() {
 
           {/* Tips */}
           <div className="bg-purple-900/20 border border-purple-800/40 rounded-xl p-4 text-sm text-purple-300">
-            <p className="font-semibold mb-1">💡 Tips for better results</p>
-            <ul className="text-purple-400 space-y-1 text-xs list-disc list-inside">
-              <li>Good lighting on your hands — avoid backlight</li>
-              <li>Keep your full arm visible in frame</li>
-              <li>Sign clearly and hold each sign for ~2 seconds</li>
-              <li>Make sure hands are clearly separated from background</li>
-              <li>First translation may take a few seconds (backend waking up)</li>
-            </ul>
+            <p className="font-semibold mb-1">
+              {mode === "word" ? "Tips for Word Mode" : "Tips for Sentence Mode"}
+            </p>
+            {mode === "word" ? (
+              <ul className="text-purple-400 space-y-1 text-xs list-disc list-inside">
+                <li>Good lighting on your hands — avoid backlight</li>
+                <li>Keep your full arm visible in frame</li>
+                <li>Sign clearly and hold each sign for ~2 seconds</li>
+                <li>Make sure hands are clearly separated from background</li>
+                <li>First translation may take a few seconds (backend waking up)</li>
+              </ul>
+            ) : (
+              <ul className="text-purple-400 space-y-1 text-xs list-disc list-inside">
+                <li>Press Record, then sign 2–4 words in sequence</li>
+                <li>Pause briefly (half a second) between each sign</li>
+                <li>Press Done when finished — or it auto-stops at 12 seconds</li>
+                <li>Works best with common daily phrases (e.g. &quot;water please&quot;, &quot;go home now&quot;)</li>
+                <li>Good lighting and clear hand visibility still matter</li>
+              </ul>
+            )}
           </div>
         </div>
       </div>
