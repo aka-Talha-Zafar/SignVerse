@@ -2,7 +2,7 @@
 SignVerse FastAPI Backend — v6.2
 ================================
 v6.2 — Translation & record-based flow:
-  - POST /api/translate endpoint (MyMemory free API)
+  - POST /api/translate endpoint (Google Translate, free, all languages)
   - Frontend now uses Record/Done buttons for both modes
 
 v6.1 — Sentence-level recognition:
@@ -1073,7 +1073,7 @@ def sign_to_sentence_endpoint(req: SignToSentenceRequest):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-# ── Language code mapping for MyMemory API ────────────────────────────────
+# ── Google Translate language codes ────────────────────────────────────────
 _LANG_MAP = {
     "en": "en", "ur": "ur", "ar": "ar", "fr": "fr",
     "es": "es", "de": "de", "zh": "zh-CN",
@@ -1082,7 +1082,8 @@ _LANG_MAP = {
 
 @app.post("/api/translate")
 def translate_text(req: TranslateRequest):
-    """Translate English text to the target language via the free MyMemory API."""
+    """Translate English text via the free Google Translate endpoint.
+    Supports all languages including Urdu, Arabic, Chinese."""
     text = (req.text or "").strip()
     target = (req.target or "en").strip()
     if not text:
@@ -1095,14 +1096,20 @@ def translate_text(req: TranslateRequest):
     try:
         encoded = urllib.parse.quote(text)
         url = (
-            f"https://api.mymemory.translated.net/get"
-            f"?q={encoded}&langpair=en|{lang_code}"
+            "https://translate.googleapis.com/translate_a/single"
+            f"?client=gtx&sl=en&tl={lang_code}&dt=t&q={encoded}"
         )
-        req_obj = urllib.request.Request(url, headers={"User-Agent": "SignVerse/1.0"})
+        req_obj = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/120.0.0.0 Safari/537.36",
+        })
         with urllib.request.urlopen(req_obj, timeout=6) as resp:
             data = json.loads(resp.read().decode())
-        translated = data.get("responseData", {}).get("translatedText", text)
-        if translated.upper() == translated and not text.isupper():
+        # Response is nested arrays: [[["translated","original",...],...],...] 
+        parts = [seg[0] for seg in data[0] if seg and seg[0]]
+        translated = "".join(parts)
+        if not translated:
             translated = text
         log.info(f"Translated '{text}' → '{translated}' (en→{lang_code})")
         return {"translated": translated, "source": "en", "target": target}

@@ -14,7 +14,7 @@ const WORD_MAX_DURATION     = 5000;    // 5 s max for a single sign
 const WORD_JPEG_QUALITY     = 0.75;
 
 const SENTENCE_FRAME_INTERVAL = 200;   // ms between captures (~5 fps)
-const SENTENCE_MAX_DURATION   = 12000; // 12 s max for a sentence
+const SENTENCE_MAX_DURATION   = 20000; // 20 s max for a sentence
 const SENTENCE_JPEG_QUALITY   = 0.65;
 
 const LANGUAGES = [
@@ -588,19 +588,19 @@ export default function SignToText() {
             </p>
             {mode === "word" ? (
               <ul className="text-purple-400 space-y-1 text-xs list-disc list-inside">
-                <li>Press Record, then perform the sign clearly</li>
-                <li>Press Done when finished (auto-stops at 5 seconds)</li>
-                <li>Good lighting on your hands — avoid backlight</li>
-                <li>Keep your full arm visible in frame</li>
-                <li>Make sure hands are clearly separated from background</li>
+                <li>Press Record, then perform the sign clearly.</li>
+                <li>Press Done when finished (it will automatically stop after 5 seconds).</li>
+                <li>Ensure good lighting on your hands (avoid backlighting).</li>
+                <li>Keep your full arm visible in the frame.</li>
+                <li>Make sure your hands are clearly separated from the background.</li>
               </ul>
             ) : (
               <ul className="text-purple-400 space-y-1 text-xs list-disc list-inside">
-                <li>Press Record, then sign 2–4 words in sequence</li>
-                <li>Pause briefly (half a second) between each sign</li>
-                <li>Press Done when finished — or it auto-stops at 12 seconds</li>
-                <li>Works best with common daily phrases (e.g. &quot;water please&quot;, &quot;go home now&quot;)</li>
-                <li>Good lighting and clear hand visibility still matter</li>
+                <li>Press Record, then sign clearly and in order.</li>
+                <li>Pause briefly (about half a second) between each sign.</li>
+                <li>Press Done when finished (it will automatically stop after 20 seconds).</li>
+                <li>Make sure the lighting is good and your hands are clearly visible.</li>
+                <li>Keep your hands clearly separated from the background.</li>
               </ul>
             )}
           </div>
