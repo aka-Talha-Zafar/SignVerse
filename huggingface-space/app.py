@@ -770,71 +770,56 @@ def _classify_one_segment(seg_vecs):
     ]
 
 
-# --- Sliding-window sentence classifier ---
+# --- Sentence segmentation helper ---
 
-def _sliding_window_classify(landmark_vecs, window=15, stride=3,
-                             conf_thresh=0.35):
+def _segment_for_sentence(landmark_vecs):
     """
-    Classify a continuous landmark stream by sliding an overlapping window
-    across the frames and classifying each window independently.
+    Produce segments for sentence-level classification.
 
-    Unlike velocity-based boundary detection, every window is large enough
-    (≈ 3 s at 5 fps) for the classifier to see a complete sign, matching
-    the frame count that word-mode recordings provide.  Transition windows
-    (between signs) produce low-confidence noise that gets filtered out.
-
-    Returns a list of top-3 prediction groups, one per detected sign.
+    Strategy:
+    1.  Try conservative boundary detection — only deliberate pauses
+        (velocity < 0.04 for ≥ 3 consecutive frames) trigger a split.
+        Each segment must be ≥ 8 frames (≈ 1.6 s at 5 fps) so the
+        classifier sees enough real motion.
+    2.  If that yields only 1 segment (user signed without clear pauses),
+        fall back to equal-size splitting based on the expected number of
+        signs (≈ 1 sign per 10 frames).
+    3.  Cap segments to avoid over-segmentation.
     """
     n = len(landmark_vecs)
 
-    # Short recording — classify as a single sign
-    if n <= window:
-        seg = list(landmark_vecs)
-        hand_frames = sum(
-            1 for v in seg
-            if np.any(v[0:63] != 0) or np.any(v[63:126] != 0)
-        )
-        if hand_frames < max(1, len(seg) * 0.25):
-            return []
-        top3 = _classify_one_segment(seg)
-        return [top3] if top3[0]["confidence"] >= conf_thresh else []
+    segments = detect_sign_boundaries(
+        landmark_vecs,
+        velocity_thresh=0.04,
+        min_rest_frames=3,
+        min_sign_frames=8,
+    )
 
-    # Classify every overlapping window
-    window_results = []  # (sign, confidence, top3)
-    for start in range(0, n - window + 1, stride):
-        end = start + window
-        seg = [landmark_vecs[i] for i in range(start, end)]
+    # Equal-split fallback when boundary detection finds only 1 segment
+    if len(segments) <= 1 and n > 18:
+        n_splits = min(4, max(2, n // 10))
+        size = n // n_splits
+        segments = []
+        for i in range(n_splits):
+            s = i * size
+            e = n if i == n_splits - 1 else (i + 1) * size
+            segments.append((s, e))
 
-        hand_frames = sum(
-            1 for v in seg
-            if np.any(v[0:63] != 0) or np.any(v[63:126] != 0)
-        )
-        if hand_frames < max(1, window * 0.25):
-            continue
+    # Safety: merge until ≤ expected number of signs
+    max_segs = max(2, n // 8)
+    while len(segments) > max_segs and len(segments) > 2:
+        # Merge the two adjacent segments with smallest combined length
+        best = 0
+        best_len = float("inf")
+        for i in range(len(segments) - 1):
+            combo = segments[i + 1][1] - segments[i][0]
+            if combo < best_len:
+                best_len = combo
+                best = i
+        merged = (segments[best][0], segments[best + 1][1])
+        segments = segments[:best] + [merged] + segments[best + 2:]
 
-        top3 = _classify_one_segment(seg)
-        if top3[0]["confidence"] >= conf_thresh:
-            window_results.append(
-                (top3[0]["sign"], top3[0]["confidence"], top3)
-            )
-
-    if not window_results:
-        return []
-
-    # Group consecutive identical predictions; keep highest-confidence of each
-    groups = []
-    cur_sign, cur_conf, cur_pred = window_results[0]
-    for sign, conf, pred in window_results[1:]:
-        if sign == cur_sign:
-            if conf > cur_conf:
-                cur_conf = conf
-                cur_pred = pred
-        else:
-            groups.append(cur_pred)
-            cur_sign, cur_conf, cur_pred = sign, conf, pred
-    groups.append(cur_pred)
-
-    return groups
+    return segments
 
 
 def format_sentence(words_with_conf):
@@ -1096,22 +1081,37 @@ def sign_to_sentence_endpoint(req: SignToSentenceRequest):
         if len(lm_vecs) < orig_len:
             log.info(f"[sentence] Trimmed idle margins: {orig_len} → {len(lm_vecs)} frames")
 
-        # --- Sliding-window classification ---
-        # Each window is ~3 s (15 frames at 5 fps), matching the frame count
-        # that word-mode recordings provide.  This avoids the tiny-segment
-        # problem that caused garbage predictions.
-        all_predictions = _sliding_window_classify(list(lm_vecs))
-        log.info(f"[sentence] Sliding window → {len(all_predictions)} distinct signs")
+        # --- Segment the recording into per-sign chunks ---
+        segments = _segment_for_sentence(lm_vecs)
+        log.info(f"[sentence] Segments: {len(segments)} "
+                 f"(sizes {[e-s for s,e in segments]})")
 
-        if not all_predictions:
+        # --- Classify each segment ---
+        raw_preds = []
+        for start, end in segments:
+            seg = list(lm_vecs[start:end])
+            if len(seg) < 4:
+                continue
+            top3 = _classify_one_segment(seg)
+            if top3[0]["confidence"] >= CONF_THRESHOLD:
+                raw_preds.append(top3)
+
+        if not raw_preds:
             return {
                 "sentence": None, "no_sign_detected": True,
                 "message": "Signs unclear — try signing more clearly with pauses between words",
                 "words": [], "confidence": 0.0,
             }
 
-        # Use classifier predictions directly (no Viterbi / LM override)
-        refined = [(p[0]["sign"], p[0]["confidence"]) for p in all_predictions]
+        # --- Deduplicate consecutive identical predictions ---
+        deduped = [raw_preds[0]]
+        for pred in raw_preds[1:]:
+            if pred[0]["sign"] != deduped[-1][0]["sign"]:
+                deduped.append(pred)
+            elif pred[0]["confidence"] > deduped[-1][0]["confidence"]:
+                deduped[-1] = pred
+
+        refined = [(p[0]["sign"], p[0]["confidence"]) for p in deduped]
 
         # --- Format output ---
         sentence, avg_conf = format_sentence(refined)
@@ -1133,12 +1133,11 @@ def sign_to_sentence_endpoint(req: SignToSentenceRequest):
         return {
             "sentence": sentence,
             "words": words_out,
-            "segments_detected": len(all_predictions),
+            "segments_detected": len(segments),
             "confidence": avg_conf,
             "language": req.language,
             "audio_url": audio_url,
             "no_sign_detected": False,
-            "method": "sliding_window",
         }
 
     except Exception as e:
