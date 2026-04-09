@@ -657,6 +657,57 @@ def viterbi_decode(word_candidates, lm: BigramLM, lm_weight: float = 0.3):
     return beam[0][1]
 
 
+# --- Pre-processing: trim leading/trailing idle frames ---
+
+def _trim_idle_margins(landmark_vecs, velocity_thresh=0.02, min_active=2):
+    """
+    Remove leading and trailing frames where hands are stationary
+    (rest / button-press transition).  Prevents the rest position from
+    being classified as a sign (commonly mis-predicted as 'zipper').
+    """
+    n = len(landmark_vecs)
+    if n < 8:
+        return landmark_vecs
+
+    vels = np.empty(n - 1, dtype=np.float32)
+    for t in range(1, n):
+        rh = np.linalg.norm(landmark_vecs[t][0:3] - landmark_vecs[t - 1][0:3])
+        lh = np.linalg.norm(landmark_vecs[t][63:66] - landmark_vecs[t - 1][63:66])
+        vels[t - 1] = max(rh, lh)
+
+    # --- find first active frame ---
+    first = 0
+    run = 0
+    for i, v in enumerate(vels):
+        if v > velocity_thresh:
+            run += 1
+            if run >= min_active:
+                first = max(0, i - run)
+                break
+        else:
+            run = 0
+
+    # --- find last active frame ---
+    last = n
+    run = 0
+    for i in range(len(vels) - 1, -1, -1):
+        if vels[i] > velocity_thresh:
+            run += 1
+            if run >= min_active:
+                last = min(n, i + run + 2)
+                break
+        else:
+            run = 0
+
+    if last <= first:
+        return landmark_vecs
+
+    trimmed = landmark_vecs[first:last]
+    if len(trimmed) < 6:
+        return landmark_vecs
+    return trimmed
+
+
 # --- Sign boundary detection ---
 
 def detect_sign_boundaries(landmark_vecs, velocity_thresh=0.025,
@@ -1002,23 +1053,38 @@ def sign_to_sentence_endpoint(req: SignToSentenceRequest):
 
         lm_vecs = np.array([v for v in landmark_vecs], dtype=np.float32)
 
+        # --- Trim leading/trailing idle frames (avoids rest-position artefacts) ---
+        orig_len = len(lm_vecs)
+        lm_vecs = _trim_idle_margins(lm_vecs)
+        landmark_vecs = list(lm_vecs)
+        if len(lm_vecs) < orig_len:
+            log.info(f"[sentence] Trimmed idle margins: {orig_len} → {len(lm_vecs)} frames")
+
         # --- Detect sign boundaries ---
         segments = detect_sign_boundaries(lm_vecs)
         log.info(f"[sentence] Boundary detection found {len(segments)} segments")
 
         # Fallback: if only 1 segment but many frames, try sliding window
-        expected_signs = max(2, n_frames // 10)
-        if len(segments) <= 1 and n_frames > 15:
+        if len(segments) <= 1 and len(lm_vecs) > 15:
             sw_segments = _sliding_window_fallback(lm_vecs, window=12, stride=8)
             if len(sw_segments) > len(segments):
                 log.info(f"[sentence] Sliding-window fallback → {len(sw_segments)} windows")
                 segments = sw_segments
 
-        # --- Classify each segment ---
+        # --- Classify each segment (with hand-presence filter) ---
         all_predictions = []
         for start, end in segments:
             seg = [landmark_vecs[i] for i in range(start, min(end, len(landmark_vecs)))]
             if len(seg) < 3:
+                continue
+            # Skip segments where fewer than 25 % of frames have hand landmarks
+            hand_frames = sum(
+                1 for v in seg
+                if np.any(v[0:63] != 0) or np.any(v[63:126] != 0)
+            )
+            if hand_frames < max(1, len(seg) * 0.25):
+                log.info(f"[sentence] Skipping segment ({start},{end}): "
+                         f"low hand presence {hand_frames}/{len(seg)}")
                 continue
             top3 = _classify_one_segment(seg)
             if top3[0]["confidence"] >= CONF_THRESHOLD:

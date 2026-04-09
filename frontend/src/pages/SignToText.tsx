@@ -308,10 +308,26 @@ export default function SignToText() {
   const displayText = translatedText || translation;
   const speakText = () => {
     if (!displayText) return;
-    window.speechSynthesis?.cancel();
-    const utt = new SpeechSynthesisUtterance(displayText);
-    utt.lang = language;
-    window.speechSynthesis?.speak(utt);
+
+    if (language === "en") {
+      window.speechSynthesis?.cancel();
+      const utt = new SpeechSynthesisUtterance(displayText);
+      utt.lang = "en";
+      window.speechSynthesis?.speak(utt);
+    } else {
+      // Google TTS supports Urdu, Arabic, Chinese, etc. — browser Speech API often doesn't
+      const ttsLang = language === "zh" ? "zh-CN" : language;
+      const url =
+        `https://translate.google.com/translate_tts?ie=UTF-8` +
+        `&q=${encodeURIComponent(displayText)}&tl=${ttsLang}&client=tw-ob`;
+      new Audio(url).play().catch(() => {
+        // last-resort fallback to browser TTS
+        window.speechSynthesis?.cancel();
+        const utt = new SpeechSynthesisUtterance(displayText);
+        utt.lang = language;
+        window.speechSynthesis?.speak(utt);
+      });
+    }
   };
   const copyText = () => { if (displayText) navigator.clipboard.writeText(displayText); };
 
