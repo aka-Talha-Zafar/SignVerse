@@ -315,12 +315,12 @@ export default function SignToText() {
       utt.lang = "en";
       window.speechSynthesis?.speak(utt);
     } else {
-      // Google TTS supports Urdu, Arabic, Chinese, etc. — browser Speech API often doesn't
-      const ttsLang = language === "zh" ? "zh-CN" : language;
+      // Use our own backend TTS proxy — avoids CORS / referrer blocks
       const url =
-        `https://translate.google.com/translate_tts?ie=UTF-8` +
-        `&q=${encodeURIComponent(displayText)}&tl=${ttsLang}&client=tw-ob`;
-      new Audio(url).play().catch(() => {
+        `${API_BASE}/api/tts?text=${encodeURIComponent(displayText)}` +
+        `&lang=${encodeURIComponent(language)}`;
+      const audio = new Audio(url);
+      audio.play().catch(() => {
         // last-resort fallback to browser TTS
         window.speechSynthesis?.cancel();
         const utt = new SpeechSynthesisUtterance(displayText);

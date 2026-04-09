@@ -1,168 +1,112 @@
-===== Application Startup at 2026-04-09 08:55:44 =====
+===== Application Startup at 2026-04-09 09:30:50 =====
 
 INFO:     Started server process [1]
 INFO:     Waiting for application startup.
-2026-04-09 08:56:48,953 [INFO] signverse — Downloading asl_best.pt...
-2026-04-09 08:56:49,078 [INFO] signverse —   asl_best.pt downloaded
-2026-04-09 08:56:49,078 [INFO] signverse — Downloading sign_to_idx.json...
-2026-04-09 08:56:49,125 [INFO] signverse —   sign_to_idx.json downloaded
-2026-04-09 08:56:49,125 [INFO] signverse — Downloading signverse_asl_classifier.pt...
-2026-04-09 08:56:49,261 [INFO] signverse —   signverse_asl_classifier.pt downloaded
-2026-04-09 08:56:49,261 [INFO] signverse — Downloading class_mapping.json...
-2026-04-09 08:56:49,308 [INFO] signverse —   class_mapping.json downloaded
+2026-04-09 09:32:07,515 [INFO] signverse — Downloading asl_best.pt...
+2026-04-09 09:32:07,675 [INFO] signverse —   asl_best.pt downloaded
+2026-04-09 09:32:07,675 [INFO] signverse — Downloading sign_to_idx.json...
+2026-04-09 09:32:07,734 [INFO] signverse —   sign_to_idx.json downloaded
+2026-04-09 09:32:07,735 [INFO] signverse — Downloading signverse_asl_classifier.pt...
+2026-04-09 09:32:07,822 [INFO] signverse —   signverse_asl_classifier.pt downloaded
+2026-04-09 09:32:07,823 [INFO] signverse — Downloading class_mapping.json...
+2026-04-09 09:32:07,884 [INFO] signverse —   class_mapping.json downloaded
 /usr/local/lib/python3.11/site-packages/torch/nn/modules/transformer.py:286: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
   warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
-2026-04-09 08:56:49,332 [INFO] signverse — ASL v5 loaded — 250 classes
-2026-04-09 08:56:49,341 [INFO] signverse — Alphabet classifier loaded
-2026-04-09 08:56:49,359 [INFO] signverse — MediaPipe Holistic ready (static_image_mode=True)
-2026-04-09 08:56:49,360 [INFO] signverse — Bigram LM ready — 164 sentences, 63 vocab, 127 bigrams
-2026-04-09 08:56:49,360 [INFO] signverse — Startup complete | asl=True | holistic=True | bigram_lm=True
+2026-04-09 09:32:07,918 [INFO] signverse — ASL v5 loaded — 250 classes
+2026-04-09 09:32:07,929 [INFO] signverse — Alphabet classifier loaded
+2026-04-09 09:32:07,950 [INFO] signverse — MediaPipe Holistic ready (static_image_mode=True)
+2026-04-09 09:32:07,951 [INFO] signverse — Bigram LM ready — 164 sentences, 63 vocab, 127 bigrams
+2026-04-09 09:32:07,951 [INFO] signverse — Startup complete | asl=True | holistic=True | bigram_lm=True
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:7860 (Press CTRL+C to quit)
 INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
 WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-W0000 00:00:1775725009.426928      20 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775725009.448514      21 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775725009.449319      27 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775725009.449722      31 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775725009.449909      22 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775725009.453733      22 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775725009.466475      34 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775725009.466567      31 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-INFO:     10.16.15.94:7668 - "POST /login HTTP/1.1" 200 OK
-INFO:     10.16.22.250:34511 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     10.16.22.250:31570 - "GET /?logs=container HTTP/1.1" 200 OK
-INFO:     10.16.12.178:58144 - "GET /?logs=container HTTP/1.1" 200 OK
+W0000 00:00:1775727128.040769      23 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775727128.068108      23 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775727128.069139      20 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775727128.069669      24 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775727128.069774      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775727128.074758      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775727128.088676      34 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775727128.090352      19 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+INFO:     10.16.12.178:37247 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.27.106:50059 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.27.106:63424 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.15.94:38057 - "GET /api/health HTTP/1.1" 200 OK
 /usr/local/lib/python3.11/site-packages/google/protobuf/symbol_database.py:55: UserWarning: SymbolDatabase.GetPrototype() is deprecated. Please use message_factory.GetMessageClass() instead. SymbolDatabase.GetPrototype() will be removed soon.
   warnings.warn('SymbolDatabase.GetPrototype() is deprecated. Please '
-2026-04-09 08:57:40,467 [INFO] signverse — Frames=24 | hands=14/24 (58%)
-2026-04-09 08:57:40,467 [INFO] signverse — Motion=0.07462 | skip_motion_gate=True
-2026-04-09 08:57:40,476 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.578}, {'sign': 'hat', 'confidence': 0.134}, {'sign': 'bed', 'confidence': 0.026}] | motion=0.0746
-INFO:     10.16.12.178:20851 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-09 08:57:44,308 [INFO] signverse — Translated 'Hello!' → 'ہیلو!' (en→ur)
-INFO:     10.16.12.178:56999 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:57:49,668 [INFO] signverse — Translated 'Hello!' → 'مرحبًا!' (en→ar)
-INFO:     10.16.15.94:56710 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:57:57,460 [INFO] signverse — Translated 'Hello!' → 'Bonjour!' (en→fr)
-INFO:     10.16.15.94:34818 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:58:00,721 [INFO] signverse — Translated 'Hello!' → '¡Hola!' (en→es)
-INFO:     10.16.15.94:43471 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:58:07,751 [INFO] signverse — Translated 'Hello!' → 'Hallo!' (en→de)
-INFO:     10.16.46.123:34496 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:58:11,471 [INFO] signverse — Translated 'Hello!' → '你好！' (en→zh-CN)
-INFO:     10.16.46.123:47788 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:58:21,189 [INFO] signverse — Translated 'Hello!' → 'Bonjour!' (en→fr)
-INFO:     10.16.27.106:59629 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:58:27,441 [INFO] signverse — Translated 'Hello!' → '¡Hola!' (en→es)
-INFO:     10.16.15.94:54352 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:59:00,272 [INFO] signverse — Frames=26 | hands=10/26 (38%)
-2026-04-09 08:59:00,272 [INFO] signverse — Motion=0.07001 | skip_motion_gate=False
-2026-04-09 08:59:00,278 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.374}, {'sign': 'hat', 'confidence': 0.149}, {'sign': 'fireman', 'confidence': 0.121}] | motion=0.0700
-INFO:     10.16.15.94:10413 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-09 08:59:05,277 [INFO] signverse — Translated 'Hello!' → 'ہیلو!' (en→ur)
-INFO:     10.16.15.94:36218 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:59:15,465 [INFO] signverse — Frames=23 | hands=7/23 (30%)
-2026-04-09 08:59:15,466 [INFO] signverse — Motion=0.11060 | skip_motion_gate=False
-2026-04-09 08:59:15,472 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.992}, {'sign': 'into', 'confidence': 0.001}, {'sign': 'night', 'confidence': 0.001}] | motion=0.1106
-INFO:     10.16.12.178:63825 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-09 08:59:15,774 [INFO] signverse — Translated 'Elephant.' → 'ہاتھی' (en→ur)
-INFO:     10.16.27.106:58306 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:59:31,253 [INFO] signverse — Translated 'Elephant.' → 'الفيل.' (en→ar)
-INFO:     10.16.46.123:54979 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:59:36,039 [INFO] signverse — Translated 'Elephant.' → 'Éléphant.' (en→fr)
-INFO:     10.16.46.123:4353 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:59:42,145 [INFO] signverse — Translated 'Elephant.' → 'Elefante.' (en→es)
-INFO:     10.16.46.123:2171 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:59:49,310 [INFO] signverse — Translated 'Elephant.' → 'Elefant.' (en→de)
-INFO:     10.16.15.94:53022 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 08:59:54,101 [INFO] signverse — Translated 'Elephant.' → '大象。' (en→zh-CN)
-INFO:     10.16.12.178:31950 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:00:01,084 [INFO] signverse — Translated 'Elephant.' → 'ہاتھی' (en→ur)
-INFO:     10.16.27.106:1194 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:00:06,576 [INFO] signverse — Translated 'Elephant.' → 'الفيل.' (en→ar)
-INFO:     10.16.46.123:34251 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:00:21,052 [INFO] signverse — Frames=29 | hands=17/29 (59%)
-2026-04-09 09:00:21,052 [INFO] signverse — Motion=0.06214 | skip_motion_gate=True
-2026-04-09 09:00:21,058 [INFO] signverse — Prediction: [{'sign': 'napkin', 'confidence': 0.944}, {'sign': 'nap', 'confidence': 0.011}, {'sign': 'bad', 'confidence': 0.011}] | motion=0.0621
-INFO:     10.16.15.94:9665 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-09 09:00:22,018 [INFO] signverse — Translated 'Napkin.' → 'منديل.' (en→ar)
-INFO:     10.16.12.178:1480 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:00:26,815 [INFO] signverse — Translated 'Napkin.' → 'Serviette de table.' (en→fr)
-INFO:     10.16.22.250:53210 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:00:33,049 [INFO] signverse — Translated 'Napkin.' → 'Servilleta.' (en→es)
-INFO:     10.16.15.94:2437 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:00:38,815 [INFO] signverse — Translated 'Napkin.' → 'Serviette.' (en→de)
-INFO:     10.16.27.106:28420 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:00:43,628 [INFO] signverse — Translated 'Napkin.' → 'رومال۔' (en→ur)
-INFO:     10.16.27.106:9054 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:01:07,459 [INFO] signverse — Frames=33 | hands=15/33 (45%)
-2026-04-09 09:01:07,460 [INFO] signverse — Motion=0.13381 | skip_motion_gate=False
-2026-04-09 09:01:07,466 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.61}, {'sign': 'drop', 'confidence': 0.159}, {'sign': 'store', 'confidence': 0.108}] | motion=0.1338
-INFO:     10.16.12.178:45716 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-09 09:01:07,773 [INFO] signverse — Translated 'Down.' → 'نیچے' (en→ur)
-INFO:     10.16.46.123:37512 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:01:37,059 [INFO] signverse — Frames=33 | hands=14/33 (42%)
-2026-04-09 09:01:37,059 [INFO] signverse — Motion=0.25784 | skip_motion_gate=False
-2026-04-09 09:01:37,065 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.468}, {'sign': 'hello', 'confidence': 0.062}, {'sign': 'fireman', 'confidence': 0.051}] | motion=0.2578
-INFO:     10.16.22.250:23179 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-09 09:01:37,424 [INFO] signverse — Translated 'Hat.' → 'ٹوپی' (en→ur)
-INFO:     10.16.22.250:23179 - "POST /api/translate HTTP/1.1" 200 OK
-INFO:     10.16.15.94:9044 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     10.16.12.178:64272 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     10.16.22.250:48049 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     10.16.22.250:49013 - "GET /api/health HTTP/1.1" 200 OK
-2026-04-09 09:07:20,134 [INFO] signverse — [sentence] Received 50 frames
-2026-04-09 09:07:23,081 [INFO] signverse — [sentence] Boundary detection found 4 segments
-2026-04-09 09:07:23,102 [INFO] signverse — [sentence] After dedup: 4 words (from 4 raw)
-2026-04-09 09:07:23,102 [INFO] signverse — [sentence] Result: 'Zipper will brown elephant.' (conf=0.64)
-INFO:     10.16.46.123:17318 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-09 09:07:36,539 [INFO] signverse — Translated 'Zipper will brown elephant.' → 'سحاب سوف يبني الفيل.' (en→ar)
-INFO:     10.16.27.106:1279 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:07:40,295 [INFO] signverse — Translated 'Zipper will brown elephant.' → 'زپر بھورا ہاتھی کا ہو گا۔' (en→ur)
-INFO:     10.16.22.250:6282 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:07:48,317 [INFO] signverse — Translated 'Zipper will brown elephant.' → 'La cremallera hará que el elefante se dore.' (en→es)
-INFO:     10.16.46.123:27568 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:08:07,855 [INFO] signverse — [sentence] Received 38 frames
-2026-04-09 09:08:10,093 [INFO] signverse — [sentence] Boundary detection found 4 segments
-2026-04-09 09:08:10,114 [INFO] signverse — [sentence] After dedup: 3 words (from 4 raw)
-2026-04-09 09:08:10,114 [INFO] signverse — [sentence] Result: 'Zipper hat down.' (conf=0.665)
-INFO:     10.16.12.178:19784 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-09 09:08:10,788 [INFO] signverse — Translated 'Zipper hat down.' → 'Sombrero con cremallera hacia abajo.' (en→es)
-INFO:     10.16.46.123:9906 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:09:03,545 [INFO] signverse — [sentence] Received 60 frames
-2026-04-09 09:09:07,056 [INFO] signverse — [sentence] Boundary detection found 5 segments
-2026-04-09 09:09:07,082 [INFO] signverse — [sentence] After dedup: 4 words (from 4 raw)
-2026-04-09 09:09:07,082 [INFO] signverse — [sentence] Result: 'Zipper pretend hat down.' (conf=0.451)
-INFO:     10.16.46.123:17700 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-09 09:09:08,015 [INFO] signverse — Translated 'Zipper pretend hat down.' → 'Gorro con cremallera hacia abajo.' (en→es)
-INFO:     10.16.15.94:60454 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:09:31,827 [INFO] signverse — [sentence] Received 24 frames
-INFO:     10.16.15.94:38663 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-09 09:10:13,148 [INFO] signverse — [sentence] Received 55 frames
-2026-04-09 09:10:16,345 [INFO] signverse — [sentence] Boundary detection found 6 segments
-2026-04-09 09:10:16,375 [INFO] signverse — [sentence] After dedup: 5 words (from 5 raw)
-2026-04-09 09:10:16,376 [INFO] signverse — [sentence] Result: 'Zipper fireman pretend zipper glasswindow.' (conf=0.437)
-INFO:     10.16.15.94:4822 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-09 09:10:17,404 [INFO] signverse — Translated 'Zipper fireman pretend zipper glasswindow.' → 'Bombero con cremallera simula una ventana de cristal con cremallera.' (en→es)
-INFO:     10.16.22.250:6455 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:10:55,017 [INFO] signverse — Frames=33 | hands=14/33 (42%)
-2026-04-09 09:10:55,018 [INFO] signverse — Motion=0.10959 | skip_motion_gate=False
-2026-04-09 09:10:55,024 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.232}, {'sign': 'pretend', 'confidence': 0.125}, {'sign': 'fireman', 'confidence': 0.105}] | motion=0.1096
-INFO:     10.16.22.250:2026 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-09 09:10:55,821 [INFO] signverse — Translated 'Hello!' → '¡Hola!' (en→es)
-INFO:     10.16.22.250:2026 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:11:04,236 [INFO] signverse — Translated 'Hello!' → 'Bonjour!' (en→fr)
-INFO:     10.16.12.178:18013 - "POST /api/translate HTTP/1.1" 200 OK
-2026-04-09 09:11:21,985 [INFO] signverse — Frames=33 | hands=19/33 (58%)
-2026-04-09 09:11:21,985 [INFO] signverse — Motion=0.06413 | skip_motion_gate=True
-2026-04-09 09:11:21,991 [INFO] signverse — Prediction: [{'sign': 'red', 'confidence': 0.746}, {'sign': 'thirsty', 'confidence': 0.082}, {'sign': 'animal', 'confidence': 0.011}] | motion=0.0641
-INFO:     10.16.27.106:58122 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-09 09:11:44,819 [INFO] signverse — Frames=30 | hands=9/30 (30%)
-2026-04-09 09:11:44,819 [INFO] signverse — Motion=0.15064 | skip_motion_gate=False
-2026-04-09 09:11:44,825 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.996}, {'sign': 'into', 'confidence': 0.001}, {'sign': 'night', 'confidence': 0.0}] | motion=0.1506
-INFO:     10.16.15.94:39664 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-09 09:12:10,765 [INFO] signverse — [sentence] Received 38 frames
-2026-04-09 09:12:12,963 [INFO] signverse — [sentence] Boundary detection found 5 segments
-2026-04-09 09:12:12,989 [INFO] signverse — [sentence] After dedup: 4 words (from 4 raw)
-2026-04-09 09:12:12,989 [INFO] signverse — [sentence] Result: 'Zipper fireman garbage elephant.' (conf=0.605)
-INFO:     10.16.12.178:3425 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-09 09:33:02,556 [INFO] signverse — Frames=33 | hands=13/33 (39%)
+2026-04-09 09:33:02,556 [INFO] signverse — Motion=0.10129 | skip_motion_gate=False
+2026-04-09 09:33:02,567 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.472}, {'sign': 'hat', 'confidence': 0.116}, {'sign': 'fireman', 'confidence': 0.066}] | motion=0.1013
+INFO:     10.16.46.123:11870 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 09:33:08,882 [INFO] signverse — Translated 'Hello!' → 'ہیلو!' (en→ur)
+INFO:     10.16.15.94:6271 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:33:16,225 [INFO] signverse — Translated 'Hello!' → 'مرحبًا!' (en→ar)
+INFO:     10.16.15.94:45442 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:33:21,026 [INFO] signverse — Translated 'Hello!' → 'Bonjour!' (en→fr)
+INFO:     10.16.15.94:48930 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:33:27,613 [INFO] signverse — Translated 'Hello!' → '¡Hola!' (en→es)
+INFO:     10.16.12.178:34151 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:33:35,017 [INFO] signverse — Translated 'Hello!' → 'Hallo!' (en→de)
+INFO:     10.16.12.178:58295 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:33:39,980 [INFO] signverse — Translated 'Hello!' → '你好！' (en→zh-CN)
+INFO:     10.16.15.94:33497 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:33:45,015 [INFO] signverse — Translated 'Hello!' → 'ہیلو!' (en→ur)
+INFO:     10.16.22.250:57482 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:33:48,756 [INFO] signverse — Translated 'Hello!' → 'مرحبًا!' (en→ar)
+INFO:     10.16.15.94:49660 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:34:47,451 [INFO] signverse — [sentence] Received 34 frames
+2026-04-09 09:34:49,593 [INFO] signverse — [sentence] Trimmed idle margins: 34 → 24 frames
+2026-04-09 09:34:49,593 [INFO] signverse — [sentence] Boundary detection found 2 segments
+2026-04-09 09:34:49,608 [INFO] signverse — [sentence] After dedup: 2 words (from 2 raw)
+2026-04-09 09:34:49,608 [INFO] signverse — [sentence] Result: 'Hello elephant.' (conf=0.549)
+INFO:     10.16.46.123:46051 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-09 09:34:56,938 [INFO] signverse — Translated 'Hello elephant.' → 'ہیلو ہاتھی۔' (en→ur)
+INFO:     10.16.27.106:9696 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:35:03,825 [INFO] signverse — Translated 'Hello elephant.' → 'Hola elefante.' (en→es)
+INFO:     10.16.22.250:51036 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:35:10,533 [INFO] signverse — Translated 'Hello elephant.' → 'Hallo Elefant.' (en→de)
+INFO:     10.16.27.106:39259 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:35:15,636 [INFO] signverse — Translated 'Hello elephant.' → '你好大象。' (en→zh-CN)
+INFO:     10.16.15.94:43007 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:35:44,202 [INFO] signverse — [sentence] Received 41 frames
+2026-04-09 09:35:46,910 [INFO] signverse — [sentence] Trimmed idle margins: 41 → 27 frames
+2026-04-09 09:35:46,910 [INFO] signverse — [sentence] Boundary detection found 3 segments
+2026-04-09 09:35:46,932 [INFO] signverse — [sentence] After dedup: 3 words (from 3 raw)
+2026-04-09 09:35:46,932 [INFO] signverse — [sentence] Result: 'Down garbage hat.' (conf=0.523)
+INFO:     10.16.15.94:2198 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-09 09:36:05,243 [INFO] signverse — [sentence] Received 38 frames
+2026-04-09 09:36:08,333 [INFO] signverse — [sentence] Trimmed idle margins: 38 → 25 frames
+2026-04-09 09:36:08,333 [INFO] signverse — [sentence] Boundary detection found 3 segments
+2026-04-09 09:36:08,343 [INFO] signverse — [sentence] Skipping segment (12,21): low hand presence 2/9
+2026-04-09 09:36:08,352 [INFO] signverse — [sentence] After dedup: 2 words (from 2 raw)
+2026-04-09 09:36:08,352 [INFO] signverse — [sentence] Result: 'Down lion.' (conf=0.603)
+INFO:     10.16.15.94:57463 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-09 09:36:27,601 [INFO] signverse — [sentence] Received 41 frames
+2026-04-09 09:36:30,339 [INFO] signverse — [sentence] Trimmed idle margins: 41 → 30 frames
+2026-04-09 09:36:30,339 [INFO] signverse — [sentence] Boundary detection found 3 segments
+2026-04-09 09:36:30,359 [INFO] signverse — [sentence] After dedup: 2 words (from 2 raw)
+2026-04-09 09:36:30,360 [INFO] signverse — [sentence] Result: 'Down napkin.' (conf=0.724)
+INFO:     10.16.12.178:30126 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-09 09:36:39,741 [INFO] signverse — Translated 'Down napkin.' → 'منديل أسفل.' (en→ar)
+INFO:     10.16.46.123:49714 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:36:43,293 [INFO] signverse — Translated 'Down napkin.' → 'نیچے نیپکن۔' (en→ur)
+INFO:     10.16.27.106:10081 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:36:50,612 [INFO] signverse — Translated 'Down napkin.' → 'Servilleta hacia abajo.' (en→es)
+INFO:     10.16.46.123:16277 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:36:59,527 [INFO] signverse — Translated 'Down napkin.' → 'Daunenserviette.' (en→de)
+INFO:     10.16.12.178:1509 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:37:06,682 [INFO] signverse — Translated 'Down napkin.' → '下餐巾。' (en→zh-CN)
+INFO:     10.16.15.94:63099 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:37:11,964 [INFO] signverse — Translated 'Down napkin.' → 'Servilleta hacia abajo.' (en→es)
+INFO:     10.16.27.106:61681 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:37:33,781 [INFO] signverse — Frames=28 | hands=14/28 (50%)
+2026-04-09 09:37:33,782 [INFO] signverse — Motion=0.12833 | skip_motion_gate=True
+2026-04-09 09:37:33,790 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.265}, {'sign': 'pretend', 'confidence': 0.229}, {'sign': 'fireman', 'confidence': 0.046}] | motion=0.1283
+INFO:     10.16.27.106:12619 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 09:37:34,104 [INFO] signverse — Translated 'Hello!' → '¡Hola!' (en→es)
+INFO:     10.16.15.94:9680 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:37:38,957 [INFO] signverse — Translated 'Hello!' → 'ہیلو!' (en→ur)
+INFO:     10.16.15.94:22652 - "POST /api/translate HTTP/1.1" 200 OK
+2026-04-09 09:37:43,818 [INFO] signverse — Translated 'Hello!' → 'مرحبًا!' (en→ar)
+INFO:     10.16.15.94:19117 - "POST /api/translate HTTP/1.1" 200 OK

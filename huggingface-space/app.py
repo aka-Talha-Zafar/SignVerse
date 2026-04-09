@@ -23,6 +23,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -1183,6 +1184,46 @@ def translate_text(req: TranslateRequest):
         log.warning(f"Translation to {lang_code} failed: {e}")
         return {"translated": text, "source": "en", "target": target,
                 "error": "Translation service unavailable"}
+
+
+@app.get("/api/tts")
+def text_to_speech(text: str, lang: str = "en"):
+    """Server-side TTS proxy via Google Translate.
+
+    Fetches MP3 audio from Google's TTS endpoint server-side so the
+    browser doesn't face CORS / referrer blocks.  Supports every
+    language that Google Translate supports, including Urdu and Arabic.
+    """
+    text = (text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="No text provided")
+
+    import urllib.request, urllib.parse
+
+    lang_code = _LANG_MAP.get(lang, lang)
+    encoded = urllib.parse.quote(text)
+
+    url = (
+        "https://translate.google.com/translate_tts"
+        f"?ie=UTF-8&q={encoded}&tl={lang_code}&client=tw-ob"
+    )
+    req_obj = urllib.request.Request(url, headers={
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Referer": "https://translate.google.com/",
+    })
+
+    try:
+        with urllib.request.urlopen(req_obj, timeout=8) as resp:
+            audio = resp.read()
+        return Response(content=audio, media_type="audio/mpeg",
+                        headers={"Cache-Control": "public, max-age=3600"})
+    except Exception as e:
+        log.warning(f"TTS failed for lang={lang_code}: {e}")
+        raise HTTPException(status_code=502, detail="TTS service unavailable")
 
 
 @app.post("/api/text-to-sign")
