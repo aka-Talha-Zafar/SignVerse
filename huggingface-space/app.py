@@ -754,24 +754,6 @@ def detect_sign_boundaries(landmark_vecs, velocity_thresh=0.025,
     return segments
 
 
-def _sliding_window_fallback(landmark_vecs, window=12, stride=6, min_windows=2):
-    """
-    Fallback segmentation: fixed sliding windows when velocity detection
-    finds too few segments.
-    """
-    n = len(landmark_vecs)
-    if n <= window:
-        return [(0, n)]
-    segs = []
-    start = 0
-    while start + window <= n:
-        segs.append((start, start + window))
-        start += stride
-    if len(segs) < min_windows and n > window:
-        segs.append((max(0, n - window), n))
-    return segs
-
-
 # --- Segment classification helpers ---
 
 def _classify_one_segment(seg_vecs):
@@ -788,17 +770,71 @@ def _classify_one_segment(seg_vecs):
     ]
 
 
-def deduplicate_predictions(word_preds):
-    """Collapse consecutive identical top-1 predictions; keep highest conf."""
-    if not word_preds:
+# --- Sliding-window sentence classifier ---
+
+def _sliding_window_classify(landmark_vecs, window=15, stride=3,
+                             conf_thresh=0.35):
+    """
+    Classify a continuous landmark stream by sliding an overlapping window
+    across the frames and classifying each window independently.
+
+    Unlike velocity-based boundary detection, every window is large enough
+    (≈ 3 s at 5 fps) for the classifier to see a complete sign, matching
+    the frame count that word-mode recordings provide.  Transition windows
+    (between signs) produce low-confidence noise that gets filtered out.
+
+    Returns a list of top-3 prediction groups, one per detected sign.
+    """
+    n = len(landmark_vecs)
+
+    # Short recording — classify as a single sign
+    if n <= window:
+        seg = list(landmark_vecs)
+        hand_frames = sum(
+            1 for v in seg
+            if np.any(v[0:63] != 0) or np.any(v[63:126] != 0)
+        )
+        if hand_frames < max(1, len(seg) * 0.25):
+            return []
+        top3 = _classify_one_segment(seg)
+        return [top3] if top3[0]["confidence"] >= conf_thresh else []
+
+    # Classify every overlapping window
+    window_results = []  # (sign, confidence, top3)
+    for start in range(0, n - window + 1, stride):
+        end = start + window
+        seg = [landmark_vecs[i] for i in range(start, end)]
+
+        hand_frames = sum(
+            1 for v in seg
+            if np.any(v[0:63] != 0) or np.any(v[63:126] != 0)
+        )
+        if hand_frames < max(1, window * 0.25):
+            continue
+
+        top3 = _classify_one_segment(seg)
+        if top3[0]["confidence"] >= conf_thresh:
+            window_results.append(
+                (top3[0]["sign"], top3[0]["confidence"], top3)
+            )
+
+    if not window_results:
         return []
-    deduped = [word_preds[0]]
-    for pred in word_preds[1:]:
-        if pred[0]["sign"] != deduped[-1][0]["sign"]:
-            deduped.append(pred)
-        elif pred[0]["confidence"] > deduped[-1][0]["confidence"]:
-            deduped[-1] = pred
-    return deduped
+
+    # Group consecutive identical predictions; keep highest-confidence of each
+    groups = []
+    cur_sign, cur_conf, cur_pred = window_results[0]
+    for sign, conf, pred in window_results[1:]:
+        if sign == cur_sign:
+            if conf > cur_conf:
+                cur_conf = conf
+                cur_pred = pred
+        else:
+            groups.append(cur_pred)
+            cur_sign, cur_conf, cur_pred = sign, conf, pred
+    groups.append(cur_pred)
+
+    return groups
 
 
 def format_sentence(words_with_conf):
@@ -1027,8 +1063,8 @@ def sign_to_text(req: SignToTextRequest):
 def sign_to_sentence_endpoint(req: SignToSentenceRequest):
     """
     Sentence-level sign recognition.
-    Receives a longer frame stream covering 2-4 signs, segments them,
-    classifies each, and refines the word sequence with a bigram LM.
+    Receives a longer frame stream covering 2-4 signs, classifies them
+    using overlapping sliding windows, and deduplicates to form a sentence.
     """
     if not req.frames:
         raise HTTPException(status_code=400, detail="No frames provided")
@@ -1057,39 +1093,15 @@ def sign_to_sentence_endpoint(req: SignToSentenceRequest):
         # --- Trim leading/trailing idle frames (avoids rest-position artefacts) ---
         orig_len = len(lm_vecs)
         lm_vecs = _trim_idle_margins(lm_vecs)
-        landmark_vecs = list(lm_vecs)
         if len(lm_vecs) < orig_len:
             log.info(f"[sentence] Trimmed idle margins: {orig_len} → {len(lm_vecs)} frames")
 
-        # --- Detect sign boundaries ---
-        segments = detect_sign_boundaries(lm_vecs)
-        log.info(f"[sentence] Boundary detection found {len(segments)} segments")
-
-        # Fallback: if only 1 segment but many frames, try sliding window
-        if len(segments) <= 1 and len(lm_vecs) > 15:
-            sw_segments = _sliding_window_fallback(lm_vecs, window=12, stride=8)
-            if len(sw_segments) > len(segments):
-                log.info(f"[sentence] Sliding-window fallback → {len(sw_segments)} windows")
-                segments = sw_segments
-
-        # --- Classify each segment (with hand-presence filter) ---
-        all_predictions = []
-        for start, end in segments:
-            seg = [landmark_vecs[i] for i in range(start, min(end, len(landmark_vecs)))]
-            if len(seg) < 3:
-                continue
-            # Skip segments where fewer than 25 % of frames have hand landmarks
-            hand_frames = sum(
-                1 for v in seg
-                if np.any(v[0:63] != 0) or np.any(v[63:126] != 0)
-            )
-            if hand_frames < max(1, len(seg) * 0.25):
-                log.info(f"[sentence] Skipping segment ({start},{end}): "
-                         f"low hand presence {hand_frames}/{len(seg)}")
-                continue
-            top3 = _classify_one_segment(seg)
-            if top3[0]["confidence"] >= CONF_THRESHOLD:
-                all_predictions.append(top3)
+        # --- Sliding-window classification ---
+        # Each window is ~3 s (15 frames at 5 fps), matching the frame count
+        # that word-mode recordings provide.  This avoids the tiny-segment
+        # problem that caused garbage predictions.
+        all_predictions = _sliding_window_classify(list(lm_vecs))
+        log.info(f"[sentence] Sliding window → {len(all_predictions)} distinct signs")
 
         if not all_predictions:
             return {
@@ -1098,13 +1110,8 @@ def sign_to_sentence_endpoint(req: SignToSentenceRequest):
                 "words": [], "confidence": 0.0,
             }
 
-        # --- Deduplicate ---
-        deduped = deduplicate_predictions(all_predictions)
-        log.info(f"[sentence] After dedup: {len(deduped)} words "
-                 f"(from {len(all_predictions)} raw)")
-
-        # --- Viterbi refinement ---
-        refined = viterbi_decode(deduped, _bigram_lm)
+        # Use classifier predictions directly (no Viterbi / LM override)
+        refined = [(p[0]["sign"], p[0]["confidence"]) for p in all_predictions]
 
         # --- Format output ---
         sentence, avg_conf = format_sentence(refined)
@@ -1126,13 +1133,12 @@ def sign_to_sentence_endpoint(req: SignToSentenceRequest):
         return {
             "sentence": sentence,
             "words": words_out,
-            "segments_detected": len(segments),
+            "segments_detected": len(all_predictions),
             "confidence": avg_conf,
             "language": req.language,
             "audio_url": audio_url,
             "no_sign_detected": False,
-            "method": "boundary_detection" if len(segments) > 1
-                      else "sliding_window",
+            "method": "sliding_window",
         }
 
     except Exception as e:

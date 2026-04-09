@@ -540,7 +540,7 @@ export default function SignToText() {
                     ? "Start the camera and begin signing"
                     : mode === "word"
                       ? "Press Record, perform a sign, then press Done"
-                      : "Press Record, sign 2–4 words with brief pauses, then press Done"}
+                      : "Press Record, sign words with brief pauses, then press Done"}
                 </p>
               )}
             </div>
