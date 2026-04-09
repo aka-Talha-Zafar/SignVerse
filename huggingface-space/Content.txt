@@ -1,319 +1,1230 @@
-===== Application Startup at 2026-04-08 09:52:05 =====
+===== Application Startup at 2026-04-08 11:22:04 =====
 
 INFO:     Started server process [1]
 INFO:     Waiting for application startup.
-2026-04-08 09:53:18,401 [INFO] signverse — Downloading asl_best.pt...
-2026-04-08 09:53:18,548 [INFO] signverse —   asl_best.pt downloaded
-2026-04-08 09:53:18,548 [INFO] signverse — Downloading sign_to_idx.json...
-2026-04-08 09:53:18,605 [INFO] signverse —   sign_to_idx.json downloaded
-2026-04-08 09:53:18,605 [INFO] signverse — Downloading signverse_asl_classifier.pt...
-2026-04-08 09:53:18,695 [INFO] signverse —   signverse_asl_classifier.pt downloaded
-2026-04-08 09:53:18,695 [INFO] signverse — Downloading class_mapping.json...
-2026-04-08 09:53:18,743 [INFO] signverse —   class_mapping.json downloaded
+2026-04-08 11:23:58,875 [INFO] signverse — Downloading asl_best.pt...
+2026-04-08 11:23:59,077 [INFO] signverse —   asl_best.pt downloaded
+2026-04-08 11:23:59,077 [INFO] signverse — Downloading sign_to_idx.json...
+2026-04-08 11:23:59,131 [INFO] signverse —   sign_to_idx.json downloaded
+2026-04-08 11:23:59,131 [INFO] signverse — Downloading signverse_asl_classifier.pt...
+2026-04-08 11:23:59,229 [INFO] signverse —   signverse_asl_classifier.pt downloaded
+2026-04-08 11:23:59,229 [INFO] signverse — Downloading class_mapping.json...
+2026-04-08 11:23:59,304 [INFO] signverse —   class_mapping.json downloaded
 /usr/local/lib/python3.11/site-packages/torch/nn/modules/transformer.py:286: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
   warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
-2026-04-08 09:53:18,772 [INFO] signverse — ASL v5 loaded — 250 classes
-2026-04-08 09:53:18,784 [INFO] signverse — Alphabet classifier loaded
-2026-04-08 09:53:18,804 [INFO] signverse — MediaPipe Holistic ready (static_image_mode=True)
-2026-04-08 09:53:18,805 [INFO] signverse — Bigram LM ready — 164 sentences, 63 vocab, 127 bigrams
-2026-04-08 09:53:18,805 [INFO] signverse — Startup complete | asl=True | holistic=True | bigram_lm=True
+2026-04-08 11:23:59,356 [INFO] signverse — ASL v5 loaded — 250 classes
+2026-04-08 11:23:59,372 [INFO] signverse — Alphabet classifier loaded
+2026-04-08 11:23:59,402 [INFO] signverse — MediaPipe Holistic ready (static_image_mode=True)
+2026-04-08 11:23:59,403 [INFO] signverse — Bigram LM ready — 164 sentences, 63 vocab, 127 bigrams
+2026-04-08 11:23:59,403 [INFO] signverse — Startup complete | asl=True | holistic=True | bigram_lm=True
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:7860 (Press CTRL+C to quit)
 INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
 WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-W0000 00:00:1775641998.881052      21 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775641998.905069      24 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775641998.906580      32 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775641998.906644      29 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775641998.907357      33 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775641998.914414      34 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775641998.923830      24 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-W0000 00:00:1775641998.925455      32 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
-INFO:     10.16.11.193:20885 - "GET /?logs=container HTTP/1.1" 200 OK
-INFO:     10.16.11.193:20885 - "GET /?logs=container HTTP/1.1" 200 OK
-2026-04-08 09:55:26,783 [INFO] signverse — [sentence] Received 42 frames
+W0000 00:00:1775647439.522627      19 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.552691      29 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.555413      24 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.555784      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.560556      23 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.575642      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.592299      23 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.592769      34 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+INFO:     10.16.47.45:3260 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.46.237:11142 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.11.193:15651 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.47.45:8696 - "GET /api/health HTTP/1.1" 200 OK
 /usr/local/lib/python3.11/site-packages/google/protobuf/symbol_database.py:55: UserWarning: SymbolDatabase.GetPrototype() is deprecated. Please use message_factory.GetMessageClass() instead. SymbolDatabase.GetPrototype() will be removed soon.
   warnings.warn('SymbolDatabase.GetPrototype() is deprecated. Please '
-2026-04-08 09:55:29,432 [INFO] signverse — [sentence] Boundary detection found 4 segments
-2026-04-08 09:55:29,457 [INFO] signverse — [sentence] After dedup: 3 words (from 3 raw)
-2026-04-08 09:55:29,458 [INFO] signverse — [sentence] Result: 'Police fast give.' (conf=0.292)
-INFO:     10.16.11.193:64332 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 09:55:47,353 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:37841 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:55:51,418 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:37841 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-INFO:     10.16.46.123:58880 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:55:59,896 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-2026-04-08 09:56:03,784 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.8.212:47090 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:15,400 [INFO] signverse — Frames=12 | hands=4/12 (33%)
-2026-04-08 09:56:15,400 [INFO] signverse — Motion=0.13739 | skip_motion_gate=False
-2026-04-08 09:56:15,407 [INFO] signverse — Prediction: [{'sign': 'there', 'confidence': 0.138}, {'sign': 'police', 'confidence': 0.125}, {'sign': 'puzzle', 'confidence': 0.081}] | motion=0.1374
-INFO:     10.16.24.44:1141 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:23,058 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.24.44:38767 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:25,937 [INFO] signverse — Frames=4 | hands=0/4 (0%)
-INFO:     10.16.46.123:35013 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:29,985 [INFO] signverse — Frames=4 | hands=0/4 (0%)
-INFO:     10.16.24.44:40797 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:34,038 [INFO] signverse — Frames=4 | hands=0/4 (0%)
-INFO:     10.16.11.193:54818 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:38,020 [INFO] signverse — Frames=4 | hands=0/4 (0%)
-INFO:     10.16.11.193:9823 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:42,059 [INFO] signverse — Frames=4 | hands=1/4 (25%)
-2026-04-08 09:56:42,060 [INFO] signverse — Motion=0.21749 | skip_motion_gate=False
-2026-04-08 09:56:42,072 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.258}, {'sign': 'pajamas', 'confidence': 0.07}, {'sign': 'gift', 'confidence': 0.04}] | motion=0.2175
-INFO:     10.16.46.123:38411 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:47,973 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.8.212:24932 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:51,026 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.24.44:56443 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:55,996 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:4713 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:56:59,659 [INFO] signverse — Frames=12 | hands=3/12 (25%)
-2026-04-08 09:56:59,660 [INFO] signverse — Motion=0.16235 | skip_motion_gate=False
-2026-04-08 09:56:59,666 [INFO] signverse — Prediction: [{'sign': 'fast', 'confidence': 0.126}, {'sign': 'all', 'confidence': 0.117}, {'sign': 'not', 'confidence': 0.086}] | motion=0.1624
-INFO:     10.16.37.110:4713 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:04,218 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.46.123:25794 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:07,968 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:33090 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-INFO:     10.16.11.193:26839 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:10,433 [INFO] signverse — Frames=5 | hands=0/5 (0%)
-2026-04-08 09:57:14,311 [INFO] signverse — Frames=4 | hands=0/4 (0%)
-INFO:     10.16.46.123:52437 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:19,427 [INFO] signverse — Frames=6 | hands=0/6 (0%)
-INFO:     10.16.8.212:25055 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:26,155 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:30658 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:32,627 [INFO] signverse — Frames=12 | hands=5/12 (42%)
-2026-04-08 09:57:32,627 [INFO] signverse — Motion=0.13540 | skip_motion_gate=False
-2026-04-08 09:57:32,635 [INFO] signverse — Prediction: [{'sign': 'arm', 'confidence': 0.184}, {'sign': 'thirsty', 'confidence': 0.168}, {'sign': 'say', 'confidence': 0.061}] | motion=0.1354
-INFO:     10.16.11.193:59142 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:41,575 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.46.123:14830 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:47,046 [INFO] signverse — Frames=8 | hands=0/8 (0%)
-INFO:     10.16.46.123:32866 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:49,985 [INFO] signverse — Frames=4 | hands=2/4 (50%)
-2026-04-08 09:57:49,985 [INFO] signverse — Motion=0.24808 | skip_motion_gate=True
-2026-04-08 09:57:49,992 [INFO] signverse — Prediction: [{'sign': 'arm', 'confidence': 0.465}, {'sign': 'toy', 'confidence': 0.104}, {'sign': 'weus', 'confidence': 0.069}] | motion=0.2481
-INFO:     10.16.46.123:32866 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:54,158 [INFO] signverse — Frames=4 | hands=3/4 (75%)
-2026-04-08 09:57:54,158 [INFO] signverse — Motion=0.22641 | skip_motion_gate=True
-2026-04-08 09:57:54,167 [INFO] signverse — Prediction: [{'sign': 'arm', 'confidence': 0.248}, {'sign': 'thirsty', 'confidence': 0.179}, {'sign': 'say', 'confidence': 0.065}] | motion=0.2264
-INFO:     10.16.46.123:32146 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:57:58,134 [INFO] signverse — Frames=4 | hands=0/4 (0%)
-INFO:     10.16.24.44:2344 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:58:03,369 [INFO] signverse — Frames=9 | hands=0/9 (0%)
-INFO:     10.16.46.123:41606 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:58:07,299 [INFO] signverse — Frames=12 | hands=7/12 (58%)
-2026-04-08 09:58:07,299 [INFO] signverse — Motion=0.06428 | skip_motion_gate=True
-2026-04-08 09:58:07,307 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.547}, {'sign': 'say', 'confidence': 0.11}, {'sign': 'chin', 'confidence': 0.06}] | motion=0.0643
-INFO:     10.16.24.44:54595 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:58:12,990 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.46.123:18884 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:58:19,052 [INFO] signverse — Frames=12 | hands=3/12 (25%)
-2026-04-08 09:58:19,053 [INFO] signverse — Motion=0.07024 | skip_motion_gate=False
-2026-04-08 09:58:19,061 [INFO] signverse — Prediction: [{'sign': 'balloon', 'confidence': 0.201}, {'sign': 'hate', 'confidence': 0.066}, {'sign': 'there', 'confidence': 0.051}] | motion=0.0702
-INFO:     10.16.46.123:50062 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:58:22,972 [INFO] signverse — Frames=12 | hands=1/12 (8%)
-INFO:     10.16.37.110:39313 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:58:27,079 [INFO] signverse — Frames=12 | hands=2/12 (17%)
-2026-04-08 09:58:27,080 [INFO] signverse — Motion=0.09615 | skip_motion_gate=False
-2026-04-08 09:58:27,086 [INFO] signverse — Prediction: [{'sign': 'hate', 'confidence': 0.374}, {'sign': 'who', 'confidence': 0.048}, {'sign': 'hesheit', 'confidence': 0.032}] | motion=0.0961
-INFO:     10.16.8.212:36969 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:58:31,032 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.24.44:4853 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:58:58,423 [INFO] signverse — Frames=12 | hands=5/12 (42%)
-2026-04-08 09:58:58,423 [INFO] signverse — Motion=0.11292 | skip_motion_gate=False
-2026-04-08 09:58:58,430 [INFO] signverse — Prediction: [{'sign': 'who', 'confidence': 0.296}, {'sign': 'hesheit', 'confidence': 0.242}, {'sign': 'police', 'confidence': 0.041}] | motion=0.1129
-INFO:     10.16.8.212:2469 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:59:02,138 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:46827 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:59:06,202 [INFO] signverse — Frames=12 | hands=4/12 (33%)
-2026-04-08 09:59:06,202 [INFO] signverse — Motion=0.11346 | skip_motion_gate=False
-2026-04-08 09:59:06,211 [INFO] signverse — Prediction: [{'sign': 'who', 'confidence': 0.239}, {'sign': 'hesheit', 'confidence': 0.166}, {'sign': 'there', 'confidence': 0.05}] | motion=0.1135
-INFO:     10.16.37.110:46827 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:59:10,365 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.11.193:60731 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:59:18,122 [INFO] signverse — Frames=12 | hands=2/12 (17%)
-2026-04-08 09:59:18,122 [INFO] signverse — Motion=0.11615 | skip_motion_gate=False
-2026-04-08 09:59:18,133 [INFO] signverse — Prediction: [{'sign': 'who', 'confidence': 0.116}, {'sign': 'garbage', 'confidence': 0.072}, {'sign': 'person', 'confidence': 0.048}] | motion=0.1161
-INFO:     10.16.8.212:63365 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:59:22,567 [INFO] signverse — Frames=12 | hands=3/12 (25%)
-2026-04-08 09:59:22,568 [INFO] signverse — Motion=0.08424 | skip_motion_gate=False
-2026-04-08 09:59:22,575 [INFO] signverse — Prediction: [{'sign': 'time', 'confidence': 0.075}, {'sign': 'hesheit', 'confidence': 0.067}, {'sign': 'person', 'confidence': 0.058}] | motion=0.0842
-INFO:     10.16.11.193:16586 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:59:26,734 [INFO] signverse — Frames=8 | hands=0/8 (0%)
-INFO:     10.16.8.212:54658 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:59:30,165 [INFO] signverse — Frames=5 | hands=0/5 (0%)
-INFO:     10.16.46.123:6995 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:59:32,941 [INFO] signverse — Frames=4 | hands=0/4 (0%)
-INFO:     10.16.24.44:34901 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 09:59:50,663 [INFO] signverse — [sentence] Received 29 frames
-2026-04-08 09:59:52,546 [INFO] signverse — [sentence] Boundary detection found 4 segments
-2026-04-08 09:59:52,579 [INFO] signverse — [sentence] After dedup: 2 words (from 3 raw)
-2026-04-08 09:59:52,580 [INFO] signverse — [sentence] Result: 'Garbage thirsty.' (conf=0.695)
-INFO:     10.16.8.212:6566 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:00:36,979 [INFO] signverse — [sentence] Received 20 frames
-2026-04-08 10:00:38,160 [INFO] signverse — [sentence] Boundary detection found 2 segments
-2026-04-08 10:00:38,172 [INFO] signverse — [sentence] After dedup: 1 words (from 1 raw)
-2026-04-08 10:00:38,172 [INFO] signverse — [sentence] Result: 'Garbage.' (conf=0.449)
-INFO:     10.16.37.110:49446 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:00:52,500 [INFO] signverse — [sentence] Received 28 frames
-2026-04-08 10:00:54,176 [INFO] signverse — [sentence] Boundary detection found 3 segments
-2026-04-08 10:00:54,198 [INFO] signverse — [sentence] After dedup: 2 words (from 2 raw)
-2026-04-08 10:00:54,198 [INFO] signverse — [sentence] Result: 'Hat stuck.' (conf=0.504)
-INFO:     10.16.24.44:33356 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:01:18,357 [INFO] signverse — [sentence] Received 32 frames
-2026-04-08 10:01:20,252 [INFO] signverse — [sentence] Boundary detection found 3 segments
-2026-04-08 10:01:20,269 [INFO] signverse — [sentence] After dedup: 1 words (from 1 raw)
-2026-04-08 10:01:20,269 [INFO] signverse — [sentence] Result: 'Down.' (conf=0.975)
-INFO:     10.16.37.110:11149 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:01:42,976 [INFO] signverse — [sentence] Received 28 frames
-2026-04-08 10:01:44,529 [INFO] signverse — [sentence] Boundary detection found 4 segments
-2026-04-08 10:01:44,551 [INFO] signverse — [sentence] After dedup: 2 words (from 3 raw)
-2026-04-08 10:01:44,552 [INFO] signverse — [sentence] Result: 'Hello thirsty.' (conf=0.826)
-INFO:     10.16.8.212:12904 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:02:27,120 [INFO] signverse — [sentence] Received 45 frames
-2026-04-08 10:02:29,708 [INFO] signverse — [sentence] Boundary detection found 4 segments
-2026-04-08 10:02:29,729 [INFO] signverse — [sentence] After dedup: 1 words (from 3 raw)
-2026-04-08 10:02:29,730 [INFO] signverse — [sentence] Result: 'Down.' (conf=0.963)
-INFO:     10.16.8.212:14949 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:03:02,565 [INFO] signverse — [sentence] Received 40 frames
-2026-04-08 10:03:04,974 [INFO] signverse — [sentence] Boundary detection found 3 segments
-2026-04-08 10:03:04,992 [INFO] signverse — [sentence] After dedup: 2 words (from 2 raw)
-2026-04-08 10:03:04,992 [INFO] signverse — [sentence] Result: 'Down hat.' (conf=0.916)
-INFO:     10.16.24.44:12519 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-INFO:     10.16.47.45:7038 - "POST /login HTTP/1.1" 200 OK
-INFO:     10.16.46.237:19313 - "GET /api/health HTTP/1.1" 200 OK
-2026-04-08 10:18:53,168 [INFO] signverse — [sentence] Received 35 frames
-2026-04-08 10:18:55,362 [INFO] signverse — [sentence] Boundary detection found 3 segments
-2026-04-08 10:18:55,379 [INFO] signverse — [sentence] After dedup: 3 words (from 3 raw)
-2026-04-08 10:18:55,379 [INFO] signverse — [sentence] Result: 'Zipper hat down.' (conf=0.722)
-INFO:     10.16.37.110:49869 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-INFO:     10.16.37.110:38177 - "GET / HTTP/1.1" 200 OK
-2026-04-08 10:19:33,786 [INFO] signverse — [sentence] Received 36 frames
-2026-04-08 10:19:36,030 [INFO] signverse — [sentence] Boundary detection found 3 segments
-2026-04-08 10:19:36,047 [INFO] signverse — [sentence] After dedup: 1 words (from 1 raw)
-2026-04-08 10:19:36,047 [INFO] signverse — [sentence] Result: 'Cute.' (conf=0.349)
-INFO:     10.16.47.45:33832 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:22:03,749 [INFO] signverse — [sentence] Received 42 frames
-2026-04-08 10:22:06,397 [INFO] signverse — [sentence] Boundary detection found 3 segments
-2026-04-08 10:22:06,416 [INFO] signverse — [sentence] After dedup: 2 words (from 2 raw)
-2026-04-08 10:22:06,416 [INFO] signverse — [sentence] Result: 'Down hat.' (conf=0.948)
-INFO:     10.16.47.45:39198 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:23:31,685 [INFO] signverse — [sentence] Received 47 frames
-2026-04-08 10:23:34,623 [INFO] signverse — [sentence] Boundary detection found 5 segments
-2026-04-08 10:23:34,652 [INFO] signverse — [sentence] After dedup: 3 words (from 4 raw)
-2026-04-08 10:23:34,652 [INFO] signverse — [sentence] Result: 'Yes hat down.' (conf=0.753)
-INFO:     10.16.46.237:10390 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:24:37,473 [INFO] signverse — [sentence] Received 54 frames
-2026-04-08 10:24:40,902 [INFO] signverse — [sentence] Boundary detection found 5 segments
-2026-04-08 10:24:40,929 [INFO] signverse — [sentence] After dedup: 4 words (from 5 raw)
-2026-04-08 10:24:40,929 [INFO] signverse — [sentence] Result: 'On down hat sun.' (conf=0.667)
-INFO:     10.16.11.193:34550 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
-2026-04-08 10:48:56,810 [INFO] signverse — Frames=12 | hands=4/12 (33%)
-2026-04-08 10:48:56,811 [INFO] signverse — Motion=0.15556 | skip_motion_gate=False
-2026-04-08 10:48:56,848 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.81}, {'sign': 'hat', 'confidence': 0.028}, {'sign': 'morning', 'confidence': 0.024}] | motion=0.1556
-INFO:     10.16.47.45:44976 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:49:02,488 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.11.193:47461 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:49:05,889 [INFO] signverse — Frames=12 | hands=6/12 (50%)
-2026-04-08 10:49:05,889 [INFO] signverse — Motion=0.08207 | skip_motion_gate=True
-2026-04-08 10:49:05,896 [INFO] signverse — Prediction: [{'sign': 'head', 'confidence': 0.726}, {'sign': 'giraffe', 'confidence': 0.05}, {'sign': 'home', 'confidence': 0.027}] | motion=0.0821
-INFO:     10.16.12.178:7215 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:49:10,012 [INFO] signverse — Frames=12 | hands=2/12 (17%)
-2026-04-08 10:49:10,012 [INFO] signverse — Motion=0.08891 | skip_motion_gate=False
-2026-04-08 10:49:10,018 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.255}, {'sign': 'person', 'confidence': 0.192}, {'sign': 'morning', 'confidence': 0.148}] | motion=0.0889
-INFO:     10.16.12.178:7215 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:49:14,729 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.12.178:7215 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:49:18,303 [INFO] signverse — Frames=12 | hands=3/12 (25%)
-2026-04-08 10:49:18,303 [INFO] signverse — Motion=0.15115 | skip_motion_gate=False
-2026-04-08 10:49:18,310 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.457}, {'sign': 'morning', 'confidence': 0.109}, {'sign': 'person', 'confidence': 0.07}] | motion=0.1512
-INFO:     10.16.11.193:59977 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:49:21,880 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.47.45:30773 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:49:25,918 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.47.45:30773 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-INFO:     10.16.46.237:29050 - "POST /login HTTP/1.1" 200 OK
-INFO:     10.16.37.110:51853 - "GET /api/health HTTP/1.1" 200 OK
-2026-04-08 10:50:23,342 [INFO] signverse — Frames=12 | hands=4/12 (33%)
-2026-04-08 10:50:23,342 [INFO] signverse — Motion=0.11251 | skip_motion_gate=False
-2026-04-08 10:50:23,348 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.625}, {'sign': 'man', 'confidence': 0.097}, {'sign': 'brother', 'confidence': 0.049}] | motion=0.1125
-INFO:     10.16.47.45:54982 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:50:27,838 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.11.193:54667 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:50:36,923 [INFO] signverse — Frames=12 | hands=5/12 (42%)
-2026-04-08 10:50:36,923 [INFO] signverse — Motion=0.15453 | skip_motion_gate=False
-2026-04-08 10:50:36,930 [INFO] signverse — Prediction: [{'sign': 'dad', 'confidence': 0.424}, {'sign': 'hat', 'confidence': 0.299}, {'sign': 'man', 'confidence': 0.074}] | motion=0.1545
-INFO:     10.16.37.110:1706 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:50:42,809 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.11.193:8176 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:50:47,936 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.47.45:37083 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:50:54,420 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.47.45:29390 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:50:59,241 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.46.237:11825 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:02,879 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:7916 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:07,250 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.47.45:1705 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:15,119 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:38693 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:20,336 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.47.45:57189 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:24,942 [INFO] signverse — Frames=12 | hands=3/12 (25%)
-2026-04-08 10:51:24,942 [INFO] signverse — Motion=0.22409 | skip_motion_gate=False
-2026-04-08 10:51:24,949 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.317}, {'sign': 'blow', 'confidence': 0.134}, {'sign': 'goose', 'confidence': 0.104}] | motion=0.2241
-INFO:     10.16.12.178:58890 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:29,341 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:36097 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:29,585 [INFO] signverse — Frames=12 | hands=5/12 (42%)
-2026-04-08 10:51:29,585 [INFO] signverse — Motion=0.14823 | skip_motion_gate=False
-2026-04-08 10:51:29,592 [INFO] signverse — Prediction: [{'sign': 'boy', 'confidence': 0.197}, {'sign': 'dad', 'confidence': 0.073}, {'sign': 'cat', 'confidence': 0.053}] | motion=0.1482
-INFO:     10.16.12.178:51532 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:35,232 [INFO] signverse — Frames=12 | hands=2/12 (17%)
-2026-04-08 10:51:35,233 [INFO] signverse — Motion=0.29199 | skip_motion_gate=False
-2026-04-08 10:51:35,239 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.396}, {'sign': 'grandpa', 'confidence': 0.172}, {'sign': 'hat', 'confidence': 0.134}] | motion=0.2920
-INFO:     10.16.47.45:3054 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:35,928 [INFO] signverse — Frames=12 | hands=4/12 (33%)
-2026-04-08 10:51:35,928 [INFO] signverse — Motion=0.14782 | skip_motion_gate=False
-2026-04-08 10:51:35,934 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.838}, {'sign': 'bedroom', 'confidence': 0.035}, {'sign': 'will', 'confidence': 0.029}] | motion=0.1478
-INFO:     10.16.37.110:36097 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:43,399 [INFO] signverse — Frames=12 | hands=4/12 (33%)
-2026-04-08 10:51:43,399 [INFO] signverse — Motion=0.23890 | skip_motion_gate=False
-2026-04-08 10:51:43,406 [INFO] signverse — Prediction: [{'sign': 'tree', 'confidence': 0.269}, {'sign': 'hat', 'confidence': 0.23}, {'sign': 'morning', 'confidence': 0.204}] | motion=0.2389
-INFO:     10.16.12.178:42234 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:49,760 [INFO] signverse — Frames=12 | hands=2/12 (17%)
-2026-04-08 10:51:49,760 [INFO] signverse — Motion=0.09540 | skip_motion_gate=False
-2026-04-08 10:51:49,766 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.656}, {'sign': 'grass', 'confidence': 0.1}, {'sign': 'bedroom', 'confidence': 0.02}] | motion=0.0954
-INFO:     10.16.37.110:1428 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:55,946 [INFO] signverse — Frames=12 | hands=10/12 (83%)
-2026-04-08 10:51:55,947 [INFO] signverse — Motion=0.07604 | skip_motion_gate=True
-2026-04-08 10:51:55,954 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.801}, {'sign': 'nap', 'confidence': 0.084}, {'sign': 'bedroom', 'confidence': 0.03}] | motion=0.0760
-INFO:     10.16.12.178:27823 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:51:57,029 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.12.178:64209 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:52:02,221 [INFO] signverse — Frames=12 | hands=1/12 (8%)
-INFO:     10.16.12.178:64209 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:52:06,251 [INFO] signverse — Frames=12 | hands=8/12 (67%)
-2026-04-08 10:52:06,251 [INFO] signverse — Motion=0.07034 | skip_motion_gate=True
-2026-04-08 10:52:06,257 [INFO] signverse — Prediction: [{'sign': 'nap', 'confidence': 0.514}, {'sign': 'bed', 'confidence': 0.373}, {'sign': 'bedroom', 'confidence': 0.019}] | motion=0.0703
-INFO:     10.16.11.193:7702 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:52:08,286 [INFO] signverse — Frames=12 | hands=4/12 (33%)
-2026-04-08 10:52:08,286 [INFO] signverse — Motion=0.08429 | skip_motion_gate=False
-2026-04-08 10:52:08,292 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.366}, {'sign': 'bedroom', 'confidence': 0.246}, {'sign': 'grass', 'confidence': 0.083}] | motion=0.0843
-INFO:     10.16.46.237:11173 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:52:09,801 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:1478 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:52:14,211 [INFO] signverse — Frames=12 | hands=5/12 (42%)
-2026-04-08 10:52:14,211 [INFO] signverse — Motion=0.21696 | skip_motion_gate=False
-2026-04-08 10:52:14,218 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.949}, {'sign': 'bedroom', 'confidence': 0.009}, {'sign': 'nap', 'confidence': 0.008}] | motion=0.2170
-INFO:     10.16.37.110:1478 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:52:17,363 [INFO] signverse — Frames=12 | hands=1/12 (8%)
-INFO:     10.16.12.178:4702 - "POST /api/sign-to-text HTTP/1.1" 200 OK
-2026-04-08 10:52:22,831 [INFO] signverse — Frames=12 | hands=0/12 (0%)
-INFO:     10.16.37.110:35585 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:25:48,797 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:37128 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:25:54,413 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:9279 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:25:58,345 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:36489 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:01,044 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:13301 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:05,575 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:15030 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:15,385 [INFO] signverse — Frames=20 | hands=13/20 (65%)
+2026-04-08 11:26:15,386 [INFO] signverse — Motion=0.10193 | skip_motion_gate=True
+2026-04-08 11:26:15,397 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.858}, {'sign': 'feet', 'confidence': 0.042}, {'sign': 'dance', 'confidence': 0.013}] | motion=0.1019
+INFO:     10.16.37.110:19873 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:22,409 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:26:22,409 [INFO] signverse — Motion=0.11357 | skip_motion_gate=False
+2026-04-08 11:26:22,422 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.423}, {'sign': 'hat', 'confidence': 0.122}, {'sign': 'man', 'confidence': 0.104}] | motion=0.1136
+INFO:     10.16.11.193:4663 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:29,368 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:26:29,369 [INFO] signverse — Motion=0.07545 | skip_motion_gate=False
+2026-04-08 11:26:29,387 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.887}, {'sign': 'hat', 'confidence': 0.016}, {'sign': 'fireman', 'confidence': 0.012}] | motion=0.0755
+INFO:     10.16.47.45:8897 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:36,152 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:26:36,152 [INFO] signverse — Motion=0.05287 | skip_motion_gate=False
+2026-04-08 11:26:36,192 [INFO] signverse — Prediction: [{'sign': 'store', 'confidence': 0.183}, {'sign': 'another', 'confidence': 0.166}, {'sign': 'stairs', 'confidence': 0.097}] | motion=0.0529
+INFO:     10.16.12.178:57740 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:47,336 [INFO] signverse — Frames=17 | hands=0/17 (0%)
+INFO:     10.16.47.45:28148 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:54,162 [INFO] signverse — Frames=20 | hands=10/20 (50%)
+2026-04-08 11:26:54,163 [INFO] signverse — Motion=0.09925 | skip_motion_gate=True
+2026-04-08 11:26:54,179 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.27}, {'sign': 'yes', 'confidence': 0.255}, {'sign': 'drop', 'confidence': 0.234}] | motion=0.0992
+INFO:     10.16.47.45:56226 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:00,801 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.12.178:19637 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:04,444 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:27:04,445 [INFO] signverse — Motion=0.05345 | skip_motion_gate=False
+2026-04-08 11:27:04,475 [INFO] signverse — Prediction: [{'sign': 'zipper', 'confidence': 0.368}, {'sign': 'dance', 'confidence': 0.128}, {'sign': 'morning', 'confidence': 0.051}] | motion=0.0534
+INFO:     10.16.11.193:65020 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:12,807 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.12.178:13418 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:22,883 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:27:22,883 [INFO] signverse — Motion=0.06168 | skip_motion_gate=False
+2026-04-08 11:27:22,910 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.574}, {'sign': 'feet', 'confidence': 0.065}, {'sign': 'stairs', 'confidence': 0.044}] | motion=0.0617
+INFO:     10.16.46.237:19094 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:29,063 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:19094 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:35,435 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.47.45:6692 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:40,020 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:27:40,021 [INFO] signverse — Motion=0.05658 | skip_motion_gate=False
+2026-04-08 11:27:40,043 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.296}, {'sign': 'garbage', 'confidence': 0.192}, {'sign': 'man', 'confidence': 0.171}] | motion=0.0566
+INFO:     10.16.37.110:21805 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:47,107 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.11.193:59654 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:54,097 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-08 11:27:54,099 [INFO] signverse — Motion=0.04668 | skip_motion_gate=False
+2026-04-08 11:27:54,151 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.741}, {'sign': 'hat', 'confidence': 0.066}, {'sign': 'close', 'confidence': 0.034}] | motion=0.0467
+INFO:     10.16.46.237:42123 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:00,295 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:5837 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:03,931 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:4697 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:12,448 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:28:12,448 [INFO] signverse — Motion=0.19263 | skip_motion_gate=False
+2026-04-08 11:28:12,475 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.972}, {'sign': 'night', 'confidence': 0.011}, {'sign': 'into', 'confidence': 0.005}] | motion=0.1926
+INFO:     10.16.47.45:61383 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:18,172 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:45014 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:25,623 [INFO] signverse — Frames=20 | hands=14/20 (70%)
+2026-04-08 11:28:25,623 [INFO] signverse — Motion=0.15967 | skip_motion_gate=True
+2026-04-08 11:28:25,656 [INFO] signverse — Prediction: [{'sign': 'pig', 'confidence': 0.436}, {'sign': 'elephant', 'confidence': 0.246}, {'sign': 'smile', 'confidence': 0.031}] | motion=0.1597
+INFO:     10.16.37.110:32810 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:31,648 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:39021 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:39,018 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:38471 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:46,039 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:28:46,039 [INFO] signverse — Motion=0.04746 | skip_motion_gate=False
+2026-04-08 11:28:46,094 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.263}, {'sign': 'bedroom', 'confidence': 0.166}, {'sign': 'nap', 'confidence': 0.11}] | motion=0.0475
+INFO:     10.16.37.110:54100 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:53,331 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:28:53,331 [INFO] signverse — Motion=0.05188 | skip_motion_gate=False
+2026-04-08 11:28:53,370 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.121}, {'sign': 'grass', 'confidence': 0.09}, {'sign': 'give', 'confidence': 0.082}] | motion=0.0519
+INFO:     10.16.46.237:43767 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:03,494 [INFO] signverse — Frames=20 | hands=15/20 (75%)
+2026-04-08 11:29:03,494 [INFO] signverse — Motion=0.20204 | skip_motion_gate=True
+2026-04-08 11:29:03,505 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.674}, {'sign': 'nap', 'confidence': 0.149}, {'sign': 'grass', 'confidence': 0.043}] | motion=0.2020
+INFO:     10.16.46.237:14725 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:15,815 [INFO] signverse — Frames=20 | hands=16/20 (80%)
+2026-04-08 11:29:15,816 [INFO] signverse — Motion=0.08351 | skip_motion_gate=True
+2026-04-08 11:29:15,842 [INFO] signverse — Prediction: [{'sign': 'nap', 'confidence': 0.696}, {'sign': 'bed', 'confidence': 0.159}, {'sign': 'bedroom', 'confidence': 0.016}] | motion=0.0835
+INFO:     10.16.37.110:43170 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:20,789 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:43170 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:24,419 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:29:24,420 [INFO] signverse — Motion=0.05548 | skip_motion_gate=False
+2026-04-08 11:29:24,454 [INFO] signverse — Prediction: [{'sign': 'give', 'confidence': 0.255}, {'sign': 'fast', 'confidence': 0.076}, {'sign': 'zipper', 'confidence': 0.073}] | motion=0.0555
+INFO:     10.16.47.45:62064 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:31,572 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:29:31,573 [INFO] signverse — Motion=0.09295 | skip_motion_gate=False
+2026-04-08 11:29:31,590 [INFO] signverse — Prediction: [{'sign': 'give', 'confidence': 0.33}, {'sign': 'zipper', 'confidence': 0.075}, {'sign': 'dry', 'confidence': 0.058}] | motion=0.0929
+INFO:     10.16.46.237:22720 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:41,531 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:20566 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:48,796 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:29:48,797 [INFO] signverse — Motion=0.08162 | skip_motion_gate=False
+2026-04-08 11:29:48,842 [INFO] signverse — Prediction: [{'sign': 'zipper', 'confidence': 0.091}, {'sign': 'give', 'confidence': 0.085}, {'sign': 'dry', 'confidence': 0.074}] | motion=0.0816
+INFO:     10.16.47.45:3337 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:57,075 [INFO] signverse — Frames=20 | hands=12/20 (60%)
+2026-04-08 11:29:57,076 [INFO] signverse — Motion=0.07708 | skip_motion_gate=True
+2026-04-08 11:29:57,084 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.439}, {'sign': 'chin', 'confidence': 0.123}, {'sign': 'say', 'confidence': 0.086}] | motion=0.0771
+INFO:     10.16.37.110:30920 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:03,091 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:13792 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:10,569 [INFO] signverse — Frames=20 | hands=12/20 (60%)
+2026-04-08 11:30:10,569 [INFO] signverse — Motion=0.04780 | skip_motion_gate=True
+2026-04-08 11:30:10,592 [INFO] signverse — Prediction: [{'sign': 'arm', 'confidence': 0.863}, {'sign': 'down', 'confidence': 0.016}, {'sign': 'hesheit', 'confidence': 0.008}] | motion=0.0478
+INFO:     10.16.11.193:13815 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:20,271 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:30:20,271 [INFO] signverse — Motion=0.08563 | skip_motion_gate=False
+2026-04-08 11:30:20,304 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.29}, {'sign': 'chin', 'confidence': 0.176}, {'sign': 'say', 'confidence': 0.142}] | motion=0.0856
+INFO:     10.16.47.45:42263 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:27,344 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:43054 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:31,280 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:30:31,281 [INFO] signverse — Motion=0.08829 | skip_motion_gate=False
+2026-04-08 11:30:31,292 [INFO] signverse — Prediction: [{'sign': 'grass', 'confidence': 0.259}, {'sign': 'clown', 'confidence': 0.088}, {'sign': 'home', 'confidence': 0.048}] | motion=0.0883
+INFO:     10.16.46.237:10286 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:38,252 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:35010 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:48,292 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:46543 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:55,833 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.37.110:3735 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:01,947 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:23634 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:06,029 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:31:06,029 [INFO] signverse — Motion=0.06435 | skip_motion_gate=False
+2026-04-08 11:31:06,060 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.813}, {'sign': 'owl', 'confidence': 0.032}, {'sign': 'man', 'confidence': 0.013}] | motion=0.0643
+INFO:     10.16.12.178:32871 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:13,063 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:31:13,064 [INFO] signverse — Motion=0.06890 | skip_motion_gate=False
+2026-04-08 11:31:13,094 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.292}, {'sign': 'brother', 'confidence': 0.09}, {'sign': 'stairs', 'confidence': 0.078}] | motion=0.0689
+INFO:     10.16.37.110:61549 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:20,027 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:31:20,027 [INFO] signverse — Motion=0.05860 | skip_motion_gate=False
+2026-04-08 11:31:20,084 [INFO] signverse — Prediction: [{'sign': 'another', 'confidence': 0.175}, {'sign': 'jump', 'confidence': 0.08}, {'sign': 'stairs', 'confidence': 0.079}] | motion=0.0586
+INFO:     10.16.12.178:23222 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:26,992 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:31:26,993 [INFO] signverse — Motion=0.06153 | skip_motion_gate=False
+2026-04-08 11:31:27,019 [INFO] signverse — Prediction: [{'sign': 'store', 'confidence': 0.288}, {'sign': 'stairs', 'confidence': 0.115}, {'sign': 'down', 'confidence': 0.107}] | motion=0.0615
+INFO:     10.16.47.45:8936 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:37,530 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:31:37,531 [INFO] signverse — Motion=0.06082 | skip_motion_gate=False
+2026-04-08 11:31:37,544 [INFO] signverse — Prediction: [{'sign': 'another', 'confidence': 0.234}, {'sign': 'drop', 'confidence': 0.117}, {'sign': 'store', 'confidence': 0.061}] | motion=0.0608
+INFO:     10.16.11.193:25242 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:45,135 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:31:45,136 [INFO] signverse — Motion=0.09872 | skip_motion_gate=False
+2026-04-08 11:31:45,205 [INFO] signverse — Prediction: [{'sign': 'later', 'confidence': 0.55}, {'sign': 'yourself', 'confidence': 0.116}, {'sign': 'brother', 'confidence': 0.021}] | motion=0.0987
+INFO:     10.16.46.237:18554 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:52,474 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:31:52,475 [INFO] signverse — Motion=0.06172 | skip_motion_gate=False
+2026-04-08 11:31:52,599 [INFO] signverse — Prediction: [{'sign': 'moon', 'confidence': 0.965}, {'sign': 'up', 'confidence': 0.003}, {'sign': 'for', 'confidence': 0.003}] | motion=0.0617
+INFO:     10.16.12.178:50190 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:59,274 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.47.45:21992 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.11.193:14034 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:05,259 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+2026-04-08 11:32:09,642 [INFO] signverse — Frames=20 | hands=15/20 (75%)
+2026-04-08 11:32:09,642 [INFO] signverse — Motion=0.04697 | skip_motion_gate=True
+2026-04-08 11:32:09,682 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.684}, {'sign': 'nap', 'confidence': 0.139}, {'sign': 'grass', 'confidence': 0.034}] | motion=0.0470
+INFO:     10.16.37.110:23549 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:20,549 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:32:20,550 [INFO] signverse — Motion=0.05095 | skip_motion_gate=False
+2026-04-08 11:32:20,619 [INFO] signverse — Prediction: [{'sign': 'nap', 'confidence': 0.378}, {'sign': 'bedroom', 'confidence': 0.167}, {'sign': 'bed', 'confidence': 0.167}] | motion=0.0510
+INFO:     10.16.11.193:1609 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:27,290 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:32:27,291 [INFO] signverse — Motion=0.05469 | skip_motion_gate=False
+2026-04-08 11:32:27,299 [INFO] signverse — Prediction: [{'sign': 'giraffe', 'confidence': 0.401}, {'sign': 'better', 'confidence': 0.118}, {'sign': 'flag', 'confidence': 0.079}] | motion=0.0547
+INFO:     10.16.46.237:31882 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:37,350 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-08 11:32:37,351 [INFO] signverse — Motion=0.05844 | skip_motion_gate=False
+2026-04-08 11:32:37,393 [INFO] signverse — Prediction: [{'sign': 'napkin', 'confidence': 0.152}, {'sign': 'flower', 'confidence': 0.064}, {'sign': 'any', 'confidence': 0.06}] | motion=0.0584
+INFO:     10.16.11.193:19407 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:44,336 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.11.193:36461 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:51,291 [INFO] signverse — Frames=20 | hands=10/20 (50%)
+2026-04-08 11:32:51,292 [INFO] signverse — Motion=0.04974 | skip_motion_gate=True
+2026-04-08 11:32:51,311 [INFO] signverse — Prediction: [{'sign': 'sleep', 'confidence': 0.367}, {'sign': 'drink', 'confidence': 0.07}, {'sign': 'nap', 'confidence': 0.04}] | motion=0.0497
+INFO:     10.16.12.178:35543 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:58,255 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:32:58,256 [INFO] signverse — Motion=0.06554 | skip_motion_gate=False
+2026-04-08 11:32:58,284 [INFO] signverse — Prediction: [{'sign': 'dirty', 'confidence': 0.782}, {'sign': 'table', 'confidence': 0.053}, {'sign': 'pig', 'confidence': 0.029}] | motion=0.0655
+INFO:     10.16.12.178:1577 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:05,359 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:5449 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:12,143 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:33:12,143 [INFO] signverse — Motion=0.10557 | skip_motion_gate=False
+2026-04-08 11:33:12,187 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.831}, {'sign': 'blow', 'confidence': 0.025}, {'sign': 'goose', 'confidence': 0.014}] | motion=0.1056
+INFO:     10.16.47.45:54331 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:19,026 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:5622 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:26,404 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:33:26,405 [INFO] signverse — Motion=0.35713 | skip_motion_gate=False
+2026-04-08 11:33:26,627 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.375}, {'sign': 'hat', 'confidence': 0.22}, {'sign': 'fireman', 'confidence': 0.105}] | motion=0.3571
+INFO:     10.16.11.193:15604 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:33,707 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-08 11:33:33,708 [INFO] signverse — Motion=0.17789 | skip_motion_gate=False
+2026-04-08 11:33:33,914 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.409}, {'sign': 'grandpa', 'confidence': 0.199}, {'sign': 'man', 'confidence': 0.048}] | motion=0.1779
+INFO:     10.16.46.237:45456 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:40,233 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.37.110:37294 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:47,314 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:33:47,314 [INFO] signverse — Motion=0.10415 | skip_motion_gate=False
+2026-04-08 11:33:47,327 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.362}, {'sign': 'will', 'confidence': 0.079}, {'sign': 'hat', 'confidence': 0.034}] | motion=0.1041
+INFO:     10.16.11.193:16063 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:54,289 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.46.237:1348 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:02,394 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:34:02,394 [INFO] signverse — Motion=0.12282 | skip_motion_gate=False
+2026-04-08 11:34:02,405 [INFO] signverse — Prediction: [{'sign': 'underwear', 'confidence': 0.094}, {'sign': 'mouth', 'confidence': 0.068}, {'sign': 'face', 'confidence': 0.066}] | motion=0.1228
+INFO:     10.16.11.193:12300 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:12,799 [INFO] signverse — Frames=20 | hands=12/20 (60%)
+2026-04-08 11:34:12,800 [INFO] signverse — Motion=0.20295 | skip_motion_gate=True
+2026-04-08 11:34:13,151 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.678}, {'sign': 'hat', 'confidence': 0.121}, {'sign': 'grandpa', 'confidence': 0.02}] | motion=0.2029
+INFO:     10.16.11.193:37618 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:22,296 [INFO] signverse — Frames=20 | hands=11/20 (55%)
+2026-04-08 11:34:22,298 [INFO] signverse — Motion=0.15226 | skip_motion_gate=True
+2026-04-08 11:34:22,318 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.422}, {'sign': 'dad', 'confidence': 0.103}, {'sign': 'man', 'confidence': 0.084}] | motion=0.1523
+INFO:     10.16.47.45:23610 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:28,944 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:34:28,944 [INFO] signverse — Motion=0.05521 | skip_motion_gate=False
+INFO:     10.16.37.110:14734 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:28,968 [INFO] signverse — Prediction: [{'sign': 'stairs', 'confidence': 0.218}, {'sign': 'store', 'confidence': 0.121}, {'sign': 'down', 'confidence': 0.105}] | motion=0.0552
+2026-04-08 11:34:35,883 [INFO] signverse — Frames=20 | hands=11/20 (55%)
+2026-04-08 11:34:35,883 [INFO] signverse — Motion=0.06288 | skip_motion_gate=True
+2026-04-08 11:34:35,891 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.34}, {'sign': 'stairs', 'confidence': 0.097}, {'sign': 'store', 'confidence': 0.073}] | motion=0.0629
+INFO:     10.16.37.110:47431 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:42,674 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:20483 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:53,374 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:25660 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:59,250 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+INFO:     10.16.47.45:15430 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:10,308 [INFO] signverse — Frames=11 | hands=3/11 (27%)
+2026-04-08 11:35:10,308 [INFO] signverse — Motion=0.23439 | skip_motion_gate=False
+2026-04-08 11:35:10,324 [INFO] signverse — Prediction: [{'sign': 'napkin', 'confidence': 0.358}, {'sign': 'flower', 'confidence': 0.23}, {'sign': 'grass', 'confidence': 0.08}] | motion=0.2344
+INFO:     10.16.47.45:20996 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.47.45:63808 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:20,008 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+2026-04-08 11:35:28,552 [INFO] signverse — Frames=20 | hands=8/20 (40%)
+2026-04-08 11:35:28,553 [INFO] signverse — Motion=0.08788 | skip_motion_gate=False
+2026-04-08 11:35:28,565 [INFO] signverse — Prediction: [{'sign': 'morning', 'confidence': 0.386}, {'sign': 'bed', 'confidence': 0.233}, {'sign': 'bad', 'confidence': 0.066}] | motion=0.0879
+INFO:     10.16.12.178:55006 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:36,189 [INFO] signverse — Frames=20 | hands=10/20 (50%)
+2026-04-08 11:35:36,189 [INFO] signverse — Motion=0.05283 | skip_motion_gate=True
+2026-04-08 11:35:36,222 [INFO] signverse — Prediction: [{'sign': 'mitten', 'confidence': 0.151}, {'sign': 'morning', 'confidence': 0.102}, {'sign': 'hat', 'confidence': 0.091}] | motion=0.0528
+INFO:     10.16.12.178:29590 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:42,296 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:32601 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:46,511 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:35:46,512 [INFO] signverse — Motion=0.05644 | skip_motion_gate=False
+2026-04-08 11:35:46,588 [INFO] signverse — Prediction: [{'sign': 'morning', 'confidence': 0.263}, {'sign': 'garbage', 'confidence': 0.201}, {'sign': 'bed', 'confidence': 0.098}] | motion=0.0564
+INFO:     10.16.11.193:56832 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:53,485 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:13940 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:02,289 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:5448 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:09,115 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+INFO:     10.16.46.237:45784 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:21,224 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:36:21,224 [INFO] signverse — Motion=0.08272 | skip_motion_gate=False
+2026-04-08 11:36:21,244 [INFO] signverse — Prediction: [{'sign': 'every', 'confidence': 0.671}, {'sign': 'brother', 'confidence': 0.07}, {'sign': 'elephant', 'confidence': 0.02}] | motion=0.0827
+INFO:     10.16.12.178:9299 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:28,521 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:36:28,521 [INFO] signverse — Motion=0.09832 | skip_motion_gate=False
+2026-04-08 11:36:28,568 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.396}, {'sign': 'jump', 'confidence': 0.09}, {'sign': 'grass', 'confidence': 0.054}] | motion=0.0983
+INFO:     10.16.47.45:44205 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:36,797 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-08 11:36:36,797 [INFO] signverse — Motion=0.07365 | skip_motion_gate=False
+2026-04-08 11:36:36,819 [INFO] signverse — Prediction: [{'sign': 'cute', 'confidence': 0.536}, {'sign': 'grass', 'confidence': 0.109}, {'sign': 'jump', 'confidence': 0.022}] | motion=0.0737
+INFO:     10.16.11.193:5069 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:42,601 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:5401 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:48,635 [INFO] signverse — Frames=13 | hands=0/13 (0%)
+INFO:     10.16.12.178:1598 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:58,449 [INFO] signverse — Frames=10 | hands=1/10 (10%)
+INFO:     10.16.37.110:60936 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:37:09,039 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.11.193:2312 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:37:19,072 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+INFO:     10.16.37.110:14049 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:37:30,606 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.12.178:38546 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.11.193:10941 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:37:40,076 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+2026-04-08 11:37:51,230 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.37.110:31735 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:02,947 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.47.45:8011 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:10,059 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:46011 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:25,215 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:38:25,215 [INFO] signverse — Motion=0.06253 | skip_motion_gate=False
+2026-04-08 11:38:25,242 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.389}, {'sign': 'man', 'confidence': 0.094}, {'sign': 'shower', 'confidence': 0.075}] | motion=0.0625
+INFO:     10.16.11.193:12370 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:31,629 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:53027 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:37,933 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:53027 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:44,744 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:11287 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:51,374 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:24468 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:54,600 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.37.110:37572 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.37.110:54508 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:04,056 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+2026-04-08 11:39:15,336 [INFO] signverse — Frames=11 | hands=6/11 (55%)
+2026-04-08 11:39:15,336 [INFO] signverse — Motion=0.24120 | skip_motion_gate=True
+2026-04-08 11:39:15,403 [INFO] signverse — Prediction: [{'sign': 'grass', 'confidence': 0.278}, {'sign': 'flower', 'confidence': 0.124}, {'sign': 'bed', 'confidence': 0.056}] | motion=0.2412
+INFO:     10.16.12.178:23305 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:25,963 [INFO] signverse — Frames=10 | hands=1/10 (10%)
+INFO:     10.16.46.237:22152 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:35,217 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:39:35,217 [INFO] signverse — Motion=0.12931 | skip_motion_gate=False
+2026-04-08 11:39:35,242 [INFO] signverse — Prediction: [{'sign': 'chin', 'confidence': 0.36}, {'sign': 'thirsty', 'confidence': 0.179}, {'sign': 'police', 'confidence': 0.149}] | motion=0.1293
+INFO:     10.16.46.237:40619 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.12.178:2803 - "GET / HTTP/1.1" 200 OK
+2026-04-08 11:39:41,207 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:29805 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:48,434 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.37.110:16742 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:54,520 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:59507 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:01,564 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:35564 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:08,357 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:52160 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:12,319 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:42333 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:19,736 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:40:19,736 [INFO] signverse — Motion=0.08652 | skip_motion_gate=False
+2026-04-08 11:40:19,757 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.204}, {'sign': 'chin', 'confidence': 0.146}, {'sign': 'weus', 'confidence': 0.085}] | motion=0.0865
+INFO:     10.16.47.45:50869 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:26,535 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:61813 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:33,884 [INFO] signverse — Frames=16 | hands=0/16 (0%)
+INFO:     10.16.11.193:49429 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.11.193:49429 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:40,320 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+2026-04-08 11:40:47,200 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:46626 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:54,633 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:40:54,634 [INFO] signverse — Motion=0.05339 | skip_motion_gate=False
+2026-04-08 11:40:54,670 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.454}, {'sign': 'red', 'confidence': 0.075}, {'sign': 'dry', 'confidence': 0.044}] | motion=0.0534
+INFO:     10.16.37.110:55299 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:00,941 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:9821 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:04,629 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:9821 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:11,271 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:34068 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:16,751 [INFO] signverse — Frames=8 | hands=0/8 (0%)
+INFO:     10.16.46.237:46429 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:28,095 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.12.178:62917 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:31,405 [INFO] signverse — Frames=8 | hands=0/8 (0%)
+INFO:     10.16.47.45:15686 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:35,820 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:43649 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:39,841 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:41:39,842 [INFO] signverse — Motion=0.04145 | skip_motion_gate=False
+2026-04-08 11:41:39,861 [INFO] signverse — Prediction: [{'sign': 'old', 'confidence': 0.416}, {'sign': 'underwear', 'confidence': 0.12}, {'sign': 'water', 'confidence': 0.052}] | motion=0.0414
+INFO:     10.16.12.178:38159 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:46,767 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:47320 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:53,555 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:41:53,556 [INFO] signverse — Motion=0.05934 | skip_motion_gate=False
+2026-04-08 11:41:53,580 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.805}, {'sign': 'store', 'confidence': 0.022}, {'sign': 'feet', 'confidence': 0.021}] | motion=0.0593
+INFO:     10.16.47.45:52635 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:01,366 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:42:01,367 [INFO] signverse — Motion=0.04974 | skip_motion_gate=False
+2026-04-08 11:42:01,375 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.509}, {'sign': 'nap', 'confidence': 0.116}, {'sign': 'sleep', 'confidence': 0.068}] | motion=0.0497
+INFO:     10.16.47.45:22206 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:08,620 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:42:08,622 [INFO] signverse — Motion=0.04569 | skip_motion_gate=False
+2026-04-08 11:42:08,651 [INFO] signverse — Prediction: [{'sign': 'nap', 'confidence': 0.668}, {'sign': 'bed', 'confidence': 0.072}, {'sign': 'sleep', 'confidence': 0.062}] | motion=0.0457
+INFO:     10.16.12.178:15298 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:14,866 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:15298 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:22,597 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:42:22,597 [INFO] signverse — Motion=0.10299 | skip_motion_gate=False
+2026-04-08 11:42:22,624 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.932}, {'sign': 'owl', 'confidence': 0.014}, {'sign': 'night', 'confidence': 0.01}] | motion=0.1030
+INFO:     10.16.11.193:47638 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:35,627 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:59339 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:42,847 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.37.110:62527 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:49,941 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:1956 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:52,554 [INFO] signverse — Frames=16 | hands=0/16 (0%)
+INFO:     10.16.11.193:29951 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:02,862 [INFO] signverse — Frames=15 | hands=0/15 (0%)
+INFO:     10.16.46.237:15062 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:07,586 [INFO] signverse — Frames=20 | hands=8/20 (40%)
+2026-04-08 11:43:07,589 [INFO] signverse — Motion=0.05277 | skip_motion_gate=False
+2026-04-08 11:43:07,611 [INFO] signverse — Prediction: [{'sign': 'pig', 'confidence': 0.644}, {'sign': 'goose', 'confidence': 0.05}, {'sign': 'frog', 'confidence': 0.021}] | motion=0.0528
+INFO:     10.16.11.193:6545 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:14,075 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.11.193:15090 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:21,430 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:43:21,430 [INFO] signverse — Motion=0.07867 | skip_motion_gate=False
+2026-04-08 11:43:21,477 [INFO] signverse — Prediction: [{'sign': 'icecream', 'confidence': 0.066}, {'sign': 'cloud', 'confidence': 0.062}, {'sign': 'table', 'confidence': 0.054}] | motion=0.0787
+INFO:     10.16.46.237:11576 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:27,992 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:37295 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:35,343 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:9949 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:42,602 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:1499 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:49,577 [INFO] signverse — Frames=20 | hands=12/20 (60%)
+2026-04-08 11:43:49,578 [INFO] signverse — Motion=0.06678 | skip_motion_gate=True
+2026-04-08 11:43:49,600 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.982}, {'sign': 'into', 'confidence': 0.002}, {'sign': 'owl', 'confidence': 0.001}] | motion=0.0668
+INFO:     10.16.47.45:23328 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:57,070 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:1754 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:44:04,167 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:44:04,168 [INFO] signverse — Motion=0.20530 | skip_motion_gate=False
+2026-04-08 11:44:04,188 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.517}, {'sign': 'hat', 'confidence': 0.125}, {'sign': 'man', 'confidence': 0.043}] | motion=0.2053
+INFO:     10.16.12.178:47538 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.46.237:57999 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:44:10,579 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+2026-04-08 11:44:17,038 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:44778 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:44:24,788 [INFO] signverse — Frames=20 | hands=10/20 (50%)
+2026-04-08 11:44:24,789 [INFO] signverse — Motion=0.16046 | skip_motion_gate=True
+2026-04-08 11:44:24,825 [INFO] signverse — Prediction: [{'sign': 'stairs', 'confidence': 0.152}, {'sign': 'lamp', 'confidence': 0.061}, {'sign': 'shower', 'confidence': 0.044}] | motion=0.1605
+INFO:     10.16.37.110:55012 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:44:30,440 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:3217 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:45:39,088 [INFO] signverse — [sentence] Received 46 frames
+2026-04-08 11:45:43,478 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 11:45:43,600 [INFO] signverse — [sentence] After dedup: 3 words (from 3 raw)
+2026-04-08 11:45:43,600 [INFO] signverse — [sentence] Result: 'Elephant down drink.' (conf=0.581)
+INFO:     10.16.11.193:42553 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 11:46:49,405 [INFO] signverse — [sentence] Received 47 frames
+2026-04-08 11:46:53,902 [INFO] signverse — [sentence] Boundary detection found 6 segments
+2026-04-08 11:46:53,988 [INFO] signverse — [sentence] After dedup: 3 words (from 4 raw)
+2026-04-08 11:46:53,989 [INFO] signverse — [sentence] Result: 'Pig drop bed.' (conf=0.623)
+INFO:     10.16.46.237:26820 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 11:47:24,792 [INFO] signverse — [sentence] Received 48 frames
+2026-04-08 11:47:29,348 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 11:47:29,449 [INFO] signverse — [sentence] After dedup: 3 words (from 4 raw)
+2026-04-08 11:47:29,449 [INFO] signverse — [sentence] Result: 'Yes down nap.' (conf=0.511)
+INFO:     10.16.11.193:50357 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 11:48:47,852 [INFO] signverse — [sentence] Received 60 frames
+2026-04-08 11:48:53,630 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 11:48:53,684 [INFO] signverse — [sentence] After dedup: 4 words (from 5 raw)
+2026-04-08 11:48:53,684 [INFO] signverse — [sentence] Result: 'Down hat hello nap.' (conf=0.65)
+INFO:     10.16.37.110:7048 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+INFO:     10.16.23.55:52503 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.24.44:18805 - "GET /api/health HTTP/1.1" 200 OK
+2026-04-08 15:33:30,515 [INFO] signverse — Frames=20 | hands=8/20 (40%)
+2026-04-08 15:33:30,534 [INFO] signverse — Motion=0.08222 | skip_motion_gate=False
+2026-04-08 15:33:31,063 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.934}, {'sign': 'feet', 'confidence': 0.013}, {'sign': 'high', 'confidence': 0.006}] | motion=0.0822
+INFO:     10.16.23.55:13507 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 15:33:43,251 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:21749 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 15:33:58,609 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:65063 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 15:35:23,639 [INFO] signverse — [sentence] Received 58 frames
+2026-04-08 15:35:29,591 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 15:35:29,652 [INFO] signverse — [sentence] After dedup: 5 words (from 5 raw)
+2026-04-08 15:35:29,653 [INFO] signverse — [sentence] Result: 'Drop can down bed bedroom.' (conf=0.519)
+INFO:     10.16.23.55:27343 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+INFO:     10.16.37.110:24896 - "POST /api/text-to-sign HTTP/1.1" 200 OK
+INFO:     10.16.37.110:19982 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.46.123:27247 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.46.123:27247 - "GET /api/health HTTP/1.1" 200 OK
+2026-04-09 05:13:41,344 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:5944 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:13:49,572 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:10270 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:13:56,531 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:10527 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:04,007 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:9731 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.24.44:27360 - "GET / HTTP/1.1" 200 OK
+2026-04-09 05:14:12,577 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-09 05:14:12,592 [INFO] signverse — Motion=0.10889 | skip_motion_gate=False
+2026-04-09 05:14:13,399 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.417}, {'sign': 'bed', 'confidence': 0.182}, {'sign': 'pretend', 'confidence': 0.076}] | motion=0.1089
+INFO:     10.16.23.55:7356 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:21,181 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:5842 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:24,954 [INFO] signverse — Frames=9 | hands=0/9 (0%)
+INFO:     10.16.23.55:36387 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:32,144 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-09 05:14:32,144 [INFO] signverse — Motion=0.11889 | skip_motion_gate=False
+2026-04-09 05:14:32,284 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.319}, {'sign': 'will', 'confidence': 0.294}, {'sign': 'bedroom', 'confidence': 0.072}] | motion=0.1189
+INFO:     10.16.37.110:33103 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:40,045 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:33063 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:45,602 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-09 05:14:45,603 [INFO] signverse — Motion=0.09276 | skip_motion_gate=False
+2026-04-09 05:14:45,677 [INFO] signverse — Prediction: [{'sign': 'napkin', 'confidence': 0.285}, {'sign': 'bad', 'confidence': 0.099}, {'sign': 'flower', 'confidence': 0.069}] | motion=0.0928
+INFO:     10.16.23.55:30486 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:52,335 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:60247 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:02,350 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:43090 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:12,787 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:37274 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:23,396 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:62165 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:35,230 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:17743 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:57,142 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:40905 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:18,102 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:50095 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:28,491 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:49469 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:35,650 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:39036 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:48,504 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:18378 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:57,113 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:48969 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:05,491 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:50042 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:13,579 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:44387 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:20,583 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:44387 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:29,654 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:12285 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+ 
+Till this stage I keep on performing different signs but the translation for them is not appeared on the translation box and also the container output also seemed stuck here and after some time it got refreshed and the stucked output is displayed but it also conatins multiple signs ignored in log output and on the web layout screen the translation still stucked badly processing happens continously but nothing translated.
+
+After stuck:
+===== Application Startup at 2026-04-08 11:22:04 =====
+
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2026-04-08 11:23:58,875 [INFO] signverse — Downloading asl_best.pt...
+2026-04-08 11:23:59,077 [INFO] signverse —   asl_best.pt downloaded
+2026-04-08 11:23:59,077 [INFO] signverse — Downloading sign_to_idx.json...
+2026-04-08 11:23:59,131 [INFO] signverse —   sign_to_idx.json downloaded
+2026-04-08 11:23:59,131 [INFO] signverse — Downloading signverse_asl_classifier.pt...
+2026-04-08 11:23:59,229 [INFO] signverse —   signverse_asl_classifier.pt downloaded
+2026-04-08 11:23:59,229 [INFO] signverse — Downloading class_mapping.json...
+2026-04-08 11:23:59,304 [INFO] signverse —   class_mapping.json downloaded
+/usr/local/lib/python3.11/site-packages/torch/nn/modules/transformer.py:286: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
+2026-04-08 11:23:59,356 [INFO] signverse — ASL v5 loaded — 250 classes
+2026-04-08 11:23:59,372 [INFO] signverse — Alphabet classifier loaded
+2026-04-08 11:23:59,402 [INFO] signverse — MediaPipe Holistic ready (static_image_mode=True)
+2026-04-08 11:23:59,403 [INFO] signverse — Bigram LM ready — 164 sentences, 63 vocab, 127 bigrams
+2026-04-08 11:23:59,403 [INFO] signverse — Startup complete | asl=True | holistic=True | bigram_lm=True
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:7860 (Press CTRL+C to quit)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1775647439.522627      19 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.552691      29 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.555413      24 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.555784      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.560556      23 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.575642      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.592299      23 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1775647439.592769      34 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+INFO:     10.16.47.45:3260 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.46.237:11142 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.11.193:15651 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.47.45:8696 - "GET /api/health HTTP/1.1" 200 OK
+/usr/local/lib/python3.11/site-packages/google/protobuf/symbol_database.py:55: UserWarning: SymbolDatabase.GetPrototype() is deprecated. Please use message_factory.GetMessageClass() instead. SymbolDatabase.GetPrototype() will be removed soon.
+  warnings.warn('SymbolDatabase.GetPrototype() is deprecated. Please '
+2026-04-08 11:25:48,797 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:37128 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:25:54,413 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:9279 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:25:58,345 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:36489 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:01,044 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:13301 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:05,575 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:15030 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:15,385 [INFO] signverse — Frames=20 | hands=13/20 (65%)
+2026-04-08 11:26:15,386 [INFO] signverse — Motion=0.10193 | skip_motion_gate=True
+2026-04-08 11:26:15,397 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.858}, {'sign': 'feet', 'confidence': 0.042}, {'sign': 'dance', 'confidence': 0.013}] | motion=0.1019
+INFO:     10.16.37.110:19873 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:22,409 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:26:22,409 [INFO] signverse — Motion=0.11357 | skip_motion_gate=False
+2026-04-08 11:26:22,422 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.423}, {'sign': 'hat', 'confidence': 0.122}, {'sign': 'man', 'confidence': 0.104}] | motion=0.1136
+INFO:     10.16.11.193:4663 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:29,368 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:26:29,369 [INFO] signverse — Motion=0.07545 | skip_motion_gate=False
+2026-04-08 11:26:29,387 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.887}, {'sign': 'hat', 'confidence': 0.016}, {'sign': 'fireman', 'confidence': 0.012}] | motion=0.0755
+INFO:     10.16.47.45:8897 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:36,152 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:26:36,152 [INFO] signverse — Motion=0.05287 | skip_motion_gate=False
+2026-04-08 11:26:36,192 [INFO] signverse — Prediction: [{'sign': 'store', 'confidence': 0.183}, {'sign': 'another', 'confidence': 0.166}, {'sign': 'stairs', 'confidence': 0.097}] | motion=0.0529
+INFO:     10.16.12.178:57740 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:47,336 [INFO] signverse — Frames=17 | hands=0/17 (0%)
+INFO:     10.16.47.45:28148 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:26:54,162 [INFO] signverse — Frames=20 | hands=10/20 (50%)
+2026-04-08 11:26:54,163 [INFO] signverse — Motion=0.09925 | skip_motion_gate=True
+2026-04-08 11:26:54,179 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.27}, {'sign': 'yes', 'confidence': 0.255}, {'sign': 'drop', 'confidence': 0.234}] | motion=0.0992
+INFO:     10.16.47.45:56226 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:00,801 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.12.178:19637 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:04,444 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:27:04,445 [INFO] signverse — Motion=0.05345 | skip_motion_gate=False
+2026-04-08 11:27:04,475 [INFO] signverse — Prediction: [{'sign': 'zipper', 'confidence': 0.368}, {'sign': 'dance', 'confidence': 0.128}, {'sign': 'morning', 'confidence': 0.051}] | motion=0.0534
+INFO:     10.16.11.193:65020 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:12,807 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.12.178:13418 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:22,883 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:27:22,883 [INFO] signverse — Motion=0.06168 | skip_motion_gate=False
+2026-04-08 11:27:22,910 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.574}, {'sign': 'feet', 'confidence': 0.065}, {'sign': 'stairs', 'confidence': 0.044}] | motion=0.0617
+INFO:     10.16.46.237:19094 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:29,063 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:19094 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:35,435 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.47.45:6692 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:40,020 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:27:40,021 [INFO] signverse — Motion=0.05658 | skip_motion_gate=False
+2026-04-08 11:27:40,043 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.296}, {'sign': 'garbage', 'confidence': 0.192}, {'sign': 'man', 'confidence': 0.171}] | motion=0.0566
+INFO:     10.16.37.110:21805 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:47,107 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.11.193:59654 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:27:54,097 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-08 11:27:54,099 [INFO] signverse — Motion=0.04668 | skip_motion_gate=False
+2026-04-08 11:27:54,151 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.741}, {'sign': 'hat', 'confidence': 0.066}, {'sign': 'close', 'confidence': 0.034}] | motion=0.0467
+INFO:     10.16.46.237:42123 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:00,295 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:5837 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:03,931 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:4697 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:12,448 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:28:12,448 [INFO] signverse — Motion=0.19263 | skip_motion_gate=False
+2026-04-08 11:28:12,475 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.972}, {'sign': 'night', 'confidence': 0.011}, {'sign': 'into', 'confidence': 0.005}] | motion=0.1926
+INFO:     10.16.47.45:61383 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:18,172 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:45014 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:25,623 [INFO] signverse — Frames=20 | hands=14/20 (70%)
+2026-04-08 11:28:25,623 [INFO] signverse — Motion=0.15967 | skip_motion_gate=True
+2026-04-08 11:28:25,656 [INFO] signverse — Prediction: [{'sign': 'pig', 'confidence': 0.436}, {'sign': 'elephant', 'confidence': 0.246}, {'sign': 'smile', 'confidence': 0.031}] | motion=0.1597
+INFO:     10.16.37.110:32810 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:31,648 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:39021 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:39,018 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:38471 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:46,039 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:28:46,039 [INFO] signverse — Motion=0.04746 | skip_motion_gate=False
+2026-04-08 11:28:46,094 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.263}, {'sign': 'bedroom', 'confidence': 0.166}, {'sign': 'nap', 'confidence': 0.11}] | motion=0.0475
+INFO:     10.16.37.110:54100 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:28:53,331 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:28:53,331 [INFO] signverse — Motion=0.05188 | skip_motion_gate=False
+2026-04-08 11:28:53,370 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.121}, {'sign': 'grass', 'confidence': 0.09}, {'sign': 'give', 'confidence': 0.082}] | motion=0.0519
+INFO:     10.16.46.237:43767 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:03,494 [INFO] signverse — Frames=20 | hands=15/20 (75%)
+2026-04-08 11:29:03,494 [INFO] signverse — Motion=0.20204 | skip_motion_gate=True
+2026-04-08 11:29:03,505 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.674}, {'sign': 'nap', 'confidence': 0.149}, {'sign': 'grass', 'confidence': 0.043}] | motion=0.2020
+INFO:     10.16.46.237:14725 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:15,815 [INFO] signverse — Frames=20 | hands=16/20 (80%)
+2026-04-08 11:29:15,816 [INFO] signverse — Motion=0.08351 | skip_motion_gate=True
+2026-04-08 11:29:15,842 [INFO] signverse — Prediction: [{'sign': 'nap', 'confidence': 0.696}, {'sign': 'bed', 'confidence': 0.159}, {'sign': 'bedroom', 'confidence': 0.016}] | motion=0.0835
+INFO:     10.16.37.110:43170 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:20,789 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:43170 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:24,419 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:29:24,420 [INFO] signverse — Motion=0.05548 | skip_motion_gate=False
+2026-04-08 11:29:24,454 [INFO] signverse — Prediction: [{'sign': 'give', 'confidence': 0.255}, {'sign': 'fast', 'confidence': 0.076}, {'sign': 'zipper', 'confidence': 0.073}] | motion=0.0555
+INFO:     10.16.47.45:62064 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:31,572 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:29:31,573 [INFO] signverse — Motion=0.09295 | skip_motion_gate=False
+2026-04-08 11:29:31,590 [INFO] signverse — Prediction: [{'sign': 'give', 'confidence': 0.33}, {'sign': 'zipper', 'confidence': 0.075}, {'sign': 'dry', 'confidence': 0.058}] | motion=0.0929
+INFO:     10.16.46.237:22720 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:41,531 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:20566 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:48,796 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:29:48,797 [INFO] signverse — Motion=0.08162 | skip_motion_gate=False
+2026-04-08 11:29:48,842 [INFO] signverse — Prediction: [{'sign': 'zipper', 'confidence': 0.091}, {'sign': 'give', 'confidence': 0.085}, {'sign': 'dry', 'confidence': 0.074}] | motion=0.0816
+INFO:     10.16.47.45:3337 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:29:57,075 [INFO] signverse — Frames=20 | hands=12/20 (60%)
+2026-04-08 11:29:57,076 [INFO] signverse — Motion=0.07708 | skip_motion_gate=True
+2026-04-08 11:29:57,084 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.439}, {'sign': 'chin', 'confidence': 0.123}, {'sign': 'say', 'confidence': 0.086}] | motion=0.0771
+INFO:     10.16.37.110:30920 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:03,091 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:13792 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:10,569 [INFO] signverse — Frames=20 | hands=12/20 (60%)
+2026-04-08 11:30:10,569 [INFO] signverse — Motion=0.04780 | skip_motion_gate=True
+2026-04-08 11:30:10,592 [INFO] signverse — Prediction: [{'sign': 'arm', 'confidence': 0.863}, {'sign': 'down', 'confidence': 0.016}, {'sign': 'hesheit', 'confidence': 0.008}] | motion=0.0478
+INFO:     10.16.11.193:13815 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:20,271 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:30:20,271 [INFO] signverse — Motion=0.08563 | skip_motion_gate=False
+2026-04-08 11:30:20,304 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.29}, {'sign': 'chin', 'confidence': 0.176}, {'sign': 'say', 'confidence': 0.142}] | motion=0.0856
+INFO:     10.16.47.45:42263 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:27,344 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:43054 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:31,280 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:30:31,281 [INFO] signverse — Motion=0.08829 | skip_motion_gate=False
+2026-04-08 11:30:31,292 [INFO] signverse — Prediction: [{'sign': 'grass', 'confidence': 0.259}, {'sign': 'clown', 'confidence': 0.088}, {'sign': 'home', 'confidence': 0.048}] | motion=0.0883
+INFO:     10.16.46.237:10286 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:38,252 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:35010 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:48,292 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:46543 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:30:55,833 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.37.110:3735 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:01,947 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:23634 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:06,029 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:31:06,029 [INFO] signverse — Motion=0.06435 | skip_motion_gate=False
+2026-04-08 11:31:06,060 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.813}, {'sign': 'owl', 'confidence': 0.032}, {'sign': 'man', 'confidence': 0.013}] | motion=0.0643
+INFO:     10.16.12.178:32871 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:13,063 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:31:13,064 [INFO] signverse — Motion=0.06890 | skip_motion_gate=False
+2026-04-08 11:31:13,094 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.292}, {'sign': 'brother', 'confidence': 0.09}, {'sign': 'stairs', 'confidence': 0.078}] | motion=0.0689
+INFO:     10.16.37.110:61549 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:20,027 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:31:20,027 [INFO] signverse — Motion=0.05860 | skip_motion_gate=False
+2026-04-08 11:31:20,084 [INFO] signverse — Prediction: [{'sign': 'another', 'confidence': 0.175}, {'sign': 'jump', 'confidence': 0.08}, {'sign': 'stairs', 'confidence': 0.079}] | motion=0.0586
+INFO:     10.16.12.178:23222 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:26,992 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:31:26,993 [INFO] signverse — Motion=0.06153 | skip_motion_gate=False
+2026-04-08 11:31:27,019 [INFO] signverse — Prediction: [{'sign': 'store', 'confidence': 0.288}, {'sign': 'stairs', 'confidence': 0.115}, {'sign': 'down', 'confidence': 0.107}] | motion=0.0615
+INFO:     10.16.47.45:8936 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:37,530 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:31:37,531 [INFO] signverse — Motion=0.06082 | skip_motion_gate=False
+2026-04-08 11:31:37,544 [INFO] signverse — Prediction: [{'sign': 'another', 'confidence': 0.234}, {'sign': 'drop', 'confidence': 0.117}, {'sign': 'store', 'confidence': 0.061}] | motion=0.0608
+INFO:     10.16.11.193:25242 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:45,135 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:31:45,136 [INFO] signverse — Motion=0.09872 | skip_motion_gate=False
+2026-04-08 11:31:45,205 [INFO] signverse — Prediction: [{'sign': 'later', 'confidence': 0.55}, {'sign': 'yourself', 'confidence': 0.116}, {'sign': 'brother', 'confidence': 0.021}] | motion=0.0987
+INFO:     10.16.46.237:18554 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:52,474 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:31:52,475 [INFO] signverse — Motion=0.06172 | skip_motion_gate=False
+2026-04-08 11:31:52,599 [INFO] signverse — Prediction: [{'sign': 'moon', 'confidence': 0.965}, {'sign': 'up', 'confidence': 0.003}, {'sign': 'for', 'confidence': 0.003}] | motion=0.0617
+INFO:     10.16.12.178:50190 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:31:59,274 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.47.45:21992 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.11.193:14034 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:05,259 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+2026-04-08 11:32:09,642 [INFO] signverse — Frames=20 | hands=15/20 (75%)
+2026-04-08 11:32:09,642 [INFO] signverse — Motion=0.04697 | skip_motion_gate=True
+2026-04-08 11:32:09,682 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.684}, {'sign': 'nap', 'confidence': 0.139}, {'sign': 'grass', 'confidence': 0.034}] | motion=0.0470
+INFO:     10.16.37.110:23549 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:20,549 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:32:20,550 [INFO] signverse — Motion=0.05095 | skip_motion_gate=False
+2026-04-08 11:32:20,619 [INFO] signverse — Prediction: [{'sign': 'nap', 'confidence': 0.378}, {'sign': 'bedroom', 'confidence': 0.167}, {'sign': 'bed', 'confidence': 0.167}] | motion=0.0510
+INFO:     10.16.11.193:1609 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:27,290 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:32:27,291 [INFO] signverse — Motion=0.05469 | skip_motion_gate=False
+2026-04-08 11:32:27,299 [INFO] signverse — Prediction: [{'sign': 'giraffe', 'confidence': 0.401}, {'sign': 'better', 'confidence': 0.118}, {'sign': 'flag', 'confidence': 0.079}] | motion=0.0547
+INFO:     10.16.46.237:31882 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:37,350 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-08 11:32:37,351 [INFO] signverse — Motion=0.05844 | skip_motion_gate=False
+2026-04-08 11:32:37,393 [INFO] signverse — Prediction: [{'sign': 'napkin', 'confidence': 0.152}, {'sign': 'flower', 'confidence': 0.064}, {'sign': 'any', 'confidence': 0.06}] | motion=0.0584
+INFO:     10.16.11.193:19407 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:44,336 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.11.193:36461 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:51,291 [INFO] signverse — Frames=20 | hands=10/20 (50%)
+2026-04-08 11:32:51,292 [INFO] signverse — Motion=0.04974 | skip_motion_gate=True
+2026-04-08 11:32:51,311 [INFO] signverse — Prediction: [{'sign': 'sleep', 'confidence': 0.367}, {'sign': 'drink', 'confidence': 0.07}, {'sign': 'nap', 'confidence': 0.04}] | motion=0.0497
+INFO:     10.16.12.178:35543 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:32:58,255 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:32:58,256 [INFO] signverse — Motion=0.06554 | skip_motion_gate=False
+2026-04-08 11:32:58,284 [INFO] signverse — Prediction: [{'sign': 'dirty', 'confidence': 0.782}, {'sign': 'table', 'confidence': 0.053}, {'sign': 'pig', 'confidence': 0.029}] | motion=0.0655
+INFO:     10.16.12.178:1577 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:05,359 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:5449 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:12,143 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:33:12,143 [INFO] signverse — Motion=0.10557 | skip_motion_gate=False
+2026-04-08 11:33:12,187 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.831}, {'sign': 'blow', 'confidence': 0.025}, {'sign': 'goose', 'confidence': 0.014}] | motion=0.1056
+INFO:     10.16.47.45:54331 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:19,026 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:5622 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:26,404 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:33:26,405 [INFO] signverse — Motion=0.35713 | skip_motion_gate=False
+2026-04-08 11:33:26,627 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.375}, {'sign': 'hat', 'confidence': 0.22}, {'sign': 'fireman', 'confidence': 0.105}] | motion=0.3571
+INFO:     10.16.11.193:15604 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:33,707 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-08 11:33:33,708 [INFO] signverse — Motion=0.17789 | skip_motion_gate=False
+2026-04-08 11:33:33,914 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.409}, {'sign': 'grandpa', 'confidence': 0.199}, {'sign': 'man', 'confidence': 0.048}] | motion=0.1779
+INFO:     10.16.46.237:45456 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:40,233 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.37.110:37294 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:47,314 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:33:47,314 [INFO] signverse — Motion=0.10415 | skip_motion_gate=False
+2026-04-08 11:33:47,327 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.362}, {'sign': 'will', 'confidence': 0.079}, {'sign': 'hat', 'confidence': 0.034}] | motion=0.1041
+INFO:     10.16.11.193:16063 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:33:54,289 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.46.237:1348 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:02,394 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:34:02,394 [INFO] signverse — Motion=0.12282 | skip_motion_gate=False
+2026-04-08 11:34:02,405 [INFO] signverse — Prediction: [{'sign': 'underwear', 'confidence': 0.094}, {'sign': 'mouth', 'confidence': 0.068}, {'sign': 'face', 'confidence': 0.066}] | motion=0.1228
+INFO:     10.16.11.193:12300 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:12,799 [INFO] signverse — Frames=20 | hands=12/20 (60%)
+2026-04-08 11:34:12,800 [INFO] signverse — Motion=0.20295 | skip_motion_gate=True
+2026-04-08 11:34:13,151 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.678}, {'sign': 'hat', 'confidence': 0.121}, {'sign': 'grandpa', 'confidence': 0.02}] | motion=0.2029
+INFO:     10.16.11.193:37618 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:22,296 [INFO] signverse — Frames=20 | hands=11/20 (55%)
+2026-04-08 11:34:22,298 [INFO] signverse — Motion=0.15226 | skip_motion_gate=True
+2026-04-08 11:34:22,318 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.422}, {'sign': 'dad', 'confidence': 0.103}, {'sign': 'man', 'confidence': 0.084}] | motion=0.1523
+INFO:     10.16.47.45:23610 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:28,944 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:34:28,944 [INFO] signverse — Motion=0.05521 | skip_motion_gate=False
+INFO:     10.16.37.110:14734 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:28,968 [INFO] signverse — Prediction: [{'sign': 'stairs', 'confidence': 0.218}, {'sign': 'store', 'confidence': 0.121}, {'sign': 'down', 'confidence': 0.105}] | motion=0.0552
+2026-04-08 11:34:35,883 [INFO] signverse — Frames=20 | hands=11/20 (55%)
+2026-04-08 11:34:35,883 [INFO] signverse — Motion=0.06288 | skip_motion_gate=True
+2026-04-08 11:34:35,891 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.34}, {'sign': 'stairs', 'confidence': 0.097}, {'sign': 'store', 'confidence': 0.073}] | motion=0.0629
+INFO:     10.16.37.110:47431 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:42,674 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:20483 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:53,374 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:25660 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:34:59,250 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+INFO:     10.16.47.45:15430 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:10,308 [INFO] signverse — Frames=11 | hands=3/11 (27%)
+2026-04-08 11:35:10,308 [INFO] signverse — Motion=0.23439 | skip_motion_gate=False
+2026-04-08 11:35:10,324 [INFO] signverse — Prediction: [{'sign': 'napkin', 'confidence': 0.358}, {'sign': 'flower', 'confidence': 0.23}, {'sign': 'grass', 'confidence': 0.08}] | motion=0.2344
+INFO:     10.16.47.45:20996 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.47.45:63808 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:20,008 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+2026-04-08 11:35:28,552 [INFO] signverse — Frames=20 | hands=8/20 (40%)
+2026-04-08 11:35:28,553 [INFO] signverse — Motion=0.08788 | skip_motion_gate=False
+2026-04-08 11:35:28,565 [INFO] signverse — Prediction: [{'sign': 'morning', 'confidence': 0.386}, {'sign': 'bed', 'confidence': 0.233}, {'sign': 'bad', 'confidence': 0.066}] | motion=0.0879
+INFO:     10.16.12.178:55006 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:36,189 [INFO] signverse — Frames=20 | hands=10/20 (50%)
+2026-04-08 11:35:36,189 [INFO] signverse — Motion=0.05283 | skip_motion_gate=True
+2026-04-08 11:35:36,222 [INFO] signverse — Prediction: [{'sign': 'mitten', 'confidence': 0.151}, {'sign': 'morning', 'confidence': 0.102}, {'sign': 'hat', 'confidence': 0.091}] | motion=0.0528
+INFO:     10.16.12.178:29590 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:42,296 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:32601 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:46,511 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:35:46,512 [INFO] signverse — Motion=0.05644 | skip_motion_gate=False
+2026-04-08 11:35:46,588 [INFO] signverse — Prediction: [{'sign': 'morning', 'confidence': 0.263}, {'sign': 'garbage', 'confidence': 0.201}, {'sign': 'bed', 'confidence': 0.098}] | motion=0.0564
+INFO:     10.16.11.193:56832 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:35:53,485 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:13940 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:02,289 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:5448 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:09,115 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+INFO:     10.16.46.237:45784 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:21,224 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:36:21,224 [INFO] signverse — Motion=0.08272 | skip_motion_gate=False
+2026-04-08 11:36:21,244 [INFO] signverse — Prediction: [{'sign': 'every', 'confidence': 0.671}, {'sign': 'brother', 'confidence': 0.07}, {'sign': 'elephant', 'confidence': 0.02}] | motion=0.0827
+INFO:     10.16.12.178:9299 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:28,521 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:36:28,521 [INFO] signverse — Motion=0.09832 | skip_motion_gate=False
+2026-04-08 11:36:28,568 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.396}, {'sign': 'jump', 'confidence': 0.09}, {'sign': 'grass', 'confidence': 0.054}] | motion=0.0983
+INFO:     10.16.47.45:44205 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:36,797 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-08 11:36:36,797 [INFO] signverse — Motion=0.07365 | skip_motion_gate=False
+2026-04-08 11:36:36,819 [INFO] signverse — Prediction: [{'sign': 'cute', 'confidence': 0.536}, {'sign': 'grass', 'confidence': 0.109}, {'sign': 'jump', 'confidence': 0.022}] | motion=0.0737
+INFO:     10.16.11.193:5069 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:42,601 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:5401 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:48,635 [INFO] signverse — Frames=13 | hands=0/13 (0%)
+INFO:     10.16.12.178:1598 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:36:58,449 [INFO] signverse — Frames=10 | hands=1/10 (10%)
+INFO:     10.16.37.110:60936 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:37:09,039 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.11.193:2312 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:37:19,072 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+INFO:     10.16.37.110:14049 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:37:30,606 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.12.178:38546 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.11.193:10941 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:37:40,076 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+2026-04-08 11:37:51,230 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.37.110:31735 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:02,947 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.47.45:8011 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:10,059 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:46011 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:25,215 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:38:25,215 [INFO] signverse — Motion=0.06253 | skip_motion_gate=False
+2026-04-08 11:38:25,242 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.389}, {'sign': 'man', 'confidence': 0.094}, {'sign': 'shower', 'confidence': 0.075}] | motion=0.0625
+INFO:     10.16.11.193:12370 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:31,629 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:53027 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:37,933 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:53027 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:44,744 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:11287 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:51,374 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:24468 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:38:54,600 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.37.110:37572 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.37.110:54508 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:04,056 [INFO] signverse — Frames=10 | hands=0/10 (0%)
+2026-04-08 11:39:15,336 [INFO] signverse — Frames=11 | hands=6/11 (55%)
+2026-04-08 11:39:15,336 [INFO] signverse — Motion=0.24120 | skip_motion_gate=True
+2026-04-08 11:39:15,403 [INFO] signverse — Prediction: [{'sign': 'grass', 'confidence': 0.278}, {'sign': 'flower', 'confidence': 0.124}, {'sign': 'bed', 'confidence': 0.056}] | motion=0.2412
+INFO:     10.16.12.178:23305 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:25,963 [INFO] signverse — Frames=10 | hands=1/10 (10%)
+INFO:     10.16.46.237:22152 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:35,217 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:39:35,217 [INFO] signverse — Motion=0.12931 | skip_motion_gate=False
+2026-04-08 11:39:35,242 [INFO] signverse — Prediction: [{'sign': 'chin', 'confidence': 0.36}, {'sign': 'thirsty', 'confidence': 0.179}, {'sign': 'police', 'confidence': 0.149}] | motion=0.1293
+INFO:     10.16.46.237:40619 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.12.178:2803 - "GET / HTTP/1.1" 200 OK
+2026-04-08 11:39:41,207 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:29805 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:48,434 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.37.110:16742 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:39:54,520 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:59507 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:01,564 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:35564 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:08,357 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:52160 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:12,319 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:42333 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:19,736 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:40:19,736 [INFO] signverse — Motion=0.08652 | skip_motion_gate=False
+2026-04-08 11:40:19,757 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.204}, {'sign': 'chin', 'confidence': 0.146}, {'sign': 'weus', 'confidence': 0.085}] | motion=0.0865
+INFO:     10.16.47.45:50869 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:26,535 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:61813 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:33,884 [INFO] signverse — Frames=16 | hands=0/16 (0%)
+INFO:     10.16.11.193:49429 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.11.193:49429 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:40,320 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+2026-04-08 11:40:47,200 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:46626 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:40:54,633 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:40:54,634 [INFO] signverse — Motion=0.05339 | skip_motion_gate=False
+2026-04-08 11:40:54,670 [INFO] signverse — Prediction: [{'sign': 'thirsty', 'confidence': 0.454}, {'sign': 'red', 'confidence': 0.075}, {'sign': 'dry', 'confidence': 0.044}] | motion=0.0534
+INFO:     10.16.37.110:55299 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:00,941 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:9821 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:04,629 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:9821 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:11,271 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:34068 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:16,751 [INFO] signverse — Frames=8 | hands=0/8 (0%)
+INFO:     10.16.46.237:46429 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:28,095 [INFO] signverse — Frames=11 | hands=0/11 (0%)
+INFO:     10.16.12.178:62917 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:31,405 [INFO] signverse — Frames=8 | hands=0/8 (0%)
+INFO:     10.16.47.45:15686 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:35,820 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:43649 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:39,841 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:41:39,842 [INFO] signverse — Motion=0.04145 | skip_motion_gate=False
+2026-04-08 11:41:39,861 [INFO] signverse — Prediction: [{'sign': 'old', 'confidence': 0.416}, {'sign': 'underwear', 'confidence': 0.12}, {'sign': 'water', 'confidence': 0.052}] | motion=0.0414
+INFO:     10.16.12.178:38159 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:46,767 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.11.193:47320 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:41:53,555 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-08 11:41:53,556 [INFO] signverse — Motion=0.05934 | skip_motion_gate=False
+2026-04-08 11:41:53,580 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.805}, {'sign': 'store', 'confidence': 0.022}, {'sign': 'feet', 'confidence': 0.021}] | motion=0.0593
+INFO:     10.16.47.45:52635 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:01,366 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-08 11:42:01,367 [INFO] signverse — Motion=0.04974 | skip_motion_gate=False
+2026-04-08 11:42:01,375 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.509}, {'sign': 'nap', 'confidence': 0.116}, {'sign': 'sleep', 'confidence': 0.068}] | motion=0.0497
+INFO:     10.16.47.45:22206 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:08,620 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:42:08,622 [INFO] signverse — Motion=0.04569 | skip_motion_gate=False
+2026-04-08 11:42:08,651 [INFO] signverse — Prediction: [{'sign': 'nap', 'confidence': 0.668}, {'sign': 'bed', 'confidence': 0.072}, {'sign': 'sleep', 'confidence': 0.062}] | motion=0.0457
+INFO:     10.16.12.178:15298 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:14,866 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:15298 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:22,597 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-08 11:42:22,597 [INFO] signverse — Motion=0.10299 | skip_motion_gate=False
+2026-04-08 11:42:22,624 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.932}, {'sign': 'owl', 'confidence': 0.014}, {'sign': 'night', 'confidence': 0.01}] | motion=0.1030
+INFO:     10.16.11.193:47638 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:35,627 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:59339 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:42,847 [INFO] signverse — Frames=20 | hands=1/20 (5%)
+INFO:     10.16.37.110:62527 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:49,941 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:1956 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:42:52,554 [INFO] signverse — Frames=16 | hands=0/16 (0%)
+INFO:     10.16.11.193:29951 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:02,862 [INFO] signverse — Frames=15 | hands=0/15 (0%)
+INFO:     10.16.46.237:15062 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:07,586 [INFO] signverse — Frames=20 | hands=8/20 (40%)
+2026-04-08 11:43:07,589 [INFO] signverse — Motion=0.05277 | skip_motion_gate=False
+2026-04-08 11:43:07,611 [INFO] signverse — Prediction: [{'sign': 'pig', 'confidence': 0.644}, {'sign': 'goose', 'confidence': 0.05}, {'sign': 'frog', 'confidence': 0.021}] | motion=0.0528
+INFO:     10.16.11.193:6545 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:14,075 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+INFO:     10.16.11.193:15090 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:21,430 [INFO] signverse — Frames=20 | hands=6/20 (30%)
+2026-04-08 11:43:21,430 [INFO] signverse — Motion=0.07867 | skip_motion_gate=False
+2026-04-08 11:43:21,477 [INFO] signverse — Prediction: [{'sign': 'icecream', 'confidence': 0.066}, {'sign': 'cloud', 'confidence': 0.062}, {'sign': 'table', 'confidence': 0.054}] | motion=0.0787
+INFO:     10.16.46.237:11576 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:27,992 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:37295 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:35,343 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:9949 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:42,602 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.12.178:1499 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:49,577 [INFO] signverse — Frames=20 | hands=12/20 (60%)
+2026-04-08 11:43:49,578 [INFO] signverse — Motion=0.06678 | skip_motion_gate=True
+2026-04-08 11:43:49,600 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.982}, {'sign': 'into', 'confidence': 0.002}, {'sign': 'owl', 'confidence': 0.001}] | motion=0.0668
+INFO:     10.16.47.45:23328 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:43:57,070 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.237:1754 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:44:04,167 [INFO] signverse — Frames=20 | hands=4/20 (20%)
+2026-04-08 11:44:04,168 [INFO] signverse — Motion=0.20530 | skip_motion_gate=False
+2026-04-08 11:44:04,188 [INFO] signverse — Prediction: [{'sign': 'garbage', 'confidence': 0.517}, {'sign': 'hat', 'confidence': 0.125}, {'sign': 'man', 'confidence': 0.043}] | motion=0.2053
+INFO:     10.16.12.178:47538 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.46.237:57999 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:44:10,579 [INFO] signverse — Frames=20 | hands=2/20 (10%)
+2026-04-08 11:44:17,038 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:44778 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:44:24,788 [INFO] signverse — Frames=20 | hands=10/20 (50%)
+2026-04-08 11:44:24,789 [INFO] signverse — Motion=0.16046 | skip_motion_gate=True
+2026-04-08 11:44:24,825 [INFO] signverse — Prediction: [{'sign': 'stairs', 'confidence': 0.152}, {'sign': 'lamp', 'confidence': 0.061}, {'sign': 'shower', 'confidence': 0.044}] | motion=0.1605
+INFO:     10.16.37.110:55012 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:44:30,440 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.47.45:3217 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 11:45:39,088 [INFO] signverse — [sentence] Received 46 frames
+2026-04-08 11:45:43,478 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 11:45:43,600 [INFO] signverse — [sentence] After dedup: 3 words (from 3 raw)
+2026-04-08 11:45:43,600 [INFO] signverse — [sentence] Result: 'Elephant down drink.' (conf=0.581)
+INFO:     10.16.11.193:42553 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 11:46:49,405 [INFO] signverse — [sentence] Received 47 frames
+2026-04-08 11:46:53,902 [INFO] signverse — [sentence] Boundary detection found 6 segments
+2026-04-08 11:46:53,988 [INFO] signverse — [sentence] After dedup: 3 words (from 4 raw)
+2026-04-08 11:46:53,989 [INFO] signverse — [sentence] Result: 'Pig drop bed.' (conf=0.623)
+INFO:     10.16.46.237:26820 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 11:47:24,792 [INFO] signverse — [sentence] Received 48 frames
+2026-04-08 11:47:29,348 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 11:47:29,449 [INFO] signverse — [sentence] After dedup: 3 words (from 4 raw)
+2026-04-08 11:47:29,449 [INFO] signverse — [sentence] Result: 'Yes down nap.' (conf=0.511)
+INFO:     10.16.11.193:50357 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-08 11:48:47,852 [INFO] signverse — [sentence] Received 60 frames
+2026-04-08 11:48:53,630 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 11:48:53,684 [INFO] signverse — [sentence] After dedup: 4 words (from 5 raw)
+2026-04-08 11:48:53,684 [INFO] signverse — [sentence] Result: 'Down hat hello nap.' (conf=0.65)
+INFO:     10.16.37.110:7048 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+INFO:     10.16.23.55:52503 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.24.44:18805 - "GET /api/health HTTP/1.1" 200 OK
+2026-04-08 15:33:30,515 [INFO] signverse — Frames=20 | hands=8/20 (40%)
+2026-04-08 15:33:30,534 [INFO] signverse — Motion=0.08222 | skip_motion_gate=False
+2026-04-08 15:33:31,063 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.934}, {'sign': 'feet', 'confidence': 0.013}, {'sign': 'high', 'confidence': 0.006}] | motion=0.0822
+INFO:     10.16.23.55:13507 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 15:33:43,251 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:21749 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 15:33:58,609 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:65063 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-08 15:35:23,639 [INFO] signverse — [sentence] Received 58 frames
+2026-04-08 15:35:29,591 [INFO] signverse — [sentence] Boundary detection found 5 segments
+2026-04-08 15:35:29,652 [INFO] signverse — [sentence] After dedup: 5 words (from 5 raw)
+2026-04-08 15:35:29,653 [INFO] signverse — [sentence] Result: 'Drop can down bed bedroom.' (conf=0.519)
+INFO:     10.16.23.55:27343 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+INFO:     10.16.37.110:24896 - "POST /api/text-to-sign HTTP/1.1" 200 OK
+INFO:     10.16.37.110:19982 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.46.123:27247 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.46.123:27247 - "GET /api/health HTTP/1.1" 200 OK
+2026-04-09 05:13:41,344 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:5944 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:13:49,572 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:10270 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:13:56,531 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:10527 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:04,007 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:9731 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.24.44:27360 - "GET / HTTP/1.1" 200 OK
+2026-04-09 05:14:12,577 [INFO] signverse — Frames=20 | hands=9/20 (45%)
+2026-04-09 05:14:12,592 [INFO] signverse — Motion=0.10889 | skip_motion_gate=False
+2026-04-09 05:14:13,399 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.417}, {'sign': 'bed', 'confidence': 0.182}, {'sign': 'pretend', 'confidence': 0.076}] | motion=0.1089
+INFO:     10.16.23.55:7356 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:21,181 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:5842 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:24,954 [INFO] signverse — Frames=9 | hands=0/9 (0%)
+INFO:     10.16.23.55:36387 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:32,144 [INFO] signverse — Frames=20 | hands=5/20 (25%)
+2026-04-09 05:14:32,144 [INFO] signverse — Motion=0.11889 | skip_motion_gate=False
+2026-04-09 05:14:32,284 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.319}, {'sign': 'will', 'confidence': 0.294}, {'sign': 'bedroom', 'confidence': 0.072}] | motion=0.1189
+INFO:     10.16.37.110:33103 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:40,045 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:33063 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:45,602 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-09 05:14:45,603 [INFO] signverse — Motion=0.09276 | skip_motion_gate=False
+2026-04-09 05:14:45,677 [INFO] signverse — Prediction: [{'sign': 'napkin', 'confidence': 0.285}, {'sign': 'bad', 'confidence': 0.099}, {'sign': 'flower', 'confidence': 0.069}] | motion=0.0928
+INFO:     10.16.23.55:30486 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:14:52,335 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:60247 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:02,350 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:43090 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:12,787 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:37274 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:23,396 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:62165 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:35,230 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:17743 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:15:57,142 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:40905 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:18,102 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:50095 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:28,491 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:49469 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:35,650 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:39036 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:48,504 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:18378 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:16:57,113 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:48969 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:05,491 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:50042 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:13,579 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:44387 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:20,583 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:44387 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:29,654 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:12285 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:36,739 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:22239 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:17:44,707 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:54624 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:18:00,848 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:19357 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:18:09,139 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:10228 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:18:19,592 [INFO] signverse — Frames=20 | hands=7/20 (35%)
+2026-04-09 05:18:19,592 [INFO] signverse — Motion=0.14513 | skip_motion_gate=False
+2026-04-09 05:18:19,654 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.583}, {'sign': 'hello', 'confidence': 0.164}, {'sign': 'will', 'confidence': 0.053}] | motion=0.1451
+INFO:     10.16.37.110:16136 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:18:24,780 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:55556 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:18:32,431 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:10289 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:18:40,735 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:64080 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:18:47,149 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-09 05:18:47,151 [INFO] signverse — Motion=0.09391 | skip_motion_gate=False
+2026-04-09 05:18:47,196 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.252}, {'sign': 'hello', 'confidence': 0.13}, {'sign': 'tree', 'confidence': 0.068}] | motion=0.0939
+INFO:     10.16.46.123:38639 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:18:52,731 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.24.44:20364 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:19:03,623 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:35941 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:19:10,535 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:23083 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:19:17,995 [INFO] signverse — Frames=20 | hands=11/20 (55%)
+2026-04-09 05:19:17,995 [INFO] signverse — Motion=0.13533 | skip_motion_gate=True
+2026-04-09 05:19:18,017 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.373}, {'sign': 'fireman', 'confidence': 0.077}, {'sign': 'hat', 'confidence': 0.053}] | motion=0.1353
+INFO:     10.16.23.55:24629 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:19:24,447 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:43623 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:19:31,553 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:3548 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:19:41,253 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:57289 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:19:50,230 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:29766 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:19:57,290 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:29766 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:20:02,822 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:24780 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:20:11,564 [INFO] signverse — Frames=20 | hands=8/20 (40%)
+2026-04-09 05:20:11,565 [INFO] signverse — Motion=0.20522 | skip_motion_gate=False
+2026-04-09 05:20:11,644 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.826}, {'sign': 'bedroom', 'confidence': 0.066}, {'sign': 'nap', 'confidence': 0.037}] | motion=0.2052
+INFO:     10.16.37.110:52853 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:20:17,729 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:27353 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:20:23,128 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:27353 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:20:31,994 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:1594 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:20:38,032 [INFO] signverse — Frames=20 | hands=14/20 (70%)
+2026-04-09 05:20:38,033 [INFO] signverse — Motion=0.06369 | skip_motion_gate=True
+2026-04-09 05:20:38,058 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.529}, {'sign': 'nap', 'confidence': 0.389}, {'sign': 'bedroom', 'confidence': 0.017}] | motion=0.0637
+INFO:     10.16.37.110:54345 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:20:45,242 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:54345 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:21:06,189 [INFO] signverse — Frames=20 | hands=17/20 (85%)
+2026-04-09 05:21:06,190 [INFO] signverse — Motion=0.05641 | skip_motion_gate=True
+2026-04-09 05:21:06,199 [INFO] signverse — Prediction: [{'sign': 'moon', 'confidence': 0.926}, {'sign': 'up', 'confidence': 0.026}, {'sign': 'listen', 'confidence': 0.003}] | motion=0.0564
+INFO:     10.16.37.110:16355 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:21:14,800 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:56451 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:21:37,966 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.23.55:23665 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:22:02,506 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:2046 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:22:09,884 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.37.110:2046 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:22:17,461 [INFO] signverse — Frames=20 | hands=3/20 (15%)
+2026-04-09 05:22:17,461 [INFO] signverse — Motion=0.11017 | skip_motion_gate=False
+2026-04-09 05:22:17,522 [INFO] signverse — Prediction: [{'sign': 'hello', 'confidence': 0.325}, {'sign': 'hat', 'confidence': 0.143}, {'sign': 'close', 'confidence': 0.044}] | motion=0.1102
+INFO:     10.16.23.55:43062 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-09 05:23:56,202 [INFO] signverse — Frames=20 | hands=0/20 (0%)
+INFO:     10.16.46.123:42010 - "POST /api/sign-to-text HTTP/1.1" 200 OK

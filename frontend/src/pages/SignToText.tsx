@@ -3,24 +3,18 @@ import { Link } from "react-router-dom";
 import {
   Hand, ArrowLeft, Camera, CameraOff, Volume2, Copy,
   RefreshCw, Languages, Loader2, AlertCircle, MessageSquare, Type,
-  Square,
+  Square, Circle,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
 
-/* ── Word-mode timing ─────────────────────────────────────────────────────── */
-const FRAME_INTERVAL_MS = 150;          // was 300 — 2× frame rate for better temporal data
-const SEND_INTERVAL_MS  = 3500;         // was 4000 — slightly faster feedback loop
-const MAX_FRAMES_PER_BATCH = 20;        // was 12 — more context per classification
-const MIN_FRAMES_TO_SEND = 8;           // never send fewer than this
-const TRANSLATION_HOLD_MS  = 5000;
-const CLIENT_MOTION_THRESHOLD = 3;
-const MOTION_MEMORY_MS = 2500;          // keep "in-motion" state for 2.5s after last movement
-const IDLE_BUFFER_KEEP = 10;            // keep last N frames when idle (context for sign start)
+/* ── Recording limits per mode ────────────────────────────────────────────── */
+const WORD_FRAME_INTERVAL   = 150;     // ms between captures (~6.7 fps)
+const WORD_MAX_DURATION     = 5000;    // 5 s max for a single sign
+const WORD_JPEG_QUALITY     = 0.75;
 
-/* ── Sentence-mode timing ─────────────────────────────────────────────────── */
-const SENTENCE_FRAME_INTERVAL = 200;   // faster capture for boundary detection
-const SENTENCE_MAX_DURATION   = 12000; // 12s max recording
+const SENTENCE_FRAME_INTERVAL = 200;   // ms between captures (~5 fps)
+const SENTENCE_MAX_DURATION   = 12000; // 12 s max for a sentence
 const SENTENCE_JPEG_QUALITY   = 0.65;
 
 const LANGUAGES = [
@@ -44,6 +38,7 @@ export default function SignToText() {
   /* ── Shared state ───────────────────────────────────────────────────────── */
   const [cameraOn,     setCameraOn]     = useState(false);
   const [translation,  setTranslation]  = useState("");
+  const [translatedText, setTranslatedText] = useState("");
   const [confidence,   setConfidence]   = useState<number | null>(null);
   const [status,       setStatus]       = useState("Camera off");
   const [error,        setError]        = useState("");
@@ -53,46 +48,42 @@ export default function SignToText() {
   const [backendReady, setBackendReady] = useState<boolean | null>(null);
   const [mode,         setMode]         = useState<RecognitionMode>("word");
 
-  /* ── Sentence-mode state ────────────────────────────────────────────────── */
-  const [sentenceRecording, setSentenceRecording] = useState(false);
-  const [sentenceElapsed,   setSentenceElapsed]   = useState(0);
-  const [sentenceWords,     setSentenceWords]     = useState<SentenceWord[]>([]);
-  const [sentenceReady,     setSentenceReady]     = useState<boolean | null>(null);
+  /* ── Recording state (shared between word & sentence modes) ─────────────── */
+  const [isRecording,      setIsRecording]      = useState(false);
+  const [recordingElapsed, setRecordingElapsed]  = useState(0);
+  const [sentenceWords,    setSentenceWords]     = useState<SentenceWord[]>([]);
+  const [isTranslating,    setIsTranslating]     = useState(false);
 
   /* ── Refs ────────────────────────────────────────────────────────────────── */
   const videoRef  = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const framesRef       = useRef<string[]>([]);
-  const isProcessingRef = useRef(false);
-  const languageRef     = useRef(language);
-  const lastTranslationTimeRef = useRef(0);
-  const prevFrameDataRef = useRef<ImageData | null>(null);
-  const lastMotionTimeRef = useRef(0);
-
-  const sentenceFramesRef  = useRef<string[]>([]);
-  const sentenceTimerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sentenceElapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sentenceStartRef   = useRef(0);
+  const recordingFramesRef = useRef<string[]>([]);
+  const recordingTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsedTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingStartRef  = useRef(0);
+  const isProcessingRef    = useRef(false);
+  const languageRef        = useRef(language);
+  const modeRef            = useRef(mode);
 
   useEffect(() => { languageRef.current = language; }, [language]);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+
+  const maxDuration = mode === "word" ? WORD_MAX_DURATION : SENTENCE_MAX_DURATION;
 
   /* ── Backend health check ───────────────────────────────────────────────── */
   useEffect(() => {
     fetch(`${API_BASE}/api/health`)
       .then(r => r.json())
-      .then(d => {
-        setBackendReady(d.sign2text === true);
-        setSentenceReady(d.sign2sentence === true);
-      })
-      .catch(() => { setBackendReady(false); setSentenceReady(false); });
+      .then(d => setBackendReady(d.sign2text === true))
+      .catch(() => setBackendReady(false));
   }, []);
 
   /* ══════════════════════════════════════════════════════════════════════════
-     WORD MODE — existing logic, unchanged
+     UNIFIED RECORDING LOGIC — used by both word and sentence modes
      ══════════════════════════════════════════════════════════════════════════ */
-  const captureFrame = useCallback(() => {
+  const captureRecordingFrame = useCallback(() => {
     const video  = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas || video.readyState < 2) return;
@@ -101,149 +92,73 @@ export default function SignToText() {
     canvas.width  = video.videoWidth  || 320;
     canvas.height = video.videoHeight || 240;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const currentData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    if (prevFrameDataRef.current) {
-      const prev = prevFrameDataRef.current.data;
-      const curr = currentData.data;
-      let totalDiff = 0;
-      let count = 0;
-      const step = 16;
-      for (let i = 0; i < curr.length; i += 4 * step) {
-        totalDiff += Math.abs(curr[i] - prev[i])
-                   + Math.abs(curr[i + 1] - prev[i + 1])
-                   + Math.abs(curr[i + 2] - prev[i + 2]);
-        count++;
-      }
-      if (count > 0 && totalDiff / (count * 3) > CLIENT_MOTION_THRESHOLD) {
-        lastMotionTimeRef.current = Date.now();
-      }
-    }
-    prevFrameDataRef.current = currentData;
-
-    framesRef.current.push(canvas.toDataURL("image/jpeg", 0.75));
-    if (framesRef.current.length > MAX_FRAMES_PER_BATCH * 2) {
-      framesRef.current = framesRef.current.slice(-MAX_FRAMES_PER_BATCH);
-    }
+    const q = modeRef.current === "word" ? WORD_JPEG_QUALITY : SENTENCE_JPEG_QUALITY;
+    recordingFramesRef.current.push(canvas.toDataURL("image/jpeg", q));
   }, []);
 
-  const sendFrames = useCallback(async () => {
-    if (isProcessingRef.current) return;
-    if (framesRef.current.length === 0) return;
+  const stopRecording = useCallback(() => {
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    if (elapsedTimerRef.current)   clearInterval(elapsedTimerRef.current);
+    recordingTimerRef.current = null;
+    elapsedTimerRef.current   = null;
+    setIsRecording(false);
+  }, []);
 
-    const hasRecentMotion =
-      Date.now() - lastMotionTimeRef.current < MOTION_MEMORY_MS;
-
-    if (!hasRecentMotion) {
-      // No recent motion — keep a rolling context buffer (not just 4 frames)
-      // so when the user starts signing, pre-sign frames are available
-      if (framesRef.current.length > IDLE_BUFFER_KEEP) {
-        framesRef.current = framesRef.current.slice(-IDLE_BUFFER_KEEP);
-      }
+  /* ── Translate helper ───────────────────────────────────────────────────── */
+  const translateText = useCallback(async (text: string) => {
+    if (!text || languageRef.current === "en") {
+      setTranslatedText("");
       return;
     }
-
-    // Motion detected recently, but wait until we have enough frames
-    if (framesRef.current.length < MIN_FRAMES_TO_SEND) {
-      return;
-    }
-
-    const frames = framesRef.current.slice(-MAX_FRAMES_PER_BATCH);
-    framesRef.current = [];
-
-    isProcessingRef.current = true;
-    setIsProcessing(true);
-    setError("");
-
+    setIsTranslating(true);
     try {
-      const res = await fetch(`${API_BASE}/api/sign-to-text`, {
-        method:  "POST",
+      const res = await fetch(`${API_BASE}/api/translate`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ frames, language: languageRef.current }),
+        body: JSON.stringify({ text, target: languageRef.current }),
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
-        throw new Error(err.detail || `Server error ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      if (data.no_sign_detected) {
-        if (Date.now() - lastTranslationTimeRef.current < TRANSLATION_HOLD_MS) return;
-        setStatus(data.message || "Ready — start signing to translate");
-        return;
-      }
-
-      if (data.translation && data.translation.trim()) {
-        setTranslation(data.translation);
-        setConfidence(data.confidence ?? null);
-        setStatus("Translating your signs...");
-        lastTranslationTimeRef.current = Date.now();
-        setHistory(prev => {
-          if (prev[0] === data.translation) return prev;
-          return [data.translation, ...prev.slice(0, 9)];
-        });
-
-        if (data.audio_url && languageRef.current !== "en") {
-          new Audio(data.audio_url).play().catch(() => {});
+      if (res.ok) {
+        const data = await res.json();
+        if (data.translated && data.translated !== text) {
+          setTranslatedText(data.translated);
         }
       }
-
-    } catch (e: any) {
-      setError(`Translation error: ${e.message}`);
-      setStatus("Error — retrying next batch");
+    } catch {
+      // translation is best-effort
     } finally {
-      isProcessingRef.current = false;
-      setIsProcessing(false);
+      setIsTranslating(false);
     }
   }, []);
 
-  /* ══════════════════════════════════════════════════════════════════════════
-     SENTENCE MODE — new logic
-     ══════════════════════════════════════════════════════════════════════════ */
-  const captureSentenceFrame = useCallback(() => {
-    const video  = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas || video.readyState < 2) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    canvas.width  = video.videoWidth  || 320;
-    canvas.height = video.videoHeight || 240;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    sentenceFramesRef.current.push(canvas.toDataURL("image/jpeg", SENTENCE_JPEG_QUALITY));
-  }, []);
+  const sendRecording = useCallback(async () => {
+    stopRecording();
 
-  const stopSentenceRecording = useCallback(() => {
-    if (sentenceTimerRef.current)   clearInterval(sentenceTimerRef.current);
-    if (sentenceElapsedRef.current) clearInterval(sentenceElapsedRef.current);
-    sentenceTimerRef.current   = null;
-    sentenceElapsedRef.current = null;
-    setSentenceRecording(false);
-  }, []);
-
-  const sendSentenceFrames = useCallback(async () => {
-    stopSentenceRecording();
-
-    const frames = sentenceFramesRef.current;
-    sentenceFramesRef.current = [];
+    const frames = recordingFramesRef.current;
+    recordingFramesRef.current = [];
 
     if (frames.length < 5) {
-      setError("Too few frames captured — try signing for longer");
+      setError("Too few frames captured — hold the sign a bit longer");
       return;
     }
 
     setIsProcessing(true);
     isProcessingRef.current = true;
-    setStatus("Analyzing sentence...");
     setError("");
     setSentenceWords([]);
+    setTranslatedText("");
+
+    const currentMode = modeRef.current;
+    const endpoint = currentMode === "word"
+      ? `${API_BASE}/api/sign-to-text`
+      : `${API_BASE}/api/sign-to-sentence`;
+    const statusLabel = currentMode === "word" ? "Classifying sign..." : "Analyzing sentence...";
+    setStatus(statusLabel);
 
     try {
-      const res = await fetch(`${API_BASE}/api/sign-to-sentence`, {
-        method:  "POST",
+      const res = await fetch(endpoint, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ frames, language: languageRef.current }),
+        body: JSON.stringify({ frames, language: languageRef.current }),
       });
 
       if (!res.ok) {
@@ -254,60 +169,73 @@ export default function SignToText() {
       const data = await res.json();
 
       if (data.no_sign_detected) {
-        setStatus(data.message || "No signs detected — try again");
+        setStatus(data.message || "No sign detected — try again");
         return;
       }
 
-      if (data.sentence) {
-        setTranslation(data.sentence);
+      const resultText = currentMode === "word"
+        ? data.translation
+        : data.sentence;
+
+      if (resultText && resultText.trim()) {
+        setTranslation(resultText);
         setConfidence(data.confidence ?? null);
-        setSentenceWords(data.words || []);
-        setStatus(`Detected ${data.words?.length || 0} signs → sentence`);
+        setStatus(currentMode === "word"
+          ? `Detected: ${data.sign || "sign"}`
+          : `Detected ${data.words?.length || 0} signs`);
+
+        if (currentMode === "sentence" && data.words) {
+          setSentenceWords(data.words);
+        }
+
         setHistory(prev => {
-          if (prev[0] === data.sentence) return prev;
-          return [data.sentence, ...prev.slice(0, 9)];
+          if (prev[0] === resultText) return prev;
+          return [resultText, ...prev.slice(0, 9)];
         });
 
-        if (data.audio_url && languageRef.current !== "en") {
-          new Audio(data.audio_url).play().catch(() => {});
-        }
+        translateText(resultText);
       }
     } catch (e: any) {
-      setError(`Sentence error: ${e.message}`);
-      setStatus("Error processing sentence");
+      setError(`Error: ${e.message}`);
+      setStatus("Error — try recording again");
     } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
     }
-  }, [stopSentenceRecording]);
+  }, [stopRecording, translateText]);
 
-  const startSentenceRecording = useCallback(() => {
-    sentenceFramesRef.current = [];
-    sentenceStartRef.current  = Date.now();
-    setSentenceRecording(true);
-    setSentenceElapsed(0);
+  const startRecording = useCallback(() => {
+    recordingFramesRef.current = [];
+    recordingStartRef.current  = Date.now();
+    setIsRecording(true);
+    setRecordingElapsed(0);
     setSentenceWords([]);
     setTranslation("");
+    setTranslatedText("");
     setConfidence(null);
-    setStatus("Recording sentence — sign your words, then press Done");
+    setError("");
 
-    sentenceTimerRef.current = setInterval(captureSentenceFrame, SENTENCE_FRAME_INTERVAL);
+    const currentMode = modeRef.current;
+    setStatus(currentMode === "word"
+      ? "Recording — perform your sign, then press Done"
+      : "Recording sentence — sign your words, then press Done");
 
-    sentenceElapsedRef.current = setInterval(() => {
-      const elapsed = Date.now() - sentenceStartRef.current;
-      setSentenceElapsed(elapsed);
-      if (elapsed >= SENTENCE_MAX_DURATION) {
-        sendSentenceFrames();
+    const interval = currentMode === "word" ? WORD_FRAME_INTERVAL : SENTENCE_FRAME_INTERVAL;
+    recordingTimerRef.current = setInterval(captureRecordingFrame, interval);
+
+    const dur = currentMode === "word" ? WORD_MAX_DURATION : SENTENCE_MAX_DURATION;
+    elapsedTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - recordingStartRef.current;
+      setRecordingElapsed(elapsed);
+      if (elapsed >= dur) {
+        sendRecording();
       }
     }, 200);
-  }, [captureSentenceFrame, sendSentenceFrames]);
+  }, [captureRecordingFrame, sendRecording]);
 
   /* ══════════════════════════════════════════════════════════════════════════
      CAMERA START / STOP
      ══════════════════════════════════════════════════════════════════════════ */
-  const captureTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sendTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const startCamera = async () => {
     setError("");
     try {
@@ -316,27 +244,17 @@ export default function SignToText() {
         audio: false,
       });
       streamRef.current = stream;
-      framesRef.current = [];
-      sentenceFramesRef.current = [];
+      recordingFramesRef.current = [];
       isProcessingRef.current = false;
-      lastMotionTimeRef.current = 0;
-      prevFrameDataRef.current = null;
-      lastTranslationTimeRef.current = 0;
       setCameraOn(true);
-      setStatus(mode === "word"
-        ? "Camera active — signing..."
-        : "Camera active — press Record to start sentence");
+      setStatus("Camera active — press Record to start");
 
       setTimeout(() => {
         if (videoRef.current) {
-          videoRef.current.srcObject  = stream;
-          videoRef.current.muted      = true;
+          videoRef.current.srcObject   = stream;
+          videoRef.current.muted       = true;
           videoRef.current.playsInline = true;
           videoRef.current.play().catch(console.error);
-        }
-        if (mode === "word") {
-          captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
-          sendTimerRef.current    = setInterval(sendFrames,   SEND_INTERVAL_MS);
         }
       }, 150);
     } catch {
@@ -346,61 +264,56 @@ export default function SignToText() {
   };
 
   const stopCamera = useCallback(() => {
-    if (captureTimerRef.current)    clearInterval(captureTimerRef.current);
-    if (sendTimerRef.current)       clearInterval(sendTimerRef.current);
-    if (sentenceTimerRef.current)   clearInterval(sentenceTimerRef.current);
-    if (sentenceElapsedRef.current) clearInterval(sentenceElapsedRef.current);
+    stopRecording();
     streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current       = null;
-    framesRef.current       = [];
-    sentenceFramesRef.current = [];
+    streamRef.current = null;
+    recordingFramesRef.current = [];
     isProcessingRef.current = false;
-    lastMotionTimeRef.current = 0;
-    prevFrameDataRef.current  = null;
-    lastTranslationTimeRef.current = 0;
     setCameraOn(false);
     setIsProcessing(false);
-    setSentenceRecording(false);
-    setSentenceElapsed(0);
+    setIsRecording(false);
+    setRecordingElapsed(0);
     setStatus("Camera off");
-  }, []);
+  }, [stopRecording]);
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
-  /* ── Mode switch (stop timers, restart appropriate ones) ────────────────── */
+  /* ── Mode switch ────────────────────────────────────────────────────────── */
   const handleModeSwitch = (newMode: RecognitionMode) => {
     if (newMode === mode) return;
-    stopSentenceRecording();
-    if (captureTimerRef.current) { clearInterval(captureTimerRef.current); captureTimerRef.current = null; }
-    if (sendTimerRef.current)    { clearInterval(sendTimerRef.current);    sendTimerRef.current = null; }
-    framesRef.current = [];
-    sentenceFramesRef.current = [];
+    stopRecording();
+    recordingFramesRef.current = [];
     setTranslation("");
+    setTranslatedText("");
     setConfidence(null);
     setSentenceWords([]);
     setError("");
-
     setMode(newMode);
     if (cameraOn) {
-      if (newMode === "word") {
-        captureTimerRef.current = setInterval(captureFrame, FRAME_INTERVAL_MS);
-        sendTimerRef.current    = setInterval(sendFrames,   SEND_INTERVAL_MS);
-        setStatus("Camera active — signing...");
-      } else {
-        setStatus("Camera active — press Record to start sentence");
-      }
+      setStatus("Camera active — press Record to start");
     }
   };
 
+  /* ── Re-translate when language changes ─────────────────────────────────── */
+  useEffect(() => {
+    if (translation && language !== "en") {
+      translateText(translation);
+    } else {
+      setTranslatedText("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
+
   /* ── Speak / copy helpers ───────────────────────────────────────────────── */
+  const displayText = translatedText || translation;
   const speakText = () => {
-    if (!translation) return;
+    if (!displayText) return;
     window.speechSynthesis?.cancel();
-    const utt = new SpeechSynthesisUtterance(translation);
-    utt.lang  = language;
+    const utt = new SpeechSynthesisUtterance(displayText);
+    utt.lang = language;
     window.speechSynthesis?.speak(utt);
   };
-  const copyText = () => { if (translation) navigator.clipboard.writeText(translation); };
+  const copyText = () => { if (displayText) navigator.clipboard.writeText(displayText); };
 
   /* ── Confidence colour helper ───────────────────────────────────────────── */
   const confColour = (c: number) =>
@@ -408,7 +321,8 @@ export default function SignToText() {
     : c > 0.5 ? "bg-yellow-900/50 text-yellow-400"
     : "bg-red-900/50 text-red-400";
 
-  const progressPct = Math.min(100, (sentenceElapsed / SENTENCE_MAX_DURATION) * 100);
+  const progressPct = Math.min(100, (recordingElapsed / maxDuration) * 100);
+  const remainingSec = Math.ceil((maxDuration - recordingElapsed) / 1000);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -472,16 +386,22 @@ export default function SignToText() {
                 {/* Live / recording badge */}
                 <div className={`absolute top-3 left-3 flex items-center gap-2
                   rounded-full px-3 py-1 text-xs font-semibold ${
-                  sentenceRecording ? "bg-orange-500/90" : "bg-red-500/80"}`}>
-                  <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                  {sentenceRecording ? "REC SENTENCE" : "LIVE"}
+                  isRecording
+                    ? mode === "sentence" ? "bg-orange-500/90" : "bg-red-500/90"
+                    : "bg-gray-700/80"}`}>
+                  <span className={`w-2 h-2 rounded-full ${
+                    isRecording ? "bg-white animate-pulse" : "bg-green-400"}`} />
+                  {isRecording
+                    ? mode === "sentence" ? "REC SENTENCE" : "REC SIGN"
+                    : "READY"}
                 </div>
 
-                {/* Sentence recording progress bar */}
-                {sentenceRecording && (
+                {/* Recording progress bar */}
+                {isRecording && (
                   <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-800/80">
                     <div
-                      className="h-full bg-orange-500 transition-all duration-200"
+                      className={`h-full transition-all duration-200 ${
+                        mode === "sentence" ? "bg-orange-500" : "bg-purple-500"}`}
                       style={{ width: `${progressPct}%` }}
                     />
                   </div>
@@ -506,34 +426,37 @@ export default function SignToText() {
           <div className="flex gap-3">
             <button
               onClick={cameraOn ? stopCamera : startCamera}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold
+              className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold
                 transition-all ${cameraOn
                   ? "bg-red-600 hover:bg-red-700"
-                  : "bg-purple-600 hover:bg-purple-700"}`}
+                  : "flex-1 bg-purple-600 hover:bg-purple-700"}`}
             >
               {cameraOn
                 ? <><CameraOff className="w-5 h-5" />Stop</>
                 : <><Camera   className="w-5 h-5" />Start Camera</>}
             </button>
 
-            {/* Sentence record / done buttons */}
-            {mode === "sentence" && cameraOn && !isProcessing && (
-              sentenceRecording ? (
+            {/* Record / Done button — shown for BOTH modes */}
+            {cameraOn && !isProcessing && (
+              isRecording ? (
                 <button
-                  onClick={sendSentenceFrames}
-                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
-                    font-semibold bg-orange-600 hover:bg-orange-700 transition-all"
+                  onClick={sendRecording}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl
+                    font-semibold transition-all ${
+                    mode === "sentence"
+                      ? "bg-orange-600 hover:bg-orange-700"
+                      : "bg-purple-600 hover:bg-purple-700"}`}
                 >
                   <Square className="w-4 h-4" />
-                  Done ({Math.ceil((SENTENCE_MAX_DURATION - sentenceElapsed) / 1000)}s)
+                  Done ({remainingSec}s)
                 </button>
               ) : (
                 <button
-                  onClick={startSentenceRecording}
-                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
+                  onClick={startRecording}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl
                     font-semibold bg-green-600 hover:bg-green-700 transition-all"
                 >
-                  <Camera className="w-4 h-4" />Record
+                  <Circle className="w-4 h-4" />Record {mode === "word" ? "Sign" : "Sentence"}
                 </button>
               )
             )}
@@ -578,13 +501,29 @@ export default function SignToText() {
 
             <div className="flex-1">
               {translation ? (
-                <p className="text-2xl font-medium leading-relaxed text-white">{translation}</p>
+                <div>
+                  <p className="text-2xl font-medium leading-relaxed text-white">{translation}</p>
+                  {/* Translated text in selected language */}
+                  {translatedText && language !== "en" && (
+                    <div className="mt-3 pt-3 border-t border-gray-800/50">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                        {LANGUAGES.find(l => l.code === language)?.label || language}
+                      </p>
+                      <p className="text-xl font-medium text-purple-300">{translatedText}</p>
+                    </div>
+                  )}
+                  {isTranslating && language !== "en" && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                      <Loader2 className="w-3 h-3 animate-spin" />Translating…
+                    </div>
+                  )}
+                </div>
               ) : (
                 <p className="text-gray-600 italic text-sm mt-4">
                   {!cameraOn
                     ? "Start the camera and begin signing"
                     : mode === "word"
-                      ? "Sign in front of the camera — translation will appear here…"
+                      ? "Press Record, perform a sign, then press Done"
                       : "Press Record, sign 2–4 words with brief pauses, then press Done"}
                 </p>
               )}
@@ -617,7 +556,7 @@ export default function SignToText() {
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors">
                   <Copy className="w-4 h-4" />Copy
                 </button>
-                <button onClick={() => { setTranslation(""); setConfidence(null); setSentenceWords([]); }}
+                <button onClick={() => { setTranslation(""); setTranslatedText(""); setConfidence(null); setSentenceWords([]); }}
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-400 transition-colors ml-auto">
                   <RefreshCw className="w-4 h-4" />Clear
                 </button>
@@ -632,7 +571,7 @@ export default function SignToText() {
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {history.map((h, i) => (
                   <div key={i}
-                    onClick={() => setTranslation(h)}
+                    onClick={() => { setTranslation(h); translateText(h); }}
                     className="text-sm text-gray-300 hover:text-white px-3 py-2
                                bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors">
                     {h}
@@ -649,11 +588,11 @@ export default function SignToText() {
             </p>
             {mode === "word" ? (
               <ul className="text-purple-400 space-y-1 text-xs list-disc list-inside">
+                <li>Press Record, then perform the sign clearly</li>
+                <li>Press Done when finished (auto-stops at 5 seconds)</li>
                 <li>Good lighting on your hands — avoid backlight</li>
                 <li>Keep your full arm visible in frame</li>
-                <li>Sign clearly and hold each sign for ~2 seconds</li>
                 <li>Make sure hands are clearly separated from background</li>
-                <li>First translation may take a few seconds (backend waking up)</li>
               </ul>
             ) : (
               <ul className="text-purple-400 space-y-1 text-xs list-disc list-inside">

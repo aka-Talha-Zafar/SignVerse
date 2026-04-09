@@ -1,6 +1,10 @@
 """
-SignVerse FastAPI Backend — v6.1
+SignVerse FastAPI Backend — v6.2
 ================================
+v6.2 — Translation & record-based flow:
+  - POST /api/translate endpoint (MyMemory free API)
+  - Frontend now uses Record/Done buttons for both modes
+
 v6.1 — Sentence-level recognition:
   - Velocity-based sign boundary detection
   - Bigram LM (Viterbi) for word-sequence refinement
@@ -29,7 +33,7 @@ logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s [%(levelname)s] %(name)s — %(message)s")
 log = logging.getLogger("signverse")
 
-app = FastAPI(title="SignVerse API", version="6.1")
+app = FastAPI(title="SignVerse API", version="6.2")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
 
@@ -831,6 +835,8 @@ class SignToSentenceRequest(BaseModel):
     frames: List[str]; language: Optional[str] = "en"
 class TextToSignRequest(BaseModel):
     text: str; language: Optional[str] = "en"
+class TranslateRequest(BaseModel):
+    text: str; target: str = "en"
 class LearningPredictRequest(BaseModel):
     frame: str
 
@@ -840,7 +846,7 @@ class LearningPredictRequest(BaseModel):
 # ══════════════════════════════════════════════════════════════════════════════
 @app.get("/")
 def root():
-    return {"message":"SignVerse API v6.1","docs":"/docs"}
+    return {"message":"SignVerse API v6.2","docs":"/docs"}
 
 @app.get("/api/health")
 def health():
@@ -848,7 +854,7 @@ def health():
     mp_ok     = _mp_alive()
     sentence_ready = asl_ready and mp_ok and _bigram_lm is not None
     return {
-        "status":"ok","version":"6.1",
+        "status":"ok","version":"6.2",
         "asl_classifier":asl_ready,"n_classes":asl_n_classes,
         "holistic":mp_ok,"normalization":"wrist_relative_v5","device":str(DEVICE),
         "sign2text":asl_ready and mp_ok,"sign2sentence":sentence_ready,
@@ -1065,6 +1071,45 @@ def sign_to_sentence_endpoint(req: SignToSentenceRequest):
     except Exception as e:
         log.error(f"sign-to-sentence error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# ── Language code mapping for MyMemory API ────────────────────────────────
+_LANG_MAP = {
+    "en": "en", "ur": "ur", "ar": "ar", "fr": "fr",
+    "es": "es", "de": "de", "zh": "zh-CN",
+}
+
+
+@app.post("/api/translate")
+def translate_text(req: TranslateRequest):
+    """Translate English text to the target language via the free MyMemory API."""
+    text = (req.text or "").strip()
+    target = (req.target or "en").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="No text provided")
+    if target == "en":
+        return {"translated": text, "source": "en", "target": "en"}
+
+    import urllib.request, urllib.parse
+    lang_code = _LANG_MAP.get(target, target)
+    try:
+        encoded = urllib.parse.quote(text)
+        url = (
+            f"https://api.mymemory.translated.net/get"
+            f"?q={encoded}&langpair=en|{lang_code}"
+        )
+        req_obj = urllib.request.Request(url, headers={"User-Agent": "SignVerse/1.0"})
+        with urllib.request.urlopen(req_obj, timeout=6) as resp:
+            data = json.loads(resp.read().decode())
+        translated = data.get("responseData", {}).get("translatedText", text)
+        if translated.upper() == translated and not text.isupper():
+            translated = text
+        log.info(f"Translated '{text}' → '{translated}' (en→{lang_code})")
+        return {"translated": translated, "source": "en", "target": target}
+    except Exception as e:
+        log.warning(f"Translation to {lang_code} failed: {e}")
+        return {"translated": text, "source": "en", "target": target,
+                "error": "Translation service unavailable"}
 
 
 @app.post("/api/text-to-sign")
