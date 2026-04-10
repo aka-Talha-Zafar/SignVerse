@@ -18,7 +18,7 @@ v6.0 — Perf & accuracy fixes vs v5.2:
   - CONF_THRESHOLD   0.30  → 0.35   (stricter — fewer noisy guesses)
 """
 
-import os, math, json, base64, logging, threading
+import os, math, json, base64, logging, threading, concurrent.futures
 import numpy as np
 import torch
 import torch.nn as nn
@@ -262,6 +262,27 @@ def _decode(b64: str):
         return None
 
 
+def _decode_resize_for_mediapipe(b64: str):
+    """Decode JPEG and downscale before Holistic — landmarks stay in normalized
+    image coordinates; smaller inputs cut MediaPipe CPU time a lot on long clips."""
+    frame = _decode(b64)
+    if frame is None:
+        return None
+    try:
+        max_side = int(os.environ.get("MEDIAPIPE_MAX_FRAME_SIDE", "480"))
+    except ValueError:
+        max_side = 480
+    max_side = max(256, min(max_side, 960))
+    h, w = frame.shape[:2]
+    m = max(h, w)
+    if m > max_side:
+        s = max_side / m
+        frame = cv2.resize(
+            frame, (int(w * s), int(h * s)), interpolation=cv2.INTER_AREA
+        )
+    return frame
+
+
 def extract_landmarks_batch(frames_b64: List[str]):
     """Run MediaPipe ONCE per frame and return landmarks, hand count, and
     wrist positions for motion computation — no second pass needed."""
@@ -269,10 +290,18 @@ def extract_landmarks_batch(frames_b64: List[str]):
     hand_present_count = 0
     wrist_positions: List[List[float]] = []
 
-    for b64 in frames_b64:
+    n = len(frames_b64)
+    if n == 0:
+        return landmark_vecs, hand_present_count, wrist_positions
+
+    # Parallel JPEG decode + resize (I/O / OpenCV release the GIL); Holistic stays serial.
+    n_workers = min(4, max(1, n), (os.cpu_count() or 4))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as ex:
+        frames = list(ex.map(_decode_resize_for_mediapipe, frames_b64))
+
+    for frame in frames:
         vec = np.zeros(N_FEAT, dtype=np.float32)
         has_hand = False
-        frame = _decode(b64)
         if frame is not None:
             try:
                 r = _process_frame(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
