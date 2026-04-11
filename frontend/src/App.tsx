@@ -11,11 +11,20 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import SignToText from "./pages/SignToText";
 import TextToSign from "./pages/TextToSign";
-import Learning from "./pages/Learning";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Accessibility from "./pages/Accessibility";
+
+import LearningHub from "./pages/learning/LearningHub";
+import LearningLearn from "./pages/learning/LearningLearn";
+import LearnEasy from "./pages/learning/LearnEasy";
+import LearnMedium from "./pages/learning/LearnMedium";
+import LearnHard from "./pages/learning/LearnHard";
+import LearningQuiz from "./pages/learning/LearningQuiz";
+import QuizAlphabets from "./pages/learning/QuizAlphabets";
+import QuizWords from "./pages/learning/QuizWords";
+import QuizSentences from "./pages/learning/QuizSentences";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +43,17 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/sign-to-text" element={<SignToText />} />
           <Route path="/text-to-sign" element={<TextToSign />} />
-          <Route path="/learning" element={<Learning />} />
+
+          <Route path="/learning" element={<LearningHub />} />
+          <Route path="/learning/learn" element={<LearningLearn />} />
+          <Route path="/learning/learn/easy" element={<LearnEasy />} />
+          <Route path="/learning/learn/medium" element={<LearnMedium />} />
+          <Route path="/learning/learn/hard" element={<LearnHard />} />
+          <Route path="/learning/quiz" element={<LearningQuiz />} />
+          <Route path="/learning/quiz/alphabets" element={<QuizAlphabets />} />
+          <Route path="/learning/quiz/words" element={<QuizWords />} />
+          <Route path="/learning/quiz/sentences" element={<QuizSentences />} />
+
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/accessibility" element={<Accessibility />} />
