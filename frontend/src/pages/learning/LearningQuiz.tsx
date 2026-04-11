@@ -6,7 +6,7 @@ const QUIZ_MODES = [
   {
     id: "alphabets",
     label: "Alphabets",
-    desc: "Identify the correct ASL letter from 4 image options. 5 questions per quiz.",
+    desc: "Perform each shown letter in front of the camera. One snapshot per question — 5 letters per quiz.",
     href: "/learning/quiz/alphabets",
     emoji: "🔤",
     bg: "from-emerald-500/10 to-teal-500/10",
