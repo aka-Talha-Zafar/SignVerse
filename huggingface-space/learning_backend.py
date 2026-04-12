@@ -111,16 +111,25 @@ def _get_hand_crop(rgb_frame: np.ndarray, pad_frac: float = 0.25) -> Optional[np
 
 def _alphabet_norm_type() -> str:
     """
-    Normalization applied to the [0,1] tensor before running the alphabet classifier.
+    Optional per-channel normalisation applied AFTER the tensor is built.
 
-    Options (set via ALPHABET_NORM_TYPE env var):
-      imagenet (default) – mean=[0.485,0.456,0.406]  std=[0.229,0.224,0.225]
-      half               – mean=[0.5,0.5,0.5]        std=[0.5,0.5,0.5]  →  maps to [-1,1]
-      none               – no normalization (raw [0,1])
+    The SignVerse ASL training notebook loaded images as raw uint8 arrays and
+    did NOT divide by 255, so the model's BN running_mean/var are calibrated for
+    the [0, 255] pixel range.  Inference therefore also keeps values in [0, 255]
+    (see learning_predict — there is intentionally NO /255 division there).
 
-    The SignVerse ASL notebook uses only transforms.ToTensor() (no extra normalisation),
-    so the default is "none" (raw [0,1]).  Override with ALPHABET_NORM_TYPE=imagenet or
-    ALPHABET_NORM_TYPE=half if your training code used a different scheme.
+    This env var controls whether an additional channel-wise shift/scale is
+    applied on top of the [0, 255] base.  Options (set ALPHABET_NORM_TYPE):
+
+      none (default) – no extra normalisation; pass raw [0, 255] to the model
+      imagenet255    – subtract ImageNet means in [0,255] space and divide by
+                       std in [0,255]:  mean=[123.675, 116.28, 103.53]
+                                        std =[  58.40,  57.12,  57.375]
+      half           – (legacy) map [0,1] to [-1,1]; only for models whose
+                       BN stats were calibrated for that range
+
+    Leave this at "none" unless you know your training code used a specific
+    normalisation on top of [0, 255] pixel values.
     """
     return os.environ.get("ALPHABET_NORM_TYPE", "none").strip().lower()
 
@@ -761,6 +770,20 @@ def _try_load_hardcoded_asl_classifier_cnn(
         log.warning("Hardcoded ASLClassifierCNN strict load failed: %s", e)
         return None
 
+    # Diagnostic: log the first BN2d running_mean to confirm the training pixel
+    # scale.  If mean >> 1 (e.g. 10–100), the model was trained on [0,255] raw
+    # pixel values and inference must NOT divide by 255.  If mean < 1, training
+    # used [0,1] (ToTensor) and the fix below must be revisited.
+    first_bn_mean = feat_sd.get("1.running_mean")
+    if first_bn_mean is not None and isinstance(first_bn_mean, torch.Tensor):
+        log.info(
+            "Alphabet BN[0] running_mean: min=%.3f  max=%.3f  mean=%.3f  "
+            "(>1 confirms model trained on [0,255] pixel range; <1 means [0,1])",
+            float(first_bn_mean.min()),
+            float(first_bn_mean.max()),
+            float(first_bn_mean.mean()),
+        )
+
     net = _FeaturesClassifierNet(features, classifier, adaptive_avg_before_flat=True)
     setattr(net, "_signverse_input_side", 128)
     log.info(
@@ -1396,19 +1419,26 @@ def learning_predict(req: LearningPredictRequest):
         side = env_side if env_side > 0 else (inferred_side if inferred_side else 128)
         side = max(32, min(int(side), 640))
         resized = cv2.resize(source_img, (side, side))
-        tensor = torch.tensor(resized, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0) / 255.0
+        # Keep pixel values in [0, 255] — the training notebook loaded images
+        # without dividing by 255, so the BN running_mean is calibrated for
+        # that range.  Dividing by 255 here would push all activations to large
+        # negative values that ReLU zeroes out, producing always-zero features.
+        tensor = torch.tensor(resized, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
         tensor = tensor.to(DEVICE)
 
         norm_type = _alphabet_norm_type()
-        if norm_type == "imagenet":
-            mean = torch.tensor([0.485, 0.456, 0.406], device=DEVICE).view(1, 3, 1, 1)
-            std = torch.tensor([0.229, 0.224, 0.225], device=DEVICE).view(1, 3, 1, 1)
+        if norm_type == "imagenet255":
+            # ImageNet stats in [0,255] space — use only if training applied this.
+            mean = torch.tensor([123.675, 116.28, 103.53], device=DEVICE).view(1, 3, 1, 1)
+            std  = torch.tensor([ 58.395,  57.12,  57.375], device=DEVICE).view(1, 3, 1, 1)
             tensor = (tensor - mean) / std
         elif norm_type == "half":
-            tensor = (tensor - 0.5) / 0.5
+            # Legacy: divides [0,1]-range inputs to [-1,1]; tensor must first be /255.
+            tensor = (tensor / 255.0 - 0.5) / 0.5
+        # norm_type == "none" (default): keep raw [0,255] — no extra operation needed.
 
         log.debug(
-            "Image preprocessed: shape=%s norm=%s mean=%.3f std=%.3f",
+            "Image preprocessed: shape=%s norm=%s mean=%.1f std=%.1f",
             tensor.shape,
             norm_type,
             tensor.mean().item(),
