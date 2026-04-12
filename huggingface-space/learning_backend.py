@@ -15,7 +15,7 @@ Modes:
      skips loading the alphabet weights so they exist only in this module (one copy in RAM).
 
 Env: MODEL_DIR, HF_TOKEN, HF_MODELS_REPO, ASL_ALPHABET_DATASET_DIR, ALPHABET_NUM_CLASSES,
-     ALPHABET_INPUT_SIZE, ALPHABET_IMAGENET_NORM (default 0 = scale 0–1 only; set 1 for torchvision-style μ/σ),
+     ALPHABET_INPUT_SIZE, ALPHABET_NORM_TYPE (imagenet|half|none  default=imagenet),
      LEARNING_API_PORT
 """
 
@@ -40,6 +40,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+try:
+    import mediapipe as mp
+
+    _mp_hands = mp.solutions.hands
+    _mp_hands_detector: Optional[object] = None  # lazy-init in predict
+    _MP_HANDS_AVAILABLE = True
+except Exception:
+    _mp_hands = None  # type: ignore[assignment]
+    _mp_hands_detector = None
+    _MP_HANDS_AVAILABLE = False
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
@@ -51,13 +62,75 @@ learning_router = APIRouter(tags=["learning"])
 MODEL_DIR = os.environ.get("MODEL_DIR", "./models")
 DEVICE = torch.device("cpu")
 
-# Kaggle-style alphabet CNNs usually use ``ToTensor()`` only (0–1). ImageNet μ/σ is for torchvision backbones.
+def _get_hand_crop(rgb_frame: np.ndarray, pad_frac: float = 0.25) -> Optional[np.ndarray]:
+    """
+    Detect the largest hand in *rgb_frame* via MediaPipe Hands and return a square
+    crop of it (with *pad_frac* padding on each side).  Returns None if no hand is
+    found or if MediaPipe is unavailable, in which case the caller falls back to the
+    full frame.
+    """
+    global _mp_hands_detector
+    if not _MP_HANDS_AVAILABLE or _mp_hands is None:
+        return None
+    if _mp_hands_detector is None:
+        try:
+            _mp_hands_detector = _mp_hands.Hands(
+                static_image_mode=True,
+                max_num_hands=1,
+                min_detection_confidence=0.4,
+            )
+        except Exception:
+            return None
+    try:
+        result = _mp_hands_detector.process(rgb_frame)
+        if not result.multi_hand_landmarks:
+            return None
+        h, w = rgb_frame.shape[:2]
+        lm = result.multi_hand_landmarks[0].landmark
+        xs = [l.x for l in lm]
+        ys = [l.y for l in lm]
+        x_min = max(0.0, min(xs) - pad_frac * (max(xs) - min(xs)))
+        x_max = min(1.0, max(xs) + pad_frac * (max(xs) - min(xs)))
+        y_min = max(0.0, min(ys) - pad_frac * (max(ys) - min(ys)))
+        y_max = min(1.0, max(ys) + pad_frac * (max(ys) - min(ys)))
+        # Make it square (helps the model whose training images were square)
+        x_span = x_max - x_min
+        y_span = y_max - y_min
+        half = max(x_span, y_span) / 2
+        cx, cy = (x_min + x_max) / 2, (y_min + y_max) / 2
+        x1 = max(0, int((cx - half) * w))
+        x2 = min(w, int((cx + half) * w))
+        y1 = max(0, int((cy - half) * h))
+        y2 = min(h, int((cy + half) * h))
+        if x2 - x1 < 20 or y2 - y1 < 20:
+            return None
+        return rgb_frame[y1:y2, x1:x2]
+    except Exception:
+        return None
+
+
+def _alphabet_norm_type() -> str:
+    """
+    Normalization applied to the [0,1] tensor before running the alphabet classifier.
+
+    Options (set via ALPHABET_NORM_TYPE env var):
+      imagenet (default) – mean=[0.485,0.456,0.406]  std=[0.229,0.224,0.225]
+      half               – mean=[0.5,0.5,0.5]        std=[0.5,0.5,0.5]  →  maps to [-1,1]
+      none               – no normalization (raw [0,1])
+
+    Kaggle ASL notebooks that use torchvision's ImageFolder almost always use ImageNet
+    normalisation.  Set ALPHABET_NORM_TYPE=none or ALPHABET_NORM_TYPE=half if your
+    training code used a different scheme.
+    """
+    return os.environ.get("ALPHABET_NORM_TYPE", "imagenet").strip().lower()
+
+
 def _alphabet_use_imagenet_norm() -> bool:
-    v = os.environ.get("ALPHABET_IMAGENET_NORM", "0").strip().lower()
-    return v in ("1", "true", "yes", "on")
+    return _alphabet_norm_type() == "imagenet"
 
 alphabet_cls: Optional[nn.Module] = None
 class_mapping: Optional[dict] = None
+_predict_call_count: int = 0
 
 DATASET_DIR = os.environ.get(
     "ASL_ALPHABET_DATASET_DIR",
@@ -601,6 +674,31 @@ def _try_load_features_classifier_split(
     feat_sd = {k[len("features.") :]: v for k, v in sd0.items() if k.startswith("features.")}
     cls_sd = {k[len("classifier.") :]: v for k, v in sd0.items() if k.startswith("classifier.")}
 
+    # Log the complete index→shape map so the architecture is visible in startup logs.
+    conv_info = {
+        int(re.match(r"^(\d+)\.weight$", k).group(1)): tuple(int(x) for x in v.shape)
+        for k, v in feat_sd.items()
+        if re.match(r"^(\d+)\.weight$", k) and isinstance(v, torch.Tensor) and v.dim() == 4
+    }
+    bn_idxs = sorted(
+        int(re.match(r"^(\d+)\.running_mean$", k).group(1))
+        for k in feat_sd
+        if re.match(r"^(\d+)\.running_mean$", k)
+    )
+    conv_summary = " ".join(f"{i}:({v[1]}→{v[0]})" for i, v in sorted(conv_info.items()))
+    log.info(
+        "Alphabet: features.* layout — Conv@[%s]  BN@%s  total_feat_keys=%d",
+        conv_summary,
+        bn_idxs,
+        len(feat_sd),
+    )
+    cls_idxs = sorted(
+        int(re.match(r"^(\d+)\.weight$", k).group(1))
+        for k in cls_sd
+        if re.match(r"^(\d+)\.weight$", k)
+    )
+    log.info("Alphabet: classifier.* parametric indices (weight) = %s", cls_idxs)
+
     cls_head = _build_classifier_ordered_cls_sd(cls_sd)
     if cls_head is None:
         return None
@@ -968,10 +1066,31 @@ def _unwrap_alphabet_checkpoint(loaded, n_classes: int) -> Optional[nn.Module]:
 
 
 def _alphabet_forward_logits(model: nn.Module, x: torch.Tensor) -> torch.Tensor:
+    global _predict_call_count
     x = x.to(DEVICE)
     model.eval()
     with torch.no_grad():
+        # On the first 3 predictions log intermediate feature stats to diagnose
+        # architecture / normalization issues.
+        debug_this = _predict_call_count < 3
+        if debug_this and isinstance(model, _FeaturesClassifierNet):
+            feats = model.features(x)
+            if feats.dim() == 4 and model.adaptive_avg_before_flat:
+                feats_pool = torch.nn.functional.adaptive_avg_pool2d(feats, (1, 1))
+            else:
+                feats_pool = feats
+            flat = torch.flatten(feats_pool, 1)
+            log.info(
+                "DEBUG forward #%d: feats shape=%s pool-flat mean=%.4f std=%.4f min=%.4f max=%.4f",
+                _predict_call_count,
+                tuple(feats.shape),
+                flat.mean().item(),
+                flat.std().item(),
+                flat.min().item(),
+                flat.max().item(),
+            )
         out = model(x)
+    _predict_call_count += 1
     if isinstance(out, (tuple, list)):
         out = out[0]
     if not isinstance(out, torch.Tensor):
@@ -1141,27 +1260,41 @@ def learning_predict(req: LearningPredictRequest):
         if frame is None:
             raise HTTPException(status_code=400, detail="Invalid frame")
 
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # ── Hand-crop: the CNN was trained on studio images where the hand
+        #    fills the entire frame.  Detect and crop the hand region first.
+        hand_crop = _get_hand_crop(rgb_frame)
+        if hand_crop is not None:
+            source_img = hand_crop
+            log.debug("Hand detected — using crop %s", hand_crop.shape[:2])
+        else:
+            source_img = rgb_frame
+            log.debug("No hand detected — using full frame")
+
         inferred_side = getattr(alphabet_cls, "_signverse_input_side", None)
         try:
             env_side = int(os.environ.get("ALPHABET_INPUT_SIZE", "0"))
         except ValueError:
             env_side = 0
-        side = env_side if env_side > 0 else (inferred_side if inferred_side else 224)
+        side = env_side if env_side > 0 else (inferred_side if inferred_side else 128)
         side = max(32, min(int(side), 640))
-        resized = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (side, side))
+        resized = cv2.resize(source_img, (side, side))
         tensor = torch.tensor(resized, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0) / 255.0
         tensor = tensor.to(DEVICE)
 
-        use_imagenet = _alphabet_use_imagenet_norm()
-        if use_imagenet:
+        norm_type = _alphabet_norm_type()
+        if norm_type == "imagenet":
             mean = torch.tensor([0.485, 0.456, 0.406], device=DEVICE).view(1, 3, 1, 1)
             std = torch.tensor([0.229, 0.224, 0.225], device=DEVICE).view(1, 3, 1, 1)
             tensor = (tensor - mean) / std
+        elif norm_type == "half":
+            tensor = (tensor - 0.5) / 0.5
 
         log.debug(
-            "Image preprocessed: shape=%s imagenet_norm=%s mean=%.3f std=%.3f",
+            "Image preprocessed: shape=%s norm=%s mean=%.3f std=%.3f",
             tensor.shape,
-            use_imagenet,
+            norm_type,
             tensor.mean().item(),
             tensor.std().item(),
         )
@@ -1264,9 +1397,12 @@ def integrate_learning_into_signverse(main_app: FastAPI) -> None:
     async def _learning_startup():
         load_alphabet_models()
         log.info(
-            "Learning (integrated) ready | alphabet=%s | letter_image_folder=%s (optional; "
-            "only for GET /api/learning/alphabet/image/{{letter}} — set ASL_ALPHABET_DATASET_DIR if needed)",
+            "Learning (integrated) ready | alphabet=%s | norm=%s | img_size=%s | "
+            "hand_crop=%s | letter_image_folder=%s",
             alphabet_cls is not None,
+            _alphabet_norm_type(),
+            getattr(alphabet_cls, "_signverse_input_side", None) if alphabet_cls else None,
+            _MP_HANDS_AVAILABLE,
             os.path.isdir(DATASET_DIR),
         )
 
