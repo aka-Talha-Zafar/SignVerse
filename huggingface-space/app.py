@@ -1323,6 +1323,11 @@ async def startup_event():
 # router; does not modify the sign-to-text / ASL pipeline above.
 # ─────────────────────────────────────────────────────────────────────────────
 os.environ["SIGNVERSE_LEARNING_INTEGRATED"] = "1"
+import sys as _sys_for_learning
+
+_app_dir_for_learning = os.path.dirname(os.path.abspath(__file__))
+if _app_dir_for_learning not in _sys_for_learning.path:
+    _sys_for_learning.path.insert(0, _app_dir_for_learning)
 from learning_backend import integrate_learning_into_signverse
 
 integrate_learning_into_signverse(app)

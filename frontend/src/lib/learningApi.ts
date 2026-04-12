@@ -1,9 +1,13 @@
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
-/** Learning-only backend (learning_backend.py): alphabet predict + optional dataset images. Not app.py. */
+/**
+ * Alphabet + learning routes. Defaults to the same origin as `API_BASE` so production (e.g. Vercel)
+ * does not call `http://localhost:7861`, which browsers block from HTTPS pages ("Failed to fetch").
+ * Set `VITE_LEARNING_BACKEND_URL` only if learning runs on a different host (second Space / local :7861).
+ */
 const LEARNING_BACKEND_URL =
   import.meta.env.VITE_LEARNING_BACKEND_URL ||
   import.meta.env.VITE_LEARNING_API_URL ||
-  "http://localhost:7861";
+  API_BASE;
 
 export { API_BASE, LEARNING_BACKEND_URL };
 /** @deprecated use LEARNING_BACKEND_URL */
