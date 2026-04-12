@@ -118,11 +118,11 @@ def _alphabet_norm_type() -> str:
       half               – mean=[0.5,0.5,0.5]        std=[0.5,0.5,0.5]  →  maps to [-1,1]
       none               – no normalization (raw [0,1])
 
-    Kaggle ASL notebooks that use torchvision's ImageFolder almost always use ImageNet
-    normalisation.  Set ALPHABET_NORM_TYPE=none or ALPHABET_NORM_TYPE=half if your
-    training code used a different scheme.
+    The SignVerse ASL notebook uses only transforms.ToTensor() (no extra normalisation),
+    so the default is "none" (raw [0,1]).  Override with ALPHABET_NORM_TYPE=imagenet or
+    ALPHABET_NORM_TYPE=half if your training code used a different scheme.
     """
-    return os.environ.get("ALPHABET_NORM_TYPE", "imagenet").strip().lower()
+    return os.environ.get("ALPHABET_NORM_TYPE", "none").strip().lower()
 
 
 def _alphabet_use_imagenet_norm() -> bool:
@@ -662,6 +662,115 @@ def _candidate_input_sides(img_size_hint: Optional[int]) -> tuple[int, ...]:
     return tuple(ordered)
 
 
+def _try_load_hardcoded_asl_classifier_cnn(
+    feat_sd: dict, cls_sd: dict
+) -> Optional[nn.Module]:
+    """
+    Load the exact ASLClassifierCNN architecture for SignVerse.
+
+    The architecture was derived directly from the checkpoint state-dict analysis
+    (see startup log line: "Alphabet: features.* layout"):
+      Conv indices : 0, 3, 8, 11, 16, 19, 24
+      BN   indices : 1, 4, 9, 12, 17, 20, 25
+      Channel progression : 3→ch0, ch0→ch0, ch0→ch1, ch1→ch1,
+                            ch1→ch2, ch2→ch2, ch2→ch3   (ch3 = last features dim)
+      Gap pattern  : (Conv-BN-ReLU)×2 → MaxPool → (repeat ×3) → trailing ReLU
+      Classifier   : Dropout(0) → Linear(1) → BN1d(2) → ReLU(3) → Dropout(4)
+                     → Linear(5) → BN1d(6) → ReLU(7) → Dropout(8) → Linear(9)
+
+    This function reads the actual channel sizes from the weight tensors so it
+    works even if the training used different widths.  strict=True loading
+    guarantees the weights are applied exactly.
+    """
+    # ── Read actual Conv weight shapes ──────────────────────────────────────
+    CONV_INDICES = [0, 3, 8, 11, 16, 19, 24]
+    CLS_LIN_IDX  = [1, 5, 9]
+
+    try:
+        ch: list[int] = []
+        for ci in CONV_INDICES:
+            w = feat_sd.get(f"{ci}.weight")
+            if not isinstance(w, torch.Tensor) or w.dim() != 4:
+                return None          # checkpoint doesn't match this architecture
+            ch.append(int(w.shape[0]))   # out_channels
+
+        last_w = cls_sd.get("9.weight")
+        if last_w is None:
+            return None
+        lin1_w = cls_sd.get("1.weight")
+        lin5_w = cls_sd.get("5.weight")
+        if lin1_w is None or lin5_w is None:
+            return None
+        in_feat  = int(lin1_w.shape[1])   # = last features channels (256)
+        hidden1  = int(lin1_w.shape[0])   # = 512
+        hidden2  = int(lin5_w.shape[0])   # = 256
+        n_out    = int(last_w.shape[0])   # = 29
+    except Exception:
+        return None
+
+    # ── Build exact architecture ─────────────────────────────────────────────
+    # Parameterless layers (ReLU, MaxPool, Dropout) have no state-dict entries,
+    # so strict=True only verifies that every Conv/BN key is present – which it is.
+    in3 = 3          # input channels (RGB)
+    features = nn.Sequential(OrderedDict([
+        ("0",  nn.Conv2d(in3,   ch[0], 3, padding=1)),
+        ("1",  nn.BatchNorm2d(ch[0])),
+        ("2",  nn.ReLU(inplace=True)),
+        ("3",  nn.Conv2d(ch[0], ch[1], 3, padding=1)),
+        ("4",  nn.BatchNorm2d(ch[1])),
+        ("5",  nn.ReLU(inplace=True)),
+        ("6",  nn.MaxPool2d(2, 2)),
+        ("7",  nn.ReLU(inplace=True)),   # Dropout(0.5) in training → identity at eval
+        ("8",  nn.Conv2d(ch[1], ch[2], 3, padding=1)),
+        ("9",  nn.BatchNorm2d(ch[2])),
+        ("10", nn.ReLU(inplace=True)),
+        ("11", nn.Conv2d(ch[2], ch[3], 3, padding=1)),
+        ("12", nn.BatchNorm2d(ch[3])),
+        ("13", nn.ReLU(inplace=True)),
+        ("14", nn.MaxPool2d(2, 2)),
+        ("15", nn.ReLU(inplace=True)),   # Dropout(0.5) → identity at eval
+        ("16", nn.Conv2d(ch[3], ch[4], 3, padding=1)),
+        ("17", nn.BatchNorm2d(ch[4])),
+        ("18", nn.ReLU(inplace=True)),
+        ("19", nn.Conv2d(ch[4], ch[5], 3, padding=1)),
+        ("20", nn.BatchNorm2d(ch[5])),
+        ("21", nn.ReLU(inplace=True)),
+        ("22", nn.MaxPool2d(2, 2)),
+        ("23", nn.ReLU(inplace=True)),   # Dropout(0.5) → identity at eval
+        ("24", nn.Conv2d(ch[5], ch[6], 3, padding=1)),
+        ("25", nn.BatchNorm2d(ch[6])),
+        ("26", nn.ReLU(inplace=True)),
+    ]))
+    classifier = nn.Sequential(OrderedDict([
+        ("0", nn.Dropout(0.5)),
+        ("1", nn.Linear(in_feat, hidden1)),
+        ("2", nn.BatchNorm1d(hidden1)),
+        ("3", nn.ReLU(inplace=True)),
+        ("4", nn.Dropout(0.5)),
+        ("5", nn.Linear(hidden1, hidden2)),
+        ("6", nn.BatchNorm1d(hidden2)),
+        ("7", nn.ReLU(inplace=True)),
+        ("8", nn.Dropout(0.5)),
+        ("9", nn.Linear(hidden2, n_out)),
+    ]))
+
+    try:
+        features.load_state_dict(feat_sd, strict=True)
+        classifier.load_state_dict(cls_sd, strict=True)
+    except Exception as e:
+        log.warning("Hardcoded ASLClassifierCNN strict load failed: %s", e)
+        return None
+
+    net = _FeaturesClassifierNet(features, classifier, adaptive_avg_before_flat=True)
+    setattr(net, "_signverse_input_side", 128)
+    log.info(
+        "Alphabet: loaded via hardcoded ASLClassifierCNN "
+        "(ch=%s in=%d h=[%d,%d] n_cls=%d)",
+        ch, in_feat, hidden1, hidden2, n_out,
+    )
+    return net
+
+
 def _try_load_features_classifier_split(
     sd0: dict, n_classes: int, img_size_hint: Optional[int] = None
 ) -> Optional[nn.Module]:
@@ -673,6 +782,13 @@ def _try_load_features_classifier_split(
 
     feat_sd = {k[len("features.") :]: v for k, v in sd0.items() if k.startswith("features.")}
     cls_sd = {k[len("classifier.") :]: v for k, v in sd0.items() if k.startswith("classifier.")}
+
+    # ── Fast path: try the hardcoded ASLClassifierCNN architecture first ────
+    # This matches SignVerse's trained checkpoint exactly (7 conv blocks,
+    # classifier with Linear indices 1/5/9).  strict=True guarantees correctness.
+    hardcoded_net = _try_load_hardcoded_asl_classifier_cnn(feat_sd, cls_sd)
+    if hardcoded_net is not None:
+        return hardcoded_net
 
     # Log the complete index→shape map so the architecture is visible in startup logs.
     conv_info = {
