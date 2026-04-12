@@ -1401,15 +1401,40 @@ def learning_predict(req: LearningPredictRequest):
 
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # ── Hand-crop: the CNN was trained on studio images where the hand
-        #    fills the entire frame.  Detect and crop the hand region first.
-        hand_crop = _get_hand_crop(rgb_frame)
+        # ── CLAHE brightness normalisation ───────────────────────────────────
+        # The Kaggle ASL training images are bright studio photos (mean ~0.5 in
+        # [0,1]).  Webcam images taken in a dim room have mean ~0.05–0.15, which
+        # makes the CNN produce near-zero activations (BN running stats were
+        # calibrated for brighter inputs).  CLAHE equalises the luminance channel
+        # so the model always receives an image with full dynamic range regardless
+        # of ambient lighting.
+        def _clahe_enhance(img_rgb: np.ndarray) -> np.ndarray:
+            lab = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2LAB)
+            lab[:, :, 0] = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8)).apply(
+                lab[:, :, 0]
+            )
+            return cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
+
+        enhanced_rgb = _clahe_enhance(rgb_frame)
+
+        # ── Hand-crop: CNN trained on hand-fills-frame studio shots ──────────
+        # Run detection on the CLAHE-enhanced frame so MediaPipe also benefits
+        # from better contrast in dark images.
+        hand_crop = _get_hand_crop(enhanced_rgb)
         if hand_crop is not None:
             source_img = hand_crop
-            log.debug("Hand detected — using crop %s", hand_crop.shape[:2])
+            log.info(
+                "Hand detected — crop %dx%d (brightness before=%.0f after=%.0f)",
+                hand_crop.shape[1], hand_crop.shape[0],
+                float(rgb_frame.mean()), float(enhanced_rgb.mean()),
+            )
         else:
-            source_img = rgb_frame
-            log.debug("No hand detected — using full frame")
+            source_img = enhanced_rgb
+            log.info(
+                "No hand detected — full enhanced frame "
+                "(brightness before=%.0f after=%.0f)",
+                float(rgb_frame.mean()), float(enhanced_rgb.mean()),
+            )
 
         inferred_side = getattr(alphabet_cls, "_signverse_input_side", None)
         try:
@@ -1419,26 +1444,29 @@ def learning_predict(req: LearningPredictRequest):
         side = env_side if env_side > 0 else (inferred_side if inferred_side else 128)
         side = max(32, min(int(side), 640))
         resized = cv2.resize(source_img, (side, side))
-        # Keep pixel values in [0, 255] — the training notebook loaded images
-        # without dividing by 255, so the BN running_mean is calibrated for
-        # that range.  Dividing by 255 here would push all activations to large
-        # negative values that ReLU zeroes out, producing always-zero features.
-        tensor = torch.tensor(resized, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
+
+        # BN running_mean ≈ -0.035 (confirmed at startup) → model trained on
+        # [0,1] pixel values.  Divide by 255 to match training scale.
+        tensor = torch.tensor(resized, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0) / 255.0
         tensor = tensor.to(DEVICE)
 
         norm_type = _alphabet_norm_type()
-        if norm_type == "imagenet255":
-            # ImageNet stats in [0,255] space — use only if training applied this.
+        if norm_type == "imagenet":
+            # Standard ImageNet stats in [0,1] space.
+            mean = torch.tensor([0.485, 0.456, 0.406], device=DEVICE).view(1, 3, 1, 1)
+            std  = torch.tensor([0.229, 0.224, 0.225], device=DEVICE).view(1, 3, 1, 1)
+            tensor = (tensor - mean) / std
+        elif norm_type == "imagenet255":
+            # ImageNet stats in [0,255] space — only if training skipped /255.
             mean = torch.tensor([123.675, 116.28, 103.53], device=DEVICE).view(1, 3, 1, 1)
             std  = torch.tensor([ 58.395,  57.12,  57.375], device=DEVICE).view(1, 3, 1, 1)
-            tensor = (tensor - mean) / std
+            tensor = (tensor * 255.0 - mean) / std
         elif norm_type == "half":
-            # Legacy: divides [0,1]-range inputs to [-1,1]; tensor must first be /255.
-            tensor = (tensor / 255.0 - 0.5) / 0.5
-        # norm_type == "none" (default): keep raw [0,255] — no extra operation needed.
+            tensor = (tensor - 0.5) / 0.5
+        # norm_type == "none" (default): keep raw [0,1].
 
         log.debug(
-            "Image preprocessed: shape=%s norm=%s mean=%.1f std=%.1f",
+            "Image preprocessed: shape=%s norm=%s mean=%.3f std=%.3f",
             tensor.shape,
             norm_type,
             tensor.mean().item(),
