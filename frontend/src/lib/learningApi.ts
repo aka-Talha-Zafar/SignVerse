@@ -1,7 +1,13 @@
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
-const LEARNING_API_BASE = import.meta.env.VITE_LEARNING_API_URL || "http://localhost:7861";
+/** Learning-only backend (learning_backend.py): alphabet predict + optional dataset images. Not app.py. */
+const LEARNING_BACKEND_URL =
+  import.meta.env.VITE_LEARNING_BACKEND_URL ||
+  import.meta.env.VITE_LEARNING_API_URL ||
+  "http://localhost:7861";
 
-export { API_BASE, LEARNING_API_BASE };
+export { API_BASE, LEARNING_BACKEND_URL };
+/** @deprecated use LEARNING_BACKEND_URL */
+export const LEARNING_API_BASE = LEARNING_BACKEND_URL;
 
 export async function fetchAvatarFrames(text: string) {
   const res = await fetch(`${API_BASE}/api/text-to-sign`, {
@@ -40,13 +46,13 @@ export async function verifySignRecording(
   };
 }
 
-/** POST /api/learning/predict — single JPEG frame, alphabet classifier (same Space as Sign-to-Text). */
+/** POST /api/learning/predict — single JPEG frame; served by learning_backend.py (not app.py). */
 export async function predictAlphabetFromFrame(frameDataUrl: string): Promise<{
   letter: string;
   confidence: number;
   top3: { letter: string; confidence: number }[];
 }> {
-  const res = await fetch(`${API_BASE}/api/learning/predict`, {
+  const res = await fetch(`${LEARNING_BACKEND_URL}/api/learning/predict`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ frame: frameDataUrl }),
@@ -170,7 +176,7 @@ export async function verifySignSentence(
 }
 
 export function getAlphabetImageUrl(letter: string): string {
-  return `${LEARNING_API_BASE}/api/learning/alphabet/image/${letter.toUpperCase()}`;
+  return `${LEARNING_BACKEND_URL}/api/learning/alphabet/image/${letter.toUpperCase()}`;
 }
 
 export function getAlphabetImageUrlFallback(letter: string): string {

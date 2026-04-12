@@ -230,18 +230,24 @@ def load_models():
     else:
         log.warning("asl_best.pt not found")
 
+    # When learning is integrated via learning_backend.py (end of this file), skip loading the
+    # alphabet weights here so they are not held twice in RAM; sign-to-text ASL path is unchanged.
+    _learning_integrated = os.environ.get("SIGNVERSE_LEARNING_INTEGRATED") == "1"
     cls_path = os.path.join(MODEL_DIR, "signverse_asl_classifier.pt")
-    if os.path.exists(cls_path):
-        try:
-            alphabet_cls = torch.load(cls_path, map_location=DEVICE)
-            if hasattr(alphabet_cls, "eval"): alphabet_cls.eval()
-            log.info("Alphabet classifier loaded")
-        except Exception as e:
-            log.error(f"Alphabet load: {e}")
+    if not _learning_integrated:
+        if os.path.exists(cls_path):
+            try:
+                alphabet_cls = torch.load(cls_path, map_location=DEVICE)
+                if hasattr(alphabet_cls, "eval"): alphabet_cls.eval()
+                log.info("Alphabet classifier loaded")
+            except Exception as e:
+                log.error(f"Alphabet load: {e}")
 
-    cm_path = os.path.join(MODEL_DIR, "class_mapping.json")
-    if os.path.exists(cm_path):
-        with open(cm_path) as f: class_mapping = json.load(f)
+        cm_path = os.path.join(MODEL_DIR, "class_mapping.json")
+        if os.path.exists(cm_path):
+            with open(cm_path) as f: class_mapping = json.load(f)
+    else:
+        log.info("Alphabet classifier + mapping: loaded by learning_backend only (single copy in RAM)")
 
     _init_mediapipe()
     if asl_model is not None:
@@ -1309,3 +1315,14 @@ def learning_predict(req: LearningPredictRequest):
 @app.on_event("startup")
 async def startup_event():
     load_models()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Learning module — same Hugging Face Space, separate backend file
+# (learning_backend.py). Replaces POST /api/learning/predict with the dedicated
+# router; does not modify the sign-to-text / ASL pipeline above.
+# ─────────────────────────────────────────────────────────────────────────────
+os.environ["SIGNVERSE_LEARNING_INTEGRATED"] = "1"
+from learning_backend import integrate_learning_into_signverse
+
+integrate_learning_into_signverse(app)
