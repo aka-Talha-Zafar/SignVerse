@@ -1,113 +1,202 @@
-===== Application Startup at 2026-04-12 08:15:25 =====
+===== Application Startup at 2026-04-13 17:13:07 =====
 
-Traceback (most recent call last):
-  File "/usr/local/bin/uvicorn", line 8, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 409, in main
-    run(
-  File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 575, in run
-    server.run()
-  File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
-    return asyncio.run(self.serve(sockets=sockets))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
-    return runner.run(main)
-           ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
-    return self._loop.run_until_complete(task)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
-  File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
-    await self._serve(sockets)
-  File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
-    config.load()
-  File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 433, in load
-    self.loaded_app = import_from_string(self.app)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 22, in import_from_string
-    raise exc from None
-  File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
-    module = importlib.import_module(module_str)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
-  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "/home/user/app.py", line 1326, in <module>
-    from learning_backend import integrate_learning_into_signverse
-ModuleNotFoundError: No module named 'learning_backend'
-
-
-
-Doker file content:
-
-# HuggingFace Spaces — Docker space
-FROM python:3.11-slim
-
-# System deps for OpenCV + MediaPipe
-RUN apt-get update && apt-get install -y \
-    libglib2.0-0 libsm6 libxext6 libxrender-dev libgl1 libglib2.0-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create user early
-RUN useradd -m -u 1000 user
-
-# Install Python deps as root
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
-
-# Copy app
-COPY app.py /home/user/app.py
-
-# Give full ownership to user
-RUN chown -R user:user /home/user
-
-USER user
-WORKDIR /home/user
-
-ENV HOME=/home/user
-ENV PATH=/home/user/.local/bin:$PATH
-ENV MODEL_DIR=/home/user/models
-ENV HF_HOME=/home/user/.cache/huggingface
-ENV TMPDIR=/home/user/tmp
-
-# Create writable directories
-RUN mkdir -p /home/user/models /home/user/tmp /home/user/.cache/huggingface
-
-EXPOSE 7860
-
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
-
-
-
-requirements.txt Content:
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
-python-multipart==0.0.9
-pydantic==2.7.1
-numpy==1.26.4
-opencv-python-headless==4.9.0.80
-torch==2.2.2
-torchvision==0.17.2
-mediapipe==0.10.14
-transformers==4.40.2
-sentencepiece==0.2.0
-huggingface_hub==0.23.0
+2026-04-13 17:15:34,221 [INFO] signverse-learning-backend — integrate_learning_into_signverse: removed 1 prior route(s) for POST /api/learning/predict
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2026-04-13 17:15:34,472 [INFO] signverse — Downloading asl_best.pt...
+2026-04-13 17:15:34,654 [INFO] signverse —   asl_best.pt downloaded
+2026-04-13 17:15:34,654 [INFO] signverse — Downloading sign_to_idx.json...
+2026-04-13 17:15:34,729 [INFO] signverse —   sign_to_idx.json downloaded
+2026-04-13 17:15:34,729 [INFO] signverse — Downloading signverse_asl_classifier.pt...
+2026-04-13 17:15:34,911 [INFO] signverse —   signverse_asl_classifier.pt downloaded
+2026-04-13 17:15:34,911 [INFO] signverse — Downloading class_mapping.json...
+2026-04-13 17:15:34,966 [INFO] signverse —   class_mapping.json downloaded
+/usr/local/lib/python3.11/site-packages/torch/nn/modules/transformer.py:286: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
+2026-04-13 17:15:35,034 [INFO] signverse — ASL v5 loaded — 250 classes
+2026-04-13 17:15:35,034 [INFO] signverse — Alphabet classifier + mapping: loaded by learning_backend only (single copy in RAM)
+2026-04-13 17:15:35,061 [INFO] signverse — MediaPipe Holistic ready (static_image_mode=True)
+2026-04-13 17:15:35,063 [INFO] signverse — Bigram LM ready — 164 sentences, 63 vocab, 127 bigrams
+2026-04-13 17:15:35,064 [INFO] signverse — Startup complete | asl=True | holistic=True | bigram_lm=True
+2026-04-13 17:15:35,064 [WARNING] signverse-learning-backend — class_mapping.json has only 3 entries (expected ~29 for ASL). Will try to extract from checkpoint.
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+2026-04-13 17:15:35,090 [INFO] signverse-learning-backend — signverse_asl_classifier.pt: root=dict keys=['epoch', 'model_state_dict', 'optimizer_state_dict', 'val_acc', 'val_loss', 'classes', 'class_to_idx', 'config'] tensor_values=0
+2026-04-13 17:15:35,090 [INFO] signverse-learning-backend — Using checkpoint 'classes' list for labels (29 entries)
+2026-04-13 17:15:35,090 [INFO] signverse-learning-backend — Attempting to load alphabet classifier with n_classes=29
+2026-04-13 17:15:35,091 [INFO] signverse-learning-backend — Found model config in checkpoint: ['img_size', 'num_classes']
+2026-04-13 17:15:35,091 [INFO] signverse-learning-backend — State dict 'model_state_dict': total=65 has_conv_4d=True fc_key_hits=16 sample_4d=['features.0.weight', 'features.3.weight', 'features.8.weight', 'features.11.weight', 'features.16.weight']
+2026-04-13 17:15:35,091 [INFO] signverse-learning-backend —   Sample fc keys: ['classifier.1.weight', 'classifier.1.bias', 'classifier.2.weight']
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1776100535.204141      19 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1776100535.264197      19 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1776100535.267325      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1776100535.267328      19 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1776100535.267630      23 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1776100535.273445      23 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1776100535.292974      19 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1776100535.296427      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+2026-04-13 17:15:37,379 [INFO] signverse-learning-backend — Alphabet BN[0] running_mean: min=-0.364  max=0.361  mean=-0.035
+2026-04-13 17:15:37,379 [INFO] signverse-learning-backend — Alphabet BN[0] running_var:  min=0.079  max=1.008  mean=0.353
+2026-04-13 17:15:37,379 [INFO] signverse-learning-backend — Alphabet: loaded via hardcoded ASLClassifierCNN (ch=[32, 32, 64, 64, 128, 128, 256] in=256 h=[512,256] n_cls=29)
+2026-04-13 17:15:37,380 [INFO] signverse-learning-backend — Alphabet classifier loaded for learning backend
+2026-04-13 17:15:37,381 [INFO] signverse-learning-backend — Learning (integrated) ready | alphabet=True | norm=imagenet | img_size=128 | hand_crop=True | letter_image_folder=False
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:7860 (Press CTRL+C to quit)
+INFO:     10.16.33.124:44199 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.12.178:65525 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.33.124:56056 - "POST /login HTTP/1.1" 200 OK
+W0000 00:00:1776100653.566057      43 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1776100653.624678      43 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+/usr/local/lib/python3.11/site-packages/google/protobuf/symbol_database.py:55: UserWarning: SymbolDatabase.GetPrototype() is deprecated. Please use message_factory.GetMessageClass() instead. SymbolDatabase.GetPrototype() will be removed soon.
+  warnings.warn('SymbolDatabase.GetPrototype() is deprecated. Please '
+2026-04-13 17:17:33,652 [INFO] signverse-learning-backend — Hand detected — crop 530x397 (brightness=58)
+2026-04-13 17:17:33,654 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-1.0 std=1.0 min=-2.1 max=2.6
+2026-04-13 17:17:33,679 [INFO] signverse-learning-backend — DEBUG forward #0: feats shape=(1, 256, 8, 8) pool-flat mean=0.0107 std=0.0123 min=0.0000 max=0.0861
+2026-04-13 17:17:33,710 [INFO] signverse-learning-backend — Prediction: letter=L, confidence=0.560, top3=[L:0.56, N:0.085, D:0.071]
+INFO:     10.16.33.124:11299 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:18:01,071 [INFO] signverse-learning-backend — No hand detected (brightness=64) — returning error to user
+INFO:     10.16.33.124:33295 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:18:25,979 [INFO] signverse-learning-backend — Hand detected — crop 305x229 (brightness=59)
+2026-04-13 17:18:25,980 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.5 std=1.0 min=-2.1 max=2.4
+2026-04-13 17:18:26,017 [INFO] signverse-learning-backend — DEBUG forward #1: feats shape=(1, 256, 8, 8) pool-flat mean=0.0069 std=0.0105 min=0.0000 max=0.0624
+2026-04-13 17:18:26,040 [INFO] signverse-learning-backend — Prediction: letter=M, confidence=0.829, top3=[M:0.829, X:0.062, S:0.053]
+INFO:     10.16.22.250:37784 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:18:43,267 [INFO] signverse-learning-backend — Hand detected — crop 365x274 (brightness=62)
+2026-04-13 17:18:43,268 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.6 std=1.1 min=-2.1 max=2.6
+2026-04-13 17:18:43,300 [INFO] signverse-learning-backend — DEBUG forward #2: feats shape=(1, 256, 8, 8) pool-flat mean=0.0065 std=0.0082 min=0.0000 max=0.0475
+2026-04-13 17:18:43,334 [INFO] signverse-learning-backend — Prediction: letter=del, confidence=0.209, top3=[del:0.209, Q:0.178, N:0.162]
+INFO:     10.16.33.124:8528 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:19:27,056 [INFO] signverse-learning-backend — Hand detected — crop 522x403 (brightness=59)
+2026-04-13 17:19:27,057 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-1.0 std=0.9 min=-2.1 max=2.6
+2026-04-13 17:19:27,078 [INFO] signverse-learning-backend — Prediction: letter=L, confidence=0.357, top3=[L:0.357, V:0.159, space:0.144]
+INFO:     10.16.22.250:23353 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:19:57,216 [INFO] signverse-learning-backend — Hand detected — crop 346x259 (brightness=57)
+2026-04-13 17:19:57,244 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.7 std=1.1 min=-2.1 max=2.6
+2026-04-13 17:19:57,270 [INFO] signverse-learning-backend — Prediction: letter=X, confidence=0.674, top3=[X:0.674, M:0.198, A:0.074]
+INFO:     10.16.33.124:53451 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:20:11,296 [INFO] signverse-learning-backend — Hand detected — crop 234x175 (brightness=60)
+2026-04-13 17:20:11,297 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.7 std=1.0 min=-2.1 max=2.0
+2026-04-13 17:20:11,333 [INFO] signverse-learning-backend — Prediction: letter=N, confidence=0.259, top3=[N:0.259, H:0.243, S:0.199]
+INFO:     10.16.22.250:53043 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:20:20,525 [INFO] signverse-learning-backend — Hand detected — crop 520x390 (brightness=58)
+2026-04-13 17:20:20,549 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.9 std=0.9 min=-2.1 max=2.2
+2026-04-13 17:20:20,571 [INFO] signverse-learning-backend — Prediction: letter=L, confidence=0.917, top3=[L:0.917, Y:0.074, space:0.004]
+INFO:     10.16.12.178:12545 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:20:27,670 [INFO] signverse-learning-backend — Hand detected — crop 543x413 (brightness=57)
+2026-04-13 17:20:27,679 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-1.0 std=0.9 min=-2.1 max=2.4
+2026-04-13 17:20:27,726 [INFO] signverse-learning-backend — Prediction: letter=Y, confidence=0.696, top3=[Y:0.696, W:0.163, T:0.057]
+INFO:     10.16.24.44:57884 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:20:57,124 [INFO] signverse-learning-backend — Hand detected — crop 394x296 (brightness=69)
+2026-04-13 17:20:57,126 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.6 std=1.0 min=-2.1 max=2.5
+2026-04-13 17:20:57,160 [INFO] signverse-learning-backend — Prediction: letter=N, confidence=0.727, top3=[N:0.727, M:0.15, P:0.094]
+INFO:     10.16.33.124:60039 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:21:15,285 [INFO] signverse-learning-backend — Hand detected — crop 297x223 (brightness=56)
+2026-04-13 17:21:15,286 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.7 std=0.9 min=-2.1 max=2.3
+2026-04-13 17:21:15,316 [INFO] signverse-learning-backend — Prediction: letter=M, confidence=0.884, top3=[M:0.884, E:0.04, I:0.024]
+INFO:     10.16.12.178:55396 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:21:25,849 [INFO] signverse-learning-backend — Hand detected — crop 266x199 (brightness=59)
+2026-04-13 17:21:25,854 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.8 std=0.9 min=-2.1 max=1.9
+2026-04-13 17:21:25,878 [INFO] signverse-learning-backend — Prediction: letter=P, confidence=0.303, top3=[P:0.303, Z:0.245, Y:0.115]
+INFO:     10.16.33.124:34268 - "POST /api/learning/predict HTTP/1.1" 200 OK
+INFO:     10.16.33.124:36695 - "GET / HTTP/1.1" 200 OK
+INFO:     10.16.33.124:24107 - "POST /login HTTP/1.1" 200 OK
+2026-04-13 17:43:32,484 [INFO] signverse-learning-backend — No hand detected (brightness=62) — returning error to user
+INFO:     10.16.12.178:56813 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:45:46,250 [INFO] signverse-learning-backend — Hand detected — crop 251x334 (brightness=54)
+2026-04-13 17:45:46,254 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.9 std=0.8 min=-2.1 max=1.9
+2026-04-13 17:45:46,275 [INFO] signverse-learning-backend — Prediction: letter=X, confidence=0.992, top3=[X:0.992, S:0.002, I:0.002]
+INFO:     10.16.33.124:10574 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:46:09,453 [INFO] signverse-learning-backend — Hand detected — crop 215x287 (brightness=65)
+2026-04-13 17:46:09,454 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.7 std=0.9 min=-2.1 max=2.1
+2026-04-13 17:46:09,471 [INFO] signverse-learning-backend — Prediction: letter=Y, confidence=0.469, top3=[Y:0.469, M:0.205, A:0.162]
+INFO:     10.16.33.124:51292 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:46:37,121 [INFO] signverse-learning-backend — Hand detected — crop 204x272 (brightness=59)
+2026-04-13 17:46:37,150 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.6 std=1.0 min=-2.0 max=2.3
+2026-04-13 17:46:37,169 [INFO] signverse-learning-backend — Prediction: letter=S, confidence=0.694, top3=[S:0.694, N:0.218, M:0.07]
+INFO:     10.16.22.250:29777 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:46:53,972 [INFO] signverse-learning-backend — Hand detected — crop 289x387 (brightness=71)
+2026-04-13 17:46:53,974 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.9 std=0.9 min=-2.1 max=2.2
+2026-04-13 17:46:54,002 [INFO] signverse-learning-backend — Prediction: letter=N, confidence=0.524, top3=[N:0.524, M:0.429, X:0.041]
+INFO:     10.16.33.124:8503 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 17:52:42,148 [INFO] signverse — Frames=27 | hands=14/27 (52%)
+2026-04-13 17:52:42,148 [INFO] signverse — Motion=0.09735 | skip_motion_gate=True
+2026-04-13 17:52:42,158 [INFO] signverse — Prediction: [{'sign': 'hat', 'confidence': 0.52}, {'sign': 'hello', 'confidence': 0.164}, {'sign': 'fireman', 'confidence': 0.036}] | motion=0.0973
+INFO:     10.16.33.124:12621 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:04:11,148 [INFO] signverse — Frames=33 | hands=20/33 (61%)
+2026-04-13 18:04:11,148 [INFO] signverse — Motion=0.15945 | skip_motion_gate=True
+2026-04-13 18:04:11,243 [INFO] signverse — Prediction: [{'sign': 'carrot', 'confidence': 0.144}, {'sign': 'mitten', 'confidence': 0.125}, {'sign': 'donkey', 'confidence': 0.105}] | motion=0.1595
+INFO:     10.16.22.250:42543 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:05:52,328 [INFO] signverse — Frames=26 | hands=16/26 (62%)
+2026-04-13 18:05:52,329 [INFO] signverse — Motion=0.11632 | skip_motion_gate=True
+2026-04-13 18:05:52,340 [INFO] signverse — Prediction: [{'sign': 'stairs', 'confidence': 0.197}, {'sign': 'another', 'confidence': 0.124}, {'sign': 'down', 'confidence': 0.061}] | motion=0.1163
+INFO:     10.16.12.178:11463 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:06:11,605 [INFO] signverse — Frames=33 | hands=11/33 (33%)
+2026-04-13 18:06:11,606 [INFO] signverse — Motion=0.16940 | skip_motion_gate=False
+2026-04-13 18:06:11,626 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.116}, {'sign': 'napkin', 'confidence': 0.075}, {'sign': 'quiet', 'confidence': 0.048}] | motion=0.1694
+INFO:     10.16.12.178:57854 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:06:48,068 [INFO] signverse — Frames=25 | hands=7/25 (28%)
+2026-04-13 18:06:48,068 [INFO] signverse — Motion=0.16842 | skip_motion_gate=False
+2026-04-13 18:06:48,098 [INFO] signverse — Prediction: [{'sign': 'stairs', 'confidence': 0.098}, {'sign': 'another', 'confidence': 0.063}, {'sign': 'icecream', 'confidence': 0.053}] | motion=0.1684
+INFO:     10.16.12.178:9751 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:07:06,553 [INFO] signverse — [sentence] Received 30 frames
+2026-04-13 18:07:09,431 [INFO] signverse — [sentence] Trimmed idle margins: 30 → 13 frames
+2026-04-13 18:07:09,431 [INFO] signverse — [sentence] Segments: 1 (sizes [13])
+2026-04-13 18:07:09,450 [INFO] signverse — [sentence] Result: 'Down.' (conf=0.293)
+INFO:     10.16.33.124:21391 - "POST /api/sign-to-sentence HTTP/1.1" 200 OK
+2026-04-13 18:08:41,963 [INFO] signverse — Frames=27 | hands=3/27 (11%)
+INFO:     10.16.33.124:20740 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:09:14,805 [INFO] signverse — Frames=25 | hands=6/25 (24%)
+2026-04-13 18:09:14,805 [INFO] signverse — Motion=0.12618 | skip_motion_gate=False
+2026-04-13 18:09:14,812 [INFO] signverse — Prediction: [{'sign': 'fireman', 'confidence': 0.423}, {'sign': 'boy', 'confidence': 0.148}, {'sign': 'man', 'confidence': 0.132}] | motion=0.1262
+INFO:     10.16.24.44:62088 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:09:36,188 [INFO] signverse — Frames=32 | hands=14/32 (44%)
+2026-04-13 18:09:36,189 [INFO] signverse — Motion=0.12948 | skip_motion_gate=False
+2026-04-13 18:09:36,199 [INFO] signverse — Prediction: [{'sign': 'bed', 'confidence': 0.84}, {'sign': 'grass', 'confidence': 0.075}, {'sign': 'bedroom', 'confidence': 0.025}] | motion=0.1295
+INFO:     10.16.12.178:30702 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:10:27,803 [INFO] signverse — Frames=23 | hands=4/23 (17%)
+2026-04-13 18:10:27,803 [INFO] signverse — Motion=0.13330 | skip_motion_gate=False
+2026-04-13 18:10:27,811 [INFO] signverse — Prediction: [{'sign': 'elephant', 'confidence': 0.678}, {'sign': 'blow', 'confidence': 0.026}, {'sign': 'duck', 'confidence': 0.023}] | motion=0.1333
+INFO:     10.16.33.124:40850 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:11:10,690 [INFO] signverse — Frames=29 | hands=0/29 (0%)
+INFO:     10.16.22.250:58067 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.22.250:38425 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:12:34,062 [INFO] signverse — Frames=25 | hands=0/25 (0%)
+INFO:     10.16.33.124:61527 - "GET /api/health HTTP/1.1" 200 OK
+2026-04-13 18:39:40,594 [INFO] signverse — Frames=33 | hands=1/33 (3%)
+INFO:     10.16.24.44:13593 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.24.44:24508 - "POST /login HTTP/1.1" 200 OK
+INFO:     10.16.24.44:59008 - "GET /api/health HTTP/1.1" 200 OK
+2026-04-13 18:40:59,692 [INFO] signverse — Frames=23 | hands=10/23 (43%)
+2026-04-13 18:40:59,692 [INFO] signverse — Motion=0.15648 | skip_motion_gate=False
+2026-04-13 18:40:59,702 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.983}, {'sign': 'feet', 'confidence': 0.002}, {'sign': 'napkin', 'confidence': 0.001}] | motion=0.1565
+INFO:     10.16.22.250:64975 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+INFO:     10.16.33.124:41547 - "POST /login HTTP/1.1" 200 OK
+2026-04-13 18:55:11,972 [INFO] signverse-learning-backend — Hand detected — crop 548x411 (brightness=101)
+2026-04-13 18:55:11,979 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.3 std=1.2 min=-2.1 max=2.2
+2026-04-13 18:55:12,006 [INFO] signverse-learning-backend — Prediction: letter=space, confidence=0.898, top3=[space:0.898, U:0.073, R:0.012]
+INFO:     10.16.24.44:56767 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 18:55:36,467 [INFO] signverse-learning-backend — Hand detected — crop 373x280 (brightness=99)
+2026-04-13 18:55:36,468 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.0 std=1.3 min=-2.1 max=2.4
+2026-04-13 18:55:36,486 [INFO] signverse-learning-backend — Prediction: letter=L, confidence=0.866, top3=[L:0.866, C:0.074, D:0.026]
+INFO:     10.16.12.178:59227 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 18:56:09,271 [INFO] signverse-learning-backend — Hand detected — crop 299x223 (brightness=95)
+2026-04-13 18:56:09,272 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=0.2 std=1.2 min=-2.1 max=2.1
+2026-04-13 18:56:09,290 [INFO] signverse-learning-backend — Prediction: letter=E, confidence=0.952, top3=[E:0.952, I:0.044, B:0.001]
+INFO:     10.16.33.124:25320 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 18:56:38,146 [INFO] signverse-learning-backend — Hand detected — crop 408x306 (brightness=106)
+2026-04-13 18:56:38,147 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=-0.9 std=0.9 min=-2.1 max=2.5
+2026-04-13 18:56:38,164 [INFO] signverse-learning-backend — Prediction: letter=H, confidence=0.945, top3=[H:0.945, Q:0.032, del:0.017]
+INFO:     10.16.33.124:54066 - "POST /api/learning/predict HTTP/1.1" 200 OK
+2026-04-13 18:57:15,349 [INFO] signverse — Frames=30 | hands=6/30 (20%)
+2026-04-13 18:57:15,349 [INFO] signverse — Motion=0.24164 | skip_motion_gate=False
+2026-04-13 18:57:15,357 [INFO] signverse — Prediction: [{'sign': 'down', 'confidence': 0.962}, {'sign': 'feet', 'confidence': 0.005}, {'sign': 'time', 'confidence': 0.005}] | motion=0.2416
+INFO:     10.16.22.250:49630 - "POST /api/sign-to-text HTTP/1.1" 200 OK
+2026-04-13 18:57:15,435 [INFO] signverse-learning-backend — Hand detected — crop 308x230 (brightness=99)
+2026-04-13 18:57:15,445 [INFO] signverse-learning-backend — Tensor stats: shape=(1, 3, 128, 128) norm=imagenet mean=0.0 std=1.3 min=-2.1 max=2.6
+2026-04-13 18:57:15,461 [INFO] signverse-learning-backend — Prediction: letter=N, confidence=0.348, top3=[N:0.348, del:0.257, Q:0.175]
+INFO:     10.16.33.124:52181 - "POST /api/learning/predict HTTP/1.1" 200 OK
+INFO:     10.16.22.250:60566 - "GET / HTTP/1.1" 200 OK
+INFO:     10.16.24.44:45661 - "GET / HTTP/1.1" 200 OK
+INFO:     10.16.22.250:60566 - "GET /?logs=container HTTP/1.1" 200 OK
+INFO:     10.16.33.124:44581 - "GET /?logs=container HTTP/1.1" 200 OK
+ 

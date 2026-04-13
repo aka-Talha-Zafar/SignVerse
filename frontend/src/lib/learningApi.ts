@@ -55,6 +55,7 @@ export async function predictAlphabetFromFrame(frameDataUrl: string): Promise<{
   letter: string;
   confidence: number;
   top3: { letter: string; confidence: number }[];
+  handDetected: boolean;
 }> {
   const res = await fetch(`${LEARNING_BACKEND_URL}/api/learning/predict`, {
     method: "POST",
@@ -69,6 +70,7 @@ export async function predictAlphabetFromFrame(frameDataUrl: string): Promise<{
     letter?: string;
     confidence?: number;
     top3?: unknown;
+    hand_detected?: boolean;
   };
 
   const top3Raw = Array.isArray(data.top3) ? data.top3 : [];
@@ -84,17 +86,26 @@ export async function predictAlphabetFromFrame(frameDataUrl: string): Promise<{
     return { letter: "?", confidence: 0 };
   });
 
+  const handDetected =
+    typeof data.hand_detected === "boolean"
+      ? data.hand_detected
+      : !(
+          String(data.letter ?? "").toLowerCase() === "nothing" &&
+          (data.confidence ?? 0) <= 0
+        );
+
   return {
     letter: String(data.letter ?? top3[0]?.letter ?? "?"),
     confidence: typeof data.confidence === "number" ? data.confidence : top3[0]?.confidence ?? 0,
     top3,
+    handDetected,
   };
 }
 
-/** Normalize model output to A–Z or null (ignore del/space for letter quiz). */
+/** Normalize model output to A–Z or null (ignore del/space/nothing for letter quiz). */
 export function normalizeAlphabetPrediction(raw: string): string | null {
   const s = String(raw || "").trim().toUpperCase();
-  if (s === "DEL" || s === "SPACE") return null;
+  if (s === "DEL" || s === "SPACE" || s === "NOTHING") return null;
   if (s.length === 1 && s >= "A" && s <= "Z") return s;
   const m = s.match(/[A-Z]/);
   return m && m[0] >= "A" && m[0] <= "Z" ? m[0] : null;
@@ -109,6 +120,16 @@ export async function verifyAlphabetSnapshot(
   const expected = expectedLetter.trim().toUpperCase();
   const detectedNorm = normalizeAlphabetPrediction(pred.letter);
   const detectedDisplay = pred.letter?.trim() || "?";
+
+  if (pred.handDetected === false) {
+    return {
+      correct: false,
+      detectedLetter: "?",
+      confidence: 0,
+      message:
+        "No hand detected. Use brighter lighting, keep your full hand in frame, and capture again.",
+    };
+  }
 
   if (detectedNorm === null) {
     return {

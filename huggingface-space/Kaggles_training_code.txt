@@ -1,0 +1,875 @@
+Model's training code from kaggle training notebook:
+
+"""
+============================================================
+SignVerse - Module 1: Learning Module (ASL Alphabet Classifier)
+============================================================
+Model: CNN (image classification for ASL fingerspelling)
+Dataset: ASL Alphabet (29 classes, 3000 images each, 200x200 RGB)
+Target: Classify static hand sign images into A-Z + del/nothing/space
+
+Run on Kaggle with GPU T4 enabled.
+Add dataset: grassknoted/asl-alphabet
+============================================================
+"""
+
+import os
+import time
+import json
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset, random_split
+from torchvision import transforms
+from PIL import Image
+from sklearn.metrics import classification_report, confusion_matrix
+import warnings
+warnings.filterwarnings('ignore')
+
+# ============================================================
+# CONFIG - All hyperparameters in one place
+# ============================================================
+class Config:
+    # Paths
+    TRAIN_DIR = "/kaggle/input/datasets/grassknoted/asl-alphabet/asl_alphabet_train/asl_alphabet_train"
+    TEST_DIR = "/kaggle/input/datasets/grassknoted/asl-alphabet/asl_alphabet_test/asl_alphabet_test"
+    SAVE_DIR = "/kaggle/working"
+    MODEL_NAME = "signverse_asl_classifier.pt"
+    
+    # Model
+    IMG_SIZE = 128  # Resize from 200 to 128 for faster training
+    NUM_CLASSES = 29
+    
+    # Training
+    BATCH_SIZE = 64
+    NUM_EPOCHS = 15
+    LEARNING_RATE = 1e-3
+    WEIGHT_DECAY = 1e-4
+    VAL_SPLIT = 0.15  # 15% of training data for validation
+    
+    # Device
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    NUM_WORKERS = 2
+    
+    # Seed
+    SEED = 42
+
+# Set seeds for reproducibility
+torch.manual_seed(Config.SEED)
+np.random.seed(Config.SEED)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(Config.SEED)
+
+print(f"Device: {Config.DEVICE}")
+print(f"PyTorch: {torch.__version__}")
+if torch.cuda.is_available():
+    print(f"GPU: {torch.cuda.get_device_name(0)}")
+    print(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+
+# ============================================================
+# STEP 1: Dataset & DataLoader
+# ============================================================
+print("\n" + "="*60)
+print("STEP 1: Loading Dataset")
+print("="*60)
+
+class ASLAlphabetDataset(Dataset):
+    """Custom dataset for ASL Alphabet images."""
+    
+    def __init__(self, root_dir, transform=None):
+        self.root_dir = root_dir
+        self.transform = transform
+        self.samples = []  # List of (image_path, label_index)
+        self.classes = sorted(os.listdir(root_dir))
+        self.class_to_idx = {cls: idx for idx, cls in enumerate(self.classes)}
+        
+        # Pre-scan all files (avoids slow per-access directory reads)
+        for cls in self.classes:
+            cls_dir = os.path.join(root_dir, cls)
+            if os.path.isdir(cls_dir):
+                for fname in os.listdir(cls_dir):
+                    if fname.lower().endswith(('.jpg', '.jpeg', '.png')):
+                        self.samples.append((
+                            os.path.join(cls_dir, fname),
+                            self.class_to_idx[cls]
+                        ))
+        
+        print(f"  Loaded {len(self.samples)} images across {len(self.classes)} classes")
+        print(f"  Classes: {self.classes}")
+    
+    def __len__(self):
+        return len(self.samples)
+    
+    def __getitem__(self, idx):
+        img_path, label = self.samples[idx]
+        try:
+            image = Image.open(img_path).convert('RGB')
+        except Exception as e:
+            # Fallback: return a black image if file is corrupted
+            print(f"  Warning: Could not load {img_path}: {e}")
+            image = Image.new('RGB', (Config.IMG_SIZE, Config.IMG_SIZE), (0, 0, 0))
+        
+        if self.transform:
+            image = self.transform(image)
+        
+        return image, label
+
+# Data transforms
+train_transform = transforms.Compose([
+    transforms.Resize((Config.IMG_SIZE, Config.IMG_SIZE)),
+    transforms.RandomHorizontalFlip(p=0.3),
+    transforms.RandomRotation(10),
+    transforms.ColorJitter(brightness=0.2, contrast=0.2),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+                         std=[0.229, 0.224, 0.225])
+])
+
+val_transform = transforms.Compose([
+    transforms.Resize((Config.IMG_SIZE, Config.IMG_SIZE)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+                         std=[0.229, 0.224, 0.225])
+])
+
+# Create full dataset, then split
+full_dataset = ASLAlphabetDataset(Config.TRAIN_DIR, transform=None)
+
+# Split into train/val
+total_size = len(full_dataset)
+val_size = int(total_size * Config.VAL_SPLIT)
+train_size = total_size - val_size
+
+train_subset, val_subset = random_split(
+    full_dataset, [train_size, val_size],
+    generator=torch.Generator().manual_seed(Config.SEED)
+)
+
+# Wrapper to apply different transforms to train vs val
+class TransformSubset(Dataset):
+    def __init__(self, subset, transform):
+        self.subset = subset
+        self.transform = transform
+    
+    def __len__(self):
+        return len(self.subset)
+    
+    def __getitem__(self, idx):
+        img_path, label = self.subset.dataset.samples[self.subset.indices[idx]]
+        image = Image.open(img_path).convert('RGB')
+        if self.transform:
+            image = self.transform(image)
+        return image, label
+
+train_dataset = TransformSubset(train_subset, train_transform)
+val_dataset = TransformSubset(val_subset, val_transform)
+
+train_loader = DataLoader(train_dataset, batch_size=Config.BATCH_SIZE, 
+                          shuffle=True, num_workers=Config.NUM_WORKERS, pin_memory=True)
+val_loader = DataLoader(val_dataset, batch_size=Config.BATCH_SIZE, 
+                        shuffle=False, num_workers=Config.NUM_WORKERS, pin_memory=True)
+
+print(f"\n  Train samples: {train_size}")
+print(f"  Val samples: {val_size}")
+print(f"  Train batches: {len(train_loader)}")
+print(f"  Val batches: {len(val_loader)}")
+
+# ============================================================
+# STEP 2: Model Architecture (CNN)
+# ============================================================
+print("\n" + "="*60)
+print("STEP 2: Building CNN Model")
+print("="*60)
+
+class ASLClassifierCNN(nn.Module):
+    """
+    CNN-based classifier for ASL alphabet recognition.
+    Uses Conv2D layers with batch normalization and dropout.
+    Architecture designed to be efficient on Kaggle T4 GPU.
+    """
+    
+    def __init__(self, num_classes=29):
+        super(ASLClassifierCNN, self).__init__()
+        
+        # Feature extraction blocks
+        self.features = nn.Sequential(
+            # Block 1: 3 -> 32 channels
+            nn.Conv2d(3, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),  # 128 -> 64
+            nn.Dropout2d(0.25),
+            
+            # Block 2: 32 -> 64 channels
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),  # 64 -> 32
+            nn.Dropout2d(0.25),
+            
+            # Block 3: 64 -> 128 channels
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),  # 32 -> 16
+            nn.Dropout2d(0.25),
+            
+            # Block 4: 128 -> 256 channels
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),  # 16 -> 8
+            nn.Dropout2d(0.25),
+        )
+        
+        # Global average pooling + classifier
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(256, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.3),
+            nn.Linear(256, num_classes)
+        )
+    
+    def forward(self, x):
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = self.classifier(x)
+        return x
+
+model = ASLClassifierCNN(num_classes=Config.NUM_CLASSES).to(Config.DEVICE)
+
+# Count parameters
+total_params = sum(p.numel() for p in model.parameters())
+trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+print(f"  Total parameters: {total_params:,}")
+print(f"  Trainable parameters: {trainable_params:,}")
+print(f"  Model size: ~{total_params * 4 / 1e6:.1f} MB")
+
+# ============================================================
+# STEP 3: Training Setup
+# ============================================================
+print("\n" + "="*60)
+print("STEP 3: Training Setup")
+print("="*60)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=Config.LEARNING_RATE, weight_decay=Config.WEIGHT_DECAY)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=3, factor=0.5)
+# Mixed precision for faster training
+scaler = torch.amp.GradScaler('cuda') if torch.cuda.is_available() else None
+
+print(f"  Optimizer: Adam (lr={Config.LEARNING_RATE})")
+print(f"  Scheduler: ReduceLROnPlateau (patience=3)")
+print(f"  Loss: CrossEntropyLoss")
+print(f"  Mixed Precision: {'Enabled' if scaler else 'Disabled'}")
+
+# ============================================================
+# STEP 4: Training Loop
+# ============================================================
+print("\n" + "="*60)
+print("STEP 4: Training")
+print("="*60)
+
+best_val_acc = 0.0
+training_history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
+
+for epoch in range(Config.NUM_EPOCHS):
+    epoch_start = time.time()
+    
+    # --- TRAIN ---
+    model.train()
+    train_loss = 0.0
+    train_correct = 0
+    train_total = 0
+    
+    for batch_idx, (images, labels) in enumerate(train_loader):
+        images = images.to(Config.DEVICE, non_blocking=True)
+        labels = labels.to(Config.DEVICE, non_blocking=True)
+        
+        optimizer.zero_grad(set_to_none=True)
+        
+        if scaler:
+            with torch.amp.autocast('cuda'):
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+        
+        train_loss += loss.item() * images.size(0)
+        _, predicted = outputs.max(1)
+        train_total += labels.size(0)
+        train_correct += predicted.eq(labels).sum().item()
+        
+        # Progress every 100 batches
+        if (batch_idx + 1) % 100 == 0:
+            print(f"    Batch {batch_idx+1}/{len(train_loader)} | "
+                  f"Loss: {loss.item():.4f} | "
+                  f"Acc: {100.*train_correct/train_total:.1f}%")
+    
+    train_loss /= train_total
+    train_acc = 100. * train_correct / train_total
+    
+    # --- VALIDATE ---
+    model.eval()
+    val_loss = 0.0
+    val_correct = 0
+    val_total = 0
+    
+    with torch.no_grad():
+        for images, labels in val_loader:
+            images = images.to(Config.DEVICE, non_blocking=True)
+            labels = labels.to(Config.DEVICE, non_blocking=True)
+            
+            if scaler:
+                with torch.amp.autocast('cuda'):
+                    outputs = model(images)
+                    loss = criterion(outputs, labels)
+            else:
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+            
+            val_loss += loss.item() * images.size(0)
+            _, predicted = outputs.max(1)
+            val_total += labels.size(0)
+            val_correct += predicted.eq(labels).sum().item()
+    
+    val_loss /= val_total
+    val_acc = 100. * val_correct / val_total
+    
+    # Update scheduler
+    scheduler.step(val_acc)
+    
+    # Save history
+    training_history["train_loss"].append(train_loss)
+    training_history["train_acc"].append(train_acc)
+    training_history["val_loss"].append(val_loss)
+    training_history["val_acc"].append(val_acc)
+    
+    epoch_time = time.time() - epoch_start
+    
+    print(f"\n  Epoch [{epoch+1}/{Config.NUM_EPOCHS}] ({epoch_time:.0f}s)")
+    print(f"    Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}%")
+    print(f"    Val Loss:   {val_loss:.4f} | Val Acc:   {val_acc:.2f}%")
+    print(f"    LR: {optimizer.param_groups[0]['lr']:.6f}")
+    
+    # Save best model
+    if val_acc > best_val_acc:
+        best_val_acc = val_acc
+        save_path = os.path.join(Config.SAVE_DIR, Config.MODEL_NAME)
+        torch.save({
+            'epoch': epoch + 1,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'val_acc': val_acc,
+            'val_loss': val_loss,
+            'classes': full_dataset.classes,
+            'class_to_idx': full_dataset.class_to_idx,
+            'config': {
+                'img_size': Config.IMG_SIZE,
+                'num_classes': Config.NUM_CLASSES,
+            }
+        }, save_path)
+        print(f"    ✅ Best model saved! (Val Acc: {val_acc:.2f}%)")
+    
+    print("-" * 50)
+
+print(f"\n🏆 Training Complete! Best Val Accuracy: {best_val_acc:.2f}%")
+
+# ============================================================
+# STEP 5: Save Training History & Class Mapping
+# ============================================================
+print("\n" + "="*60)
+print("STEP 5: Saving Artifacts")
+print("="*60)
+
+# Save training history
+history_path = os.path.join(Config.SAVE_DIR, "training_history.json")
+with open(history_path, 'w') as f:
+    json.dump(training_history, f, indent=2)
+print(f"  Training history saved to: {history_path}")
+
+# Save class mapping (needed by backend for inference)
+class_mapping = {
+    "classes": full_dataset.classes,
+    "class_to_idx": full_dataset.class_to_idx,
+    "idx_to_class": {v: k for k, v in full_dataset.class_to_idx.items()}
+}
+mapping_path = os.path.join(Config.SAVE_DIR, "class_mapping.json")
+with open(mapping_path, 'w') as f:
+    json.dump(class_mapping, f, indent=2)
+print(f"  Class mapping saved to: {mapping_path}")
+
+# ============================================================
+# STEP 6: Evaluate on Test Set
+# ============================================================
+print("\n" + "="*60)
+print("STEP 6: Test Evaluation")
+print("="*60)
+
+# Load best model
+checkpoint = torch.load(os.path.join(Config.SAVE_DIR, Config.MODEL_NAME), weights_only=False)
+model.load_state_dict(checkpoint['model_state_dict'])
+model.eval()
+
+# The test set has 28 images (one per class, named like A_test.jpg)
+test_dir = Config.TEST_DIR
+test_files = sorted(os.listdir(test_dir))
+
+test_correct = 0
+test_total = 0
+results = []
+
+for fname in test_files:
+    if not fname.lower().endswith(('.jpg', '.jpeg', '.png')):
+        continue
+    
+    # Extract true label from filename (e.g., "A_test.jpg" -> "A")
+    true_label = fname.split('_')[0]
+    if true_label not in full_dataset.class_to_idx:
+        print(f"  Warning: Unknown label '{true_label}' from file {fname}")
+        continue
+    
+    true_idx = full_dataset.class_to_idx[true_label]
+    
+    # Load and transform image
+    img_path = os.path.join(test_dir, fname)
+    image = Image.open(img_path).convert('RGB')
+    image = val_transform(image).unsqueeze(0).to(Config.DEVICE)
+    
+    with torch.no_grad():
+        if scaler:
+            with torch.amp.autocast('cuda'):
+                output = model(image)
+        else:
+            output = model(image)
+        
+        probs = torch.softmax(output, dim=1)
+        confidence, predicted = probs.max(1)
+        pred_label = full_dataset.classes[predicted.item()]
+    
+    is_correct = pred_label == true_label
+    test_correct += int(is_correct)
+    test_total += 1
+    
+    status = "✅" if is_correct else "❌"
+    results.append({
+        "file": fname,
+        "true": true_label,
+        "predicted": pred_label,
+        "confidence": f"{confidence.item()*100:.1f}%",
+        "correct": is_correct
+    })
+    print(f"  {status} {fname}: True={true_label}, Predicted={pred_label} ({confidence.item()*100:.1f}%)")
+
+test_acc = 100. * test_correct / test_total if test_total > 0 else 0
+print(f"\n  Test Accuracy: {test_acc:.1f}% ({test_correct}/{test_total})")
+
+# Save test results
+results_path = os.path.join(Config.SAVE_DIR, "test_results.json")
+with open(results_path, 'w') as f:
+    json.dump({"accuracy": test_acc, "results": results}, f, indent=2)
+
+# ============================================================
+# STEP 7: Summary
+# ============================================================
+print("\n" + "="*60)
+print("SUMMARY")
+print("="*60)
+print(f"  Model: ASLClassifierCNN")
+print(f"  Parameters: {total_params:,}")
+print(f"  Best Val Accuracy: {best_val_acc:.2f}%")
+print(f"  Test Accuracy: {test_acc:.1f}%")
+print(f"  Saved files:")
+print(f"    - {Config.MODEL_NAME} (model weights)")
+print(f"    - training_history.json")
+print(f"    - class_mapping.json")
+print(f"    - test_results.json")
+print(f"\n  📥 Download these 4 files from /kaggle/working/")
+print(f"  They will be needed for the backend server.")
+
+
+
+
+Model training results:
+
+Device: cuda
+PyTorch: 2.9.0+cu126
+GPU: Tesla T4
+GPU Memory: 15.6 GB
+
+============================================================
+STEP 1: Loading Dataset
+============================================================
+  Loaded 87000 images across 29 classes
+  Classes: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'del', 'nothing', 'space']
+
+  Train samples: 73950
+  Val samples: 13050
+  Train batches: 1156
+  Val batches: 204
+
+============================================================
+STEP 2: Building CNN Model
+============================================================
+  Total parameters: 855,485
+  Trainable parameters: 855,485
+  Model size: ~3.4 MB
+
+============================================================
+STEP 3: Training Setup
+============================================================
+  Optimizer: Adam (lr=0.001)
+  Scheduler: ReduceLROnPlateau (patience=3)
+  Loss: CrossEntropyLoss
+  Mixed Precision: Enabled
+
+============================================================
+STEP 4: Training
+============================================================
+    Batch 100/1156 | Loss: 3.2638 | Acc: 5.1%
+    Batch 200/1156 | Loss: 3.0602 | Acc: 7.4%
+    Batch 300/1156 | Loss: 2.5592 | Acc: 9.6%
+    Batch 400/1156 | Loss: 2.6135 | Acc: 11.7%
+    Batch 500/1156 | Loss: 2.2731 | Acc: 13.6%
+    Batch 600/1156 | Loss: 2.2466 | Acc: 15.8%
+    Batch 700/1156 | Loss: 1.8957 | Acc: 18.3%
+    Batch 800/1156 | Loss: 1.8908 | Acc: 20.7%
+    Batch 900/1156 | Loss: 1.3261 | Acc: 23.4%
+    Batch 1000/1156 | Loss: 1.5930 | Acc: 25.9%
+    Batch 1100/1156 | Loss: 1.2924 | Acc: 28.4%
+
+  Epoch [1/15] (481s)
+    Train Loss: 2.2465 | Train Acc: 29.79%
+    Val Loss:   0.8198 | Val Acc:   73.09%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 73.09%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 1.0702 | Acc: 60.0%
+    Batch 200/1156 | Loss: 1.1028 | Acc: 61.8%
+    Batch 300/1156 | Loss: 0.7953 | Acc: 63.3%
+    Batch 400/1156 | Loss: 1.0105 | Acc: 64.5%
+    Batch 500/1156 | Loss: 1.0367 | Acc: 66.0%
+    Batch 600/1156 | Loss: 0.8456 | Acc: 67.3%
+    Batch 700/1156 | Loss: 0.7014 | Acc: 68.5%
+    Batch 800/1156 | Loss: 0.5314 | Acc: 69.7%
+    Batch 900/1156 | Loss: 0.4558 | Acc: 70.6%
+    Batch 1000/1156 | Loss: 0.4721 | Acc: 71.5%
+    Batch 1100/1156 | Loss: 0.6692 | Acc: 72.3%
+
+  Epoch [2/15] (209s)
+    Train Loss: 0.7836 | Train Acc: 72.83%
+    Val Loss:   0.2309 | Val Acc:   93.06%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 93.06%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.2713 | Acc: 83.7%
+    Batch 200/1156 | Loss: 0.4353 | Acc: 83.5%
+    Batch 300/1156 | Loss: 0.3187 | Acc: 83.7%
+    Batch 400/1156 | Loss: 0.2663 | Acc: 84.1%
+    Batch 500/1156 | Loss: 0.6353 | Acc: 84.5%
+    Batch 600/1156 | Loss: 0.4076 | Acc: 84.8%
+    Batch 700/1156 | Loss: 0.4565 | Acc: 85.2%
+    Batch 800/1156 | Loss: 0.3649 | Acc: 85.5%
+    Batch 900/1156 | Loss: 0.3441 | Acc: 85.8%
+    Batch 1000/1156 | Loss: 0.2866 | Acc: 86.2%
+    Batch 1100/1156 | Loss: 0.1628 | Acc: 86.4%
+
+  Epoch [3/15] (168s)
+    Train Loss: 0.3881 | Train Acc: 86.59%
+    Val Loss:   0.0762 | Val Acc:   98.18%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 98.18%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.1477 | Acc: 91.0%
+    Batch 200/1156 | Loss: 0.2620 | Acc: 90.4%
+    Batch 300/1156 | Loss: 0.2576 | Acc: 90.4%
+    Batch 400/1156 | Loss: 0.2095 | Acc: 90.6%
+    Batch 500/1156 | Loss: 0.1565 | Acc: 90.7%
+    Batch 600/1156 | Loss: 0.2577 | Acc: 90.8%
+    Batch 700/1156 | Loss: 0.2012 | Acc: 91.0%
+    Batch 800/1156 | Loss: 0.1239 | Acc: 91.2%
+    Batch 900/1156 | Loss: 0.2979 | Acc: 91.4%
+    Batch 1000/1156 | Loss: 0.1220 | Acc: 91.5%
+    Batch 1100/1156 | Loss: 0.1127 | Acc: 91.6%
+
+  Epoch [4/15] (171s)
+    Train Loss: 0.2477 | Train Acc: 91.63%
+    Val Loss:   0.0389 | Val Acc:   99.01%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 99.01%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.2651 | Acc: 92.7%
+    Batch 200/1156 | Loss: 0.2207 | Acc: 93.3%
+    Batch 300/1156 | Loss: 0.3272 | Acc: 93.3%
+    Batch 400/1156 | Loss: 0.2217 | Acc: 93.3%
+    Batch 500/1156 | Loss: 0.2300 | Acc: 93.5%
+    Batch 600/1156 | Loss: 0.2670 | Acc: 93.5%
+    Batch 700/1156 | Loss: 0.2015 | Acc: 93.6%
+    Batch 800/1156 | Loss: 0.2190 | Acc: 93.7%
+    Batch 900/1156 | Loss: 0.1638 | Acc: 93.7%
+    Batch 1000/1156 | Loss: 0.2267 | Acc: 93.8%
+    Batch 1100/1156 | Loss: 0.1149 | Acc: 93.8%
+
+  Epoch [5/15] (170s)
+    Train Loss: 0.1849 | Train Acc: 93.87%
+    Val Loss:   0.0239 | Val Acc:   99.52%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 99.52%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.1759 | Acc: 94.2%
+    Batch 200/1156 | Loss: 0.1950 | Acc: 94.3%
+    Batch 300/1156 | Loss: 0.0998 | Acc: 94.3%
+    Batch 400/1156 | Loss: 0.1716 | Acc: 94.6%
+    Batch 500/1156 | Loss: 0.2044 | Acc: 94.6%
+    Batch 600/1156 | Loss: 0.1837 | Acc: 94.5%
+    Batch 700/1156 | Loss: 0.1688 | Acc: 94.6%
+    Batch 800/1156 | Loss: 0.0744 | Acc: 94.6%
+    Batch 900/1156 | Loss: 0.1501 | Acc: 94.7%
+    Batch 1000/1156 | Loss: 0.1038 | Acc: 94.7%
+    Batch 1100/1156 | Loss: 0.2822 | Acc: 94.8%
+
+  Epoch [6/15] (191s)
+    Train Loss: 0.1542 | Train Acc: 94.88%
+    Val Loss:   0.0175 | Val Acc:   99.52%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 99.52%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.0600 | Acc: 95.6%
+    Batch 200/1156 | Loss: 0.1514 | Acc: 95.5%
+    Batch 300/1156 | Loss: 0.1088 | Acc: 95.3%
+    Batch 400/1156 | Loss: 0.1268 | Acc: 95.3%
+    Batch 500/1156 | Loss: 0.0598 | Acc: 95.3%
+    Batch 600/1156 | Loss: 0.0922 | Acc: 95.3%
+    Batch 700/1156 | Loss: 0.1134 | Acc: 95.4%
+    Batch 800/1156 | Loss: 0.1339 | Acc: 95.5%
+    Batch 900/1156 | Loss: 0.1519 | Acc: 95.5%
+    Batch 1000/1156 | Loss: 0.1707 | Acc: 95.6%
+    Batch 1100/1156 | Loss: 0.2211 | Acc: 95.7%
+
+  Epoch [7/15] (167s)
+    Train Loss: 0.1300 | Train Acc: 95.70%
+    Val Loss:   0.0115 | Val Acc:   99.73%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 99.73%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.2052 | Acc: 95.3%
+    Batch 200/1156 | Loss: 0.0896 | Acc: 95.8%
+    Batch 300/1156 | Loss: 0.1304 | Acc: 95.9%
+    Batch 400/1156 | Loss: 0.0873 | Acc: 96.0%
+    Batch 500/1156 | Loss: 0.0289 | Acc: 96.0%
+    Batch 600/1156 | Loss: 0.1290 | Acc: 96.2%
+    Batch 700/1156 | Loss: 0.1941 | Acc: 96.2%
+    Batch 800/1156 | Loss: 0.1314 | Acc: 96.2%
+    Batch 900/1156 | Loss: 0.1264 | Acc: 96.2%
+    Batch 1000/1156 | Loss: 0.2530 | Acc: 96.2%
+    Batch 1100/1156 | Loss: 0.0615 | Acc: 96.2%
+
+  Epoch [8/15] (162s)
+    Train Loss: 0.1136 | Train Acc: 96.26%
+    Val Loss:   0.0079 | Val Acc:   99.86%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 99.86%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.0671 | Acc: 95.7%
+    Batch 200/1156 | Loss: 0.0248 | Acc: 95.9%
+    Batch 300/1156 | Loss: 0.0632 | Acc: 95.8%
+    Batch 400/1156 | Loss: 0.1043 | Acc: 95.9%
+    Batch 500/1156 | Loss: 0.1316 | Acc: 96.0%
+    Batch 600/1156 | Loss: 0.1983 | Acc: 96.1%
+    Batch 700/1156 | Loss: 0.0193 | Acc: 96.2%
+    Batch 800/1156 | Loss: 0.0837 | Acc: 96.3%
+    Batch 900/1156 | Loss: 0.0836 | Acc: 96.3%
+    Batch 1000/1156 | Loss: 0.1065 | Acc: 96.4%
+    Batch 1100/1156 | Loss: 0.0634 | Acc: 96.4%
+
+  Epoch [9/15] (156s)
+    Train Loss: 0.1080 | Train Acc: 96.44%
+    Val Loss:   0.0081 | Val Acc:   99.77%
+    LR: 0.001000
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.1499 | Acc: 96.9%
+    Batch 200/1156 | Loss: 0.1650 | Acc: 96.8%
+    Batch 300/1156 | Loss: 0.1163 | Acc: 96.6%
+    Batch 400/1156 | Loss: 0.0967 | Acc: 96.7%
+    Batch 500/1156 | Loss: 0.0687 | Acc: 96.9%
+    Batch 600/1156 | Loss: 0.1725 | Acc: 96.9%
+    Batch 700/1156 | Loss: 0.0955 | Acc: 96.9%
+    Batch 800/1156 | Loss: 0.0306 | Acc: 96.9%
+    Batch 900/1156 | Loss: 0.0244 | Acc: 96.9%
+    Batch 1000/1156 | Loss: 0.0475 | Acc: 96.9%
+    Batch 1100/1156 | Loss: 0.1038 | Acc: 96.9%
+
+  Epoch [10/15] (156s)
+    Train Loss: 0.0968 | Train Acc: 96.87%
+    Val Loss:   0.0069 | Val Acc:   99.83%
+    LR: 0.001000
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.0403 | Acc: 97.0%
+    Batch 200/1156 | Loss: 0.0872 | Acc: 97.1%
+    Batch 300/1156 | Loss: 0.2557 | Acc: 97.1%
+    Batch 400/1156 | Loss: 0.1272 | Acc: 97.0%
+    Batch 500/1156 | Loss: 0.0737 | Acc: 97.1%
+    Batch 600/1156 | Loss: 0.1751 | Acc: 97.2%
+    Batch 700/1156 | Loss: 0.0604 | Acc: 97.1%
+    Batch 800/1156 | Loss: 0.1599 | Acc: 97.1%
+    Batch 900/1156 | Loss: 0.0526 | Acc: 97.1%
+    Batch 1000/1156 | Loss: 0.1396 | Acc: 97.1%
+    Batch 1100/1156 | Loss: 0.0289 | Acc: 97.1%
+
+  Epoch [11/15] (158s)
+    Train Loss: 0.0884 | Train Acc: 97.15%
+    Val Loss:   0.0033 | Val Acc:   99.96%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 99.96%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.1449 | Acc: 97.5%
+    Batch 200/1156 | Loss: 0.0933 | Acc: 97.4%
+    Batch 300/1156 | Loss: 0.0271 | Acc: 97.2%
+    Batch 400/1156 | Loss: 0.0750 | Acc: 97.3%
+    Batch 500/1156 | Loss: 0.0456 | Acc: 97.3%
+    Batch 600/1156 | Loss: 0.0782 | Acc: 97.4%
+    Batch 700/1156 | Loss: 0.2156 | Acc: 97.4%
+    Batch 800/1156 | Loss: 0.0376 | Acc: 97.4%
+    Batch 900/1156 | Loss: 0.1107 | Acc: 97.4%
+    Batch 1000/1156 | Loss: 0.0921 | Acc: 97.3%
+    Batch 1100/1156 | Loss: 0.1008 | Acc: 97.3%
+
+  Epoch [12/15] (155s)
+    Train Loss: 0.0830 | Train Acc: 97.29%
+    Val Loss:   0.0063 | Val Acc:   99.83%
+    LR: 0.001000
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.0131 | Acc: 97.3%
+    Batch 200/1156 | Loss: 0.1946 | Acc: 97.2%
+    Batch 300/1156 | Loss: 0.1278 | Acc: 97.3%
+    Batch 400/1156 | Loss: 0.0235 | Acc: 97.3%
+    Batch 500/1156 | Loss: 0.1311 | Acc: 97.3%
+    Batch 600/1156 | Loss: 0.0057 | Acc: 97.3%
+    Batch 700/1156 | Loss: 0.0488 | Acc: 97.3%
+    Batch 800/1156 | Loss: 0.0716 | Acc: 97.3%
+    Batch 900/1156 | Loss: 0.1697 | Acc: 97.3%
+    Batch 1000/1156 | Loss: 0.1183 | Acc: 97.3%
+    Batch 1100/1156 | Loss: 0.0473 | Acc: 97.3%
+
+  Epoch [13/15] (171s)
+    Train Loss: 0.0824 | Train Acc: 97.30%
+    Val Loss:   0.0021 | Val Acc:   99.97%
+    LR: 0.001000
+    ✅ Best model saved! (Val Acc: 99.97%)
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.1065 | Acc: 97.3%
+    Batch 200/1156 | Loss: 0.0241 | Acc: 97.3%
+    Batch 300/1156 | Loss: 0.0369 | Acc: 97.4%
+    Batch 400/1156 | Loss: 0.0673 | Acc: 97.5%
+    Batch 500/1156 | Loss: 0.0534 | Acc: 97.6%
+    Batch 600/1156 | Loss: 0.0548 | Acc: 97.6%
+    Batch 700/1156 | Loss: 0.1009 | Acc: 97.6%
+    Batch 800/1156 | Loss: 0.1148 | Acc: 97.6%
+    Batch 900/1156 | Loss: 0.2326 | Acc: 97.5%
+    Batch 1000/1156 | Loss: 0.1393 | Acc: 97.5%
+    Batch 1100/1156 | Loss: 0.1098 | Acc: 97.5%
+
+  Epoch [14/15] (166s)
+    Train Loss: 0.0776 | Train Acc: 97.53%
+    Val Loss:   0.0021 | Val Acc:   99.95%
+    LR: 0.001000
+--------------------------------------------------
+    Batch 100/1156 | Loss: 0.0213 | Acc: 97.6%
+    Batch 200/1156 | Loss: 0.0824 | Acc: 97.4%
+    Batch 300/1156 | Loss: 0.0377 | Acc: 97.4%
+    Batch 400/1156 | Loss: 0.0249 | Acc: 97.3%
+    Batch 500/1156 | Loss: 0.0222 | Acc: 97.3%
+    Batch 600/1156 | Loss: 0.0278 | Acc: 97.3%
+    Batch 700/1156 | Loss: 0.0723 | Acc: 97.4%
+    Batch 800/1156 | Loss: 0.0614 | Acc: 97.4%
+    Batch 900/1156 | Loss: 0.0394 | Acc: 97.5%
+    Batch 1000/1156 | Loss: 0.0483 | Acc: 97.6%
+    Batch 1100/1156 | Loss: 0.0539 | Acc: 97.5%
+
+  Epoch [15/15] (163s)
+    Train Loss: 0.0777 | Train Acc: 97.54%
+    Val Loss:   0.0022 | Val Acc:   99.97%
+    LR: 0.000500
+--------------------------------------------------
+
+🏆 Training Complete! Best Val Accuracy: 99.97%
+
+============================================================
+STEP 5: Saving Artifacts
+============================================================
+  Training history saved to: /kaggle/working/training_history.json
+  Class mapping saved to: /kaggle/working/class_mapping.json
+
+============================================================
+STEP 6: Test Evaluation
+============================================================
+  ✅ A_test.jpg: True=A, Predicted=A (100.0%)
+  ✅ B_test.jpg: True=B, Predicted=B (100.0%)
+  ✅ C_test.jpg: True=C, Predicted=C (100.0%)
+  ✅ D_test.jpg: True=D, Predicted=D (100.0%)
+  ✅ E_test.jpg: True=E, Predicted=E (100.0%)
+  ✅ F_test.jpg: True=F, Predicted=F (100.0%)
+  ✅ G_test.jpg: True=G, Predicted=G (100.0%)
+  ✅ H_test.jpg: True=H, Predicted=H (100.0%)
+  ✅ I_test.jpg: True=I, Predicted=I (100.0%)
+  ✅ J_test.jpg: True=J, Predicted=J (100.0%)
+  ✅ K_test.jpg: True=K, Predicted=K (100.0%)
+  ✅ L_test.jpg: True=L, Predicted=L (100.0%)
+  ✅ M_test.jpg: True=M, Predicted=M (100.0%)
+  ✅ N_test.jpg: True=N, Predicted=N (100.0%)
+  ✅ O_test.jpg: True=O, Predicted=O (100.0%)
+  ✅ P_test.jpg: True=P, Predicted=P (100.0%)
+  ✅ Q_test.jpg: True=Q, Predicted=Q (100.0%)
+  ✅ R_test.jpg: True=R, Predicted=R (99.7%)
+  ✅ S_test.jpg: True=S, Predicted=S (100.0%)
+  ✅ T_test.jpg: True=T, Predicted=T (100.0%)
+  ✅ U_test.jpg: True=U, Predicted=U (100.0%)
+  ✅ V_test.jpg: True=V, Predicted=V (99.9%)
+  ✅ W_test.jpg: True=W, Predicted=W (100.0%)
+  ✅ X_test.jpg: True=X, Predicted=X (100.0%)
+  ✅ Y_test.jpg: True=Y, Predicted=Y (100.0%)
+  ✅ Z_test.jpg: True=Z, Predicted=Z (100.0%)
+  ✅ nothing_test.jpg: True=nothing, Predicted=nothing (100.0%)
+  ✅ space_test.jpg: True=space, Predicted=space (100.0%)
+
+  Test Accuracy: 100.0% (28/28)
+
+============================================================
+SUMMARY
+============================================================
+  Model: ASLClassifierCNN
+  Parameters: 855,485
+  Best Val Accuracy: 99.97%
+  Test Accuracy: 100.0%
+  Saved files:
+    - signverse_asl_classifier.pt (model weights)
+    - training_history.json
+    - class_mapping.json
+    - test_results.json
+
+  📥 Download these 4 files from /kaggle/working/
+  They will be needed for the backend server.

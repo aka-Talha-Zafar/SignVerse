@@ -16,6 +16,7 @@ Modes:
 
 Env: MODEL_DIR, HF_TOKEN, HF_MODELS_REPO, ASL_ALPHABET_DATASET_DIR, ALPHABET_NUM_CLASSES,
      ALPHABET_INPUT_SIZE, ALPHABET_NORM_TYPE (imagenet|half|none  default=imagenet),
+     ALPHABET_DISABLE_TTA (set 1/true to skip horizontal-flip test-time averaging),
      LEARNING_API_PORT
 """
 
@@ -62,12 +63,10 @@ learning_router = APIRouter(tags=["learning"])
 MODEL_DIR = os.environ.get("MODEL_DIR", "./models")
 DEVICE = torch.device("cpu")
 
-def _get_hand_crop(rgb_frame: np.ndarray, pad_frac: float = 0.25) -> Optional[np.ndarray]:
+def _get_hand_bbox(rgb_for_detection: np.ndarray, pad_frac: float = 0.12) -> Optional[tuple[int, int, int, int]]:
     """
-    Detect the largest hand in *rgb_frame* via MediaPipe Hands and return a square
-    crop of it (with *pad_frac* padding on each side).  Returns None if no hand is
-    found or if MediaPipe is unavailable, in which case the caller falls back to the
-    full frame.
+    Run MediaPipe on *rgb_for_detection* and return pixel bbox ``(y1, y2, x1, x2)``
+    inclusive-exclusive slice indices for the same image shape.
     """
     global _mp_hands_detector
     if not _MP_HANDS_AVAILABLE or _mp_hands is None:
@@ -77,15 +76,15 @@ def _get_hand_crop(rgb_frame: np.ndarray, pad_frac: float = 0.25) -> Optional[np
             _mp_hands_detector = _mp_hands.Hands(
                 static_image_mode=True,
                 max_num_hands=1,
-                min_detection_confidence=0.4,
+                min_detection_confidence=0.1,
             )
         except Exception:
             return None
     try:
-        result = _mp_hands_detector.process(rgb_frame)
+        result = _mp_hands_detector.process(rgb_for_detection)
         if not result.multi_hand_landmarks:
             return None
-        h, w = rgb_frame.shape[:2]
+        h, w = rgb_for_detection.shape[:2]
         lm = result.multi_hand_landmarks[0].landmark
         xs = [l.x for l in lm]
         ys = [l.y for l in lm]
@@ -93,7 +92,6 @@ def _get_hand_crop(rgb_frame: np.ndarray, pad_frac: float = 0.25) -> Optional[np
         x_max = min(1.0, max(xs) + pad_frac * (max(xs) - min(xs)))
         y_min = max(0.0, min(ys) - pad_frac * (max(ys) - min(ys)))
         y_max = min(1.0, max(ys) + pad_frac * (max(ys) - min(ys)))
-        # Make it square (helps the model whose training images were square)
         x_span = x_max - x_min
         y_span = y_max - y_min
         half = max(x_span, y_span) / 2
@@ -104,34 +102,59 @@ def _get_hand_crop(rgb_frame: np.ndarray, pad_frac: float = 0.25) -> Optional[np
         y2 = min(h, int((cy + half) * h))
         if x2 - x1 < 20 or y2 - y1 < 20:
             return None
-        return rgb_frame[y1:y2, x1:x2]
+        return (y1, y2, x1, x2)
     except Exception:
         return None
 
 
+def _get_hand_crop(rgb_frame: np.ndarray, pad_frac: float = 0.12) -> Optional[np.ndarray]:
+    """Detect hand in *rgb_frame* and return that crop (see :func:`_get_hand_bbox`)."""
+    bbox = _get_hand_bbox(rgb_frame, pad_frac)
+    if bbox is None:
+        return None
+    y1, y2, x1, x2 = bbox
+    return rgb_frame[y1:y2, x1:x2]
+
+
+def _alphabet_square_letterbox_white(img_rgb: np.ndarray) -> np.ndarray:
+    """
+    Pad non-square hand crops to a square on white (255) before resize.
+
+    Webcam ROIs are often rectangular after int() clipping; resizing them
+    directly to 128×128 **stretches** the hand and breaks geometry vs training,
+    where each class image is already square (200×200 → 128×128).
+    """
+    h, w = img_rgb.shape[:2]
+    if h == w:
+        return img_rgb
+    side = max(h, w)
+    out = np.full((side, side, 3), 255, dtype=np.uint8)
+    y0 = (side - h) // 2
+    x0 = (side - w) // 2
+    out[y0 : y0 + h, x0 : x0 + w] = img_rgb
+    return out
+
+
+def _alphabet_exposure_lift(img_rgb: np.ndarray) -> np.ndarray:
+    """Linear gain for dark crops so luminance is closer to bright Kaggle studio shots."""
+    x = img_rgb.astype(np.float32)
+    m = float(x.mean())
+    if m >= 92.0:
+        return img_rgb
+    target = 122.0
+    scale = min(2.85, max(1.05, target / max(m, 34.0)))
+    return np.clip(x * scale, 0.0, 255.0).astype(np.uint8)
+
+
 def _alphabet_norm_type() -> str:
     """
-    Optional per-channel normalisation applied AFTER the tensor is built.
+    Per-channel normalisation applied AFTER /255 scaling.
 
-    The SignVerse ASL training notebook loaded images as raw uint8 arrays and
-    did NOT divide by 255, so the model's BN running_mean/var are calibrated for
-    the [0, 255] pixel range.  Inference therefore also keeps values in [0, 255]
-    (see learning_predict — there is intentionally NO /255 division there).
-
-    This env var controls whether an additional channel-wise shift/scale is
-    applied on top of the [0, 255] base.  Options (set ALPHABET_NORM_TYPE):
-
-      none (default) – no extra normalisation; pass raw [0, 255] to the model
-      imagenet255    – subtract ImageNet means in [0,255] space and divide by
-                       std in [0,255]:  mean=[123.675, 116.28, 103.53]
-                                        std =[  58.40,  57.12,  57.375]
-      half           – (legacy) map [0,1] to [-1,1]; only for models whose
-                       BN stats were calibrated for that range
-
-    Leave this at "none" unless you know your training code used a specific
-    normalisation on top of [0, 255] pixel values.
+    Training used  transforms.ToTensor()  (/255 → [0,1])  followed by
+    transforms.Normalize([0.485,0.456,0.406], [0.229,0.224,0.225]).
+    Default is "imagenet" to match.
     """
-    return os.environ.get("ALPHABET_NORM_TYPE", "none").strip().lower()
+    return os.environ.get("ALPHABET_NORM_TYPE", "imagenet").strip().lower()
 
 
 def _alphabet_use_imagenet_norm() -> bool:
@@ -722,36 +745,42 @@ def _try_load_hardcoded_asl_classifier_cnn(
     # so strict=True only verifies that every Conv/BN key is present – which it is.
     in3 = 3          # input channels (RGB)
     features = nn.Sequential(OrderedDict([
+        # Block 1: 3 → ch[0], ch[0] → ch[1]
         ("0",  nn.Conv2d(in3,   ch[0], 3, padding=1)),
         ("1",  nn.BatchNorm2d(ch[0])),
         ("2",  nn.ReLU(inplace=True)),
         ("3",  nn.Conv2d(ch[0], ch[1], 3, padding=1)),
         ("4",  nn.BatchNorm2d(ch[1])),
         ("5",  nn.ReLU(inplace=True)),
-        ("6",  nn.MaxPool2d(2, 2)),
-        ("7",  nn.ReLU(inplace=True)),   # Dropout(0.5) in training → identity at eval
+        ("6",  nn.MaxPool2d(2, 2)),          # 128→64
+        ("7",  nn.Identity()),               # Dropout2d(0.25) → identity at eval
+        # Block 2: ch[1] → ch[2], ch[2] → ch[3]
         ("8",  nn.Conv2d(ch[1], ch[2], 3, padding=1)),
         ("9",  nn.BatchNorm2d(ch[2])),
         ("10", nn.ReLU(inplace=True)),
         ("11", nn.Conv2d(ch[2], ch[3], 3, padding=1)),
         ("12", nn.BatchNorm2d(ch[3])),
         ("13", nn.ReLU(inplace=True)),
-        ("14", nn.MaxPool2d(2, 2)),
-        ("15", nn.ReLU(inplace=True)),   # Dropout(0.5) → identity at eval
+        ("14", nn.MaxPool2d(2, 2)),          # 64→32
+        ("15", nn.Identity()),               # Dropout2d(0.25) → identity at eval
+        # Block 3: ch[3] → ch[4], ch[4] → ch[5]
         ("16", nn.Conv2d(ch[3], ch[4], 3, padding=1)),
         ("17", nn.BatchNorm2d(ch[4])),
         ("18", nn.ReLU(inplace=True)),
         ("19", nn.Conv2d(ch[4], ch[5], 3, padding=1)),
         ("20", nn.BatchNorm2d(ch[5])),
         ("21", nn.ReLU(inplace=True)),
-        ("22", nn.MaxPool2d(2, 2)),
-        ("23", nn.ReLU(inplace=True)),   # Dropout(0.5) → identity at eval
+        ("22", nn.MaxPool2d(2, 2)),          # 32→16
+        ("23", nn.Identity()),               # Dropout2d(0.25) → identity at eval
+        # Block 4: ch[5] → ch[6]
         ("24", nn.Conv2d(ch[5], ch[6], 3, padding=1)),
         ("25", nn.BatchNorm2d(ch[6])),
         ("26", nn.ReLU(inplace=True)),
+        ("27", nn.MaxPool2d(2, 2)),          # 16→8  ← was MISSING before!
+        ("28", nn.Identity()),               # Dropout2d(0.25) → identity at eval
     ]))
     classifier = nn.Sequential(OrderedDict([
-        ("0", nn.Dropout(0.5)),
+        ("0", nn.Flatten()),
         ("1", nn.Linear(in_feat, hidden1)),
         ("2", nn.BatchNorm1d(hidden1)),
         ("3", nn.ReLU(inplace=True)),
@@ -759,7 +788,7 @@ def _try_load_hardcoded_asl_classifier_cnn(
         ("5", nn.Linear(hidden1, hidden2)),
         ("6", nn.BatchNorm1d(hidden2)),
         ("7", nn.ReLU(inplace=True)),
-        ("8", nn.Dropout(0.5)),
+        ("8", nn.Dropout(0.3)),
         ("9", nn.Linear(hidden2, n_out)),
     ]))
 
@@ -770,18 +799,21 @@ def _try_load_hardcoded_asl_classifier_cnn(
         log.warning("Hardcoded ASLClassifierCNN strict load failed: %s", e)
         return None
 
-    # Diagnostic: log the first BN2d running_mean to confirm the training pixel
-    # scale.  If mean >> 1 (e.g. 10–100), the model was trained on [0,255] raw
-    # pixel values and inference must NOT divide by 255.  If mean < 1, training
-    # used [0,1] (ToTensor) and the fix below must be revisited.
     first_bn_mean = feat_sd.get("1.running_mean")
+    first_bn_var = feat_sd.get("1.running_var")
     if first_bn_mean is not None and isinstance(first_bn_mean, torch.Tensor):
         log.info(
-            "Alphabet BN[0] running_mean: min=%.3f  max=%.3f  mean=%.3f  "
-            "(>1 confirms model trained on [0,255] pixel range; <1 means [0,1])",
+            "Alphabet BN[0] running_mean: min=%.3f  max=%.3f  mean=%.3f",
             float(first_bn_mean.min()),
             float(first_bn_mean.max()),
             float(first_bn_mean.mean()),
+        )
+    if first_bn_var is not None and isinstance(first_bn_var, torch.Tensor):
+        log.info(
+            "Alphabet BN[0] running_var:  min=%.3f  max=%.3f  mean=%.3f",
+            float(first_bn_var.min()),
+            float(first_bn_var.max()),
+            float(first_bn_var.mean()),
         )
 
     net = _FeaturesClassifierNet(features, classifier, adaptive_avg_before_flat=True)
@@ -1401,40 +1433,35 @@ def learning_predict(req: LearningPredictRequest):
 
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # ── CLAHE brightness normalisation ───────────────────────────────────
-        # The Kaggle ASL training images are bright studio photos (mean ~0.5 in
-        # [0,1]).  Webcam images taken in a dim room have mean ~0.05–0.15, which
-        # makes the CNN produce near-zero activations (BN running stats were
-        # calibrated for brighter inputs).  CLAHE equalises the luminance channel
-        # so the model always receives an image with full dynamic range regardless
-        # of ambient lighting.
-        def _clahe_enhance(img_rgb: np.ndarray) -> np.ndarray:
-            lab = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2LAB)
-            lab[:, :, 0] = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8)).apply(
-                lab[:, :, 0]
-            )
-            return cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
-
-        enhanced_rgb = _clahe_enhance(rgb_frame)
-
-        # ── Hand-crop: CNN trained on hand-fills-frame studio shots ──────────
-        # Run detection on the CLAHE-enhanced frame so MediaPipe also benefits
-        # from better contrast in dark images.
-        hand_crop = _get_hand_crop(enhanced_rgb)
-        if hand_crop is not None:
-            source_img = hand_crop
+        # ── Hand-crop: the CNN was trained on hand-fills-frame studio shots.
+        # Detect on the raw RGB frame (no CLAHE — training never used CLAHE,
+        # and it distorts pixel distributions the model expects).
+        # MediaPipe sees a gently brightened copy (dark rooms); CNN crop pixels
+        # come from the original frame so colour/exposure matches the real scene.
+        bbox = _get_hand_bbox(_alphabet_exposure_lift(rgb_frame)) or _get_hand_bbox(
+            rgb_frame
+        )
+        if bbox is None:
             log.info(
-                "Hand detected — crop %dx%d (brightness before=%.0f after=%.0f)",
-                hand_crop.shape[1], hand_crop.shape[0],
-                float(rgb_frame.mean()), float(enhanced_rgb.mean()),
+                "No hand detected (brightness=%.0f) — returning error to user",
+                float(rgb_frame.mean()),
             )
-        else:
-            source_img = enhanced_rgb
-            log.info(
-                "No hand detected — full enhanced frame "
-                "(brightness before=%.0f after=%.0f)",
-                float(rgb_frame.mean()), float(enhanced_rgb.mean()),
-            )
+            return {
+                "letter": "nothing",
+                "confidence": 0.0,
+                "hand_detected": False,
+                "top3": [],
+            }
+
+        y1, y2, x1, x2 = bbox
+        hand_crop = rgb_frame[y1:y2, x1:x2]
+        source_img = _alphabet_exposure_lift(_alphabet_square_letterbox_white(hand_crop))
+        log.info(
+            "Hand detected — crop %dx%d → square+lift (brightness frame=%.0f crop=%.0f)",
+            hand_crop.shape[1], hand_crop.shape[0],
+            float(rgb_frame.mean()),
+            float(source_img.mean()),
+        )
 
         inferred_side = getattr(alphabet_cls, "_signverse_input_side", None)
         try:
@@ -1443,37 +1470,36 @@ def learning_predict(req: LearningPredictRequest):
             env_side = 0
         side = env_side if env_side > 0 else (inferred_side if inferred_side else 128)
         side = max(32, min(int(side), 640))
-        resized = cv2.resize(source_img, (side, side))
+        resized = cv2.resize(source_img, (side, side), interpolation=cv2.INTER_AREA)
 
-        # BN running_mean ≈ -0.035 (confirmed at startup) → model trained on
-        # [0,1] pixel values.  Divide by 255 to match training scale.
-        tensor = torch.tensor(resized, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0) / 255.0
+        # Replicate training: ToTensor() (/255) + Normalize(ImageNet)
+        tensor = torch.tensor(resized, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
         tensor = tensor.to(DEVICE)
+        tensor = tensor / 255.0   # ToTensor equivalent → [0,1]
 
         norm_type = _alphabet_norm_type()
         if norm_type == "imagenet":
-            # Standard ImageNet stats in [0,1] space.
             mean = torch.tensor([0.485, 0.456, 0.406], device=DEVICE).view(1, 3, 1, 1)
             std  = torch.tensor([0.229, 0.224, 0.225], device=DEVICE).view(1, 3, 1, 1)
             tensor = (tensor - mean) / std
-        elif norm_type == "imagenet255":
-            # ImageNet stats in [0,255] space — only if training skipped /255.
-            mean = torch.tensor([123.675, 116.28, 103.53], device=DEVICE).view(1, 3, 1, 1)
-            std  = torch.tensor([ 58.395,  57.12,  57.375], device=DEVICE).view(1, 3, 1, 1)
-            tensor = (tensor * 255.0 - mean) / std
         elif norm_type == "half":
             tensor = (tensor - 0.5) / 0.5
-        # norm_type == "none" (default): keep raw [0,1].
 
-        log.debug(
-            "Image preprocessed: shape=%s norm=%s mean=%.3f std=%.3f",
-            tensor.shape,
+        log.info(
+            "Tensor stats: shape=%s norm=%s mean=%.1f std=%.1f min=%.1f max=%.1f",
+            tuple(tensor.shape),
             norm_type,
             tensor.mean().item(),
             tensor.std().item(),
+            tensor.min().item(),
+            tensor.max().item(),
         )
 
         logits = _alphabet_forward_logits(alphabet_cls, tensor)
+        # Training used RandomHorizontalFlip(p=0.3); average with mirror improves webcam robustness.
+        if os.environ.get("ALPHABET_DISABLE_TTA", "").strip().lower() not in ("1", "true", "yes"):
+            logits_f = _alphabet_forward_logits(alphabet_cls, torch.flip(tensor, dims=[3]))
+            logits = (logits + logits_f) * 0.5
         probs = torch.softmax(logits, dim=-1)[0]
         k = min(3, int(probs.numel()))
         top3v, top3i = probs.topk(k)
@@ -1508,6 +1534,7 @@ def learning_predict(req: LearningPredictRequest):
         return {
             "letter": predicted_letter,
             "confidence": confidence,
+            "hand_detected": True,
             "top3": [{il(int(i)): round(float(v), 3)} for i, v in zip(top3i, top3v)],
         }
     except HTTPException:
