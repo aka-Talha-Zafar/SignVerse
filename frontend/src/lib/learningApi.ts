@@ -1,3 +1,5 @@
+import { ASL_PUBLIC_REFERENCE_SVG } from "./learningData";
+
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
 /**
  * Alphabet + learning routes. Defaults to the same origin as `API_BASE` so production (e.g. Vercel)
@@ -204,6 +206,7 @@ export function getAlphabetImageUrl(letter: string): string {
   return `${LEARNING_BACKEND_URL}/api/learning/alphabet/image/${letter.toUpperCase()}`;
 }
 
+/** Used when the API has no dataset or bundled refs (see LearnEasy tiered loading). */
 export function getAlphabetImageUrlFallback(letter: string): string {
-  return `https://asl-hands.s3.amazonaws.com/${letter.toUpperCase()}.png`;
+  return ASL_PUBLIC_REFERENCE_SVG[letter.toUpperCase()] || "";
 }

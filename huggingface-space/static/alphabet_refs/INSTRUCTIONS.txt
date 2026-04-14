@@ -1,0 +1,19 @@
+Optional bundled alphabet photos for Easy mode (/api/learning/alphabet/image/{letter})
+
+1) Full Kaggle tree: set env ASL_ALPHABET_DATASET_DIR to your asl_alphabet_train folder
+   (subfolders A/, B/, ... with many images). The API picks a random image per request.
+
+2) Lightweight Space deploy: add ONE image per letter in THIS folder, named:
+     A.jpg  B.png  ...  Z.jpeg
+   (any of .jpg .jpeg .png .webp). Override path with ASL_ALPHABET_REF_IMAGES_DIR if needed.
+
+3) Generate from your local Kaggle download:
+     python scripts/prepare_alphabet_refs.py --src "path/to/asl_alphabet_train"
+
+The frontend also falls back to public manual-alphabet SVGs if neither (1) nor (2) is present.
+
+4) Docker / Hugging Face Space: commit this whole static/alphabet_refs/ folder (including .gitkeep)
+   in the SAME repo root the Space builds from. The Dockerfile creates /home/user/static/alphabet_refs
+   at build time. To bake JPGs into the image, add this line after the RUN mkdir in Dockerfile:
+     COPY static/alphabet_refs/ /home/user/static/alphabet_refs/
+   (Only if that path exists in the build context — otherwise the build fails with "not found".)

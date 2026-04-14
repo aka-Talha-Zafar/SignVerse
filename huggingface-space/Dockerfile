@@ -17,6 +17,14 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 # Copy API — learning_backend.py is required for integrate_learning_into_signverse(app)
 COPY app.py learning_backend.py /home/user/
 
+# Easy-mode ref images live under static/alphabet_refs/ (see learning_backend REF_IMAGES_DIR).
+# Do not `COPY static` unless that folder exists in THIS Space repo — HF build fails with "not found"
+# if static/ was never committed. Always create the dirs so the API can use env-mounted or later-added files.
+RUN mkdir -p /home/user/static/alphabet_refs
+
+# When you commit reference photos (A.jpg … Z.jpg) under static/alphabet_refs/, uncomment:
+# COPY static/alphabet_refs/ /home/user/static/alphabet_refs/
+
 # Give full ownership to user
 RUN chown -R user:user /home/user
 

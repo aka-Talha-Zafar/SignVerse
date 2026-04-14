@@ -1,19 +1,43 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle, X } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { CheckCircle, X } from "lucide-react";
 import ProgressHeader from "./ProgressHeader";
 import { ALPHABETS, ASL_ALPHABET_DESCRIPTIONS } from "@/lib/learningData";
 import { getProgress, markAlphabetCompleted } from "@/lib/learningProgress";
-import { LEARNING_API_BASE } from "@/lib/learningApi";
+import { getAlphabetImageUrl, getAlphabetImageUrlFallback } from "@/lib/learningApi";
 
 export default function LearnEasy() {
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
   const [completed, setCompleted] = useState<string[]>([]);
   const [imgError, setImgError] = useState(false);
+  /** 0 = learning API (dataset or bundled refs), 1 = frontend public/, 2 = Wikimedia SVG fallback */
+  const [loadTier, setLoadTier] = useState<0 | 1 | 2>(0);
+  const [imageAttribution, setImageAttribution] = useState<"none" | "commons">("none");
 
   useEffect(() => {
     setCompleted(getProgress().completedAlphabets);
   }, []);
+
+  useEffect(() => {
+    if (selectedLetter) {
+      setLoadTier(0);
+      setImgError(false);
+      setImageAttribution("none");
+    }
+  }, [selectedLetter]);
+
+  const imageSrc = useMemo(() => {
+    if (!selectedLetter) return "";
+    if (loadTier === 0) return getAlphabetImageUrl(selectedLetter);
+    if (loadTier === 1)
+      return `${import.meta.env.BASE_URL}learning/alphabet/${selectedLetter}.jpg`;
+    return getAlphabetImageUrlFallback(selectedLetter);
+  }, [selectedLetter, loadTier]);
+
+  const handleLetterImageError = () => {
+    if (loadTier === 0) setLoadTier(1);
+    else if (loadTier === 1) setLoadTier(2);
+    else setImgError(true);
+  };
 
   const handleMarkLearned = (letter: string) => {
     markAlphabetCompleted(letter);
@@ -45,7 +69,6 @@ export default function LearnEasy() {
                 key={letter}
                 onClick={() => {
                   setSelectedLetter(letter);
-                  setImgError(false);
                 }}
                 className={`relative aspect-square rounded-xl border text-xl font-bold flex items-center justify-center transition-all duration-200 hover:scale-105 ${
                   selectedLetter === letter
@@ -84,10 +107,17 @@ export default function LearnEasy() {
               <div className="bg-gray-800 rounded-xl overflow-hidden aspect-square max-w-xs mx-auto mb-4">
                 {!imgError ? (
                   <img
-                    src={`${LEARNING_API_BASE}/api/learning/alphabet/image/${selectedLetter}`}
+                    key={imageSrc}
+                    src={imageSrc}
                     alt={`ASL sign for letter ${selectedLetter}`}
-                    className="w-full h-full object-cover"
-                    onError={() => setImgError(true)}
+                    className="w-full h-full object-contain bg-gray-900"
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    onLoad={() => {
+                      if (loadTier === 2) setImageAttribution("commons");
+                    }}
+                    onError={handleLetterImageError}
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 p-6">
@@ -95,12 +125,21 @@ export default function LearnEasy() {
                     <p className="text-sm text-center">
                       {ASL_ALPHABET_DESCRIPTIONS[selectedLetter]}
                     </p>
-                    <p className="text-xs text-gray-600 mt-3">
-                      Connect the Learning API to see training dataset images
+                    <p className="text-xs text-gray-600 mt-3 text-center">
+                      No image could be loaded (API, optional files in public/learning/alphabet/, or public
+                      reference). Check that the learning API is reachable and see INSTRUCTIONS in the Space
+                      static/alphabet_refs folder for dataset or bundled photos.
                     </p>
                   </div>
                 )}
               </div>
+              {imageAttribution === "commons" && !imgError && (
+                <p className="text-xs text-gray-600 text-center mb-4 max-w-xs mx-auto -mt-2">
+                  Reference illustration: Wikimedia Commons &ldquo;Sign language {selectedLetter}.svg&rdquo;
+                  (manual alphabet). For Kaggle-style training photos, bundle images on the API (see Space
+                  static/alphabet_refs).
+                </p>
+              )}
 
               <div className="flex gap-3">
                 <button
@@ -108,7 +147,6 @@ export default function LearnEasy() {
                     const idx = ALPHABETS.indexOf(selectedLetter);
                     if (idx > 0) {
                       setSelectedLetter(ALPHABETS[idx - 1]);
-                      setImgError(false);
                     }
                   }}
                   disabled={ALPHABETS.indexOf(selectedLetter) === 0}
@@ -122,7 +160,6 @@ export default function LearnEasy() {
                     const idx = ALPHABETS.indexOf(selectedLetter);
                     if (idx < ALPHABETS.length - 1) {
                       setSelectedLetter(ALPHABETS[idx + 1]);
-                      setImgError(false);
                     } else {
                       setSelectedLetter(null);
                     }
