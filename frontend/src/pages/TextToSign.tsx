@@ -1,4 +1,3 @@
-// TextToSign.tsx (Frontend)
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -52,7 +51,12 @@ export default function TextToSign() {
       ctx.beginPath(); ctx.moveTo(0, i * H / 10); ctx.lineTo(W, i * H / 10); ctx.stroke();
     }
 
-    if (!frame) return;
+    // 🚨 FIX: Safely assign the frame. If null, use the resting pose array.
+    const currentFrame = frame || Array.from({ length: 75 }, (_, i) => {
+      if (i === 11) return [-0.15, 0]; // Resting Left Shoulder
+      if (i === 12) return [0.15, 0];  // Resting Right Shoulder
+      return [0, 0]; // Hide everything else
+    });
 
     // Responsive Sizing
     const CX = W * 0.50; 
@@ -61,7 +65,8 @@ export default function TextToSign() {
     
     const B = (kp: number[]) => ({ x: CX + kp[0]*SCALE, y: CY + kp[1]*SCALE });
 
-    const lSh = B(frame[11]), rSh = B(frame[12]);
+    // Safely use currentFrame for all measurements
+    const lSh = B(currentFrame[11]), rSh = B(currentFrame[12]);
     const headCX = (lSh.x + rSh.x) / 2;
     const headCY = ((lSh.y + rSh.y) / 2) - (SCALE * 0.16); 
 
@@ -95,8 +100,8 @@ export default function TextToSign() {
     ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     const lines = [ [11, 12], [11, 23], [12, 24], [23, 24], [11, 13], [13, 15], [12, 14], [14, 16] ];
     lines.forEach(([s, e]) => { 
-        if(isMissing(frame[s]) || isMissing(frame[e])) return;
-        ctx.beginPath(); ctx.moveTo(B(frame[s]).x, B(frame[s]).y); ctx.lineTo(B(frame[e]).x, B(frame[e]).y); ctx.stroke(); 
+        if(isMissing(currentFrame[s]) || isMissing(currentFrame[e])) return;
+        ctx.beginPath(); ctx.moveTo(B(currentFrame[s]).x, B(currentFrame[s]).y); ctx.lineTo(B(currentFrame[e]).x, B(currentFrame[e]).y); ctx.stroke(); 
     });
 
     // --- HANDS ---
@@ -104,11 +109,11 @@ export default function TextToSign() {
     const handColor = '#FBBF24'; const armColor = 'rgba(148, 163, 184, 0.8)';
 
     [ {offset: 33, wrist: 15}, {offset: 54, wrist: 16} ].forEach(hand => {
-      if (isMissing(frame[hand.offset]) || isMissing(frame[hand.wrist])) return; 
+      if (isMissing(currentFrame[hand.offset]) || isMissing(currentFrame[hand.wrist])) return; 
       
-      const wristPx = B(frame[hand.wrist]); const handBasePx = B(frame[hand.offset]);
+      const wristPx = B(currentFrame[hand.wrist]); const handBasePx = B(currentFrame[hand.offset]);
       const dx = wristPx.x - handBasePx.x; const dy = wristPx.y - handBasePx.y;
-      const glued = (index: number) => { const pt = B(frame[index]); return { x: pt.x + dx, y: pt.y + dy }; };
+      const glued = (index: number) => { const pt = B(currentFrame[index]); return { x: pt.x + dx, y: pt.y + dy }; };
 
       ctx.beginPath(); ctx.moveTo(wristPx.x, wristPx.y); ctx.lineTo(glued(hand.offset).x, glued(hand.offset).y);
       ctx.strokeStyle = armColor; ctx.lineWidth = 6; ctx.stroke();
@@ -117,7 +122,7 @@ export default function TextToSign() {
       fingers.forEach((finger) => {
         ctx.beginPath(); ctx.moveTo(glued(hand.offset).x, glued(hand.offset).y); 
         for(let j=1; j<finger.length; j++) { 
-            if(isMissing(frame[hand.offset + finger[j]])) continue; 
+            if(isMissing(currentFrame[hand.offset + finger[j]])) continue; 
             ctx.lineTo(glued(hand.offset + finger[j]).x, glued(hand.offset + finger[j]).y); 
         }
         ctx.stroke();
