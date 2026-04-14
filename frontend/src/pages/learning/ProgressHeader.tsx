@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle, Star, Clock, Target } from "lucide-react";
+import { ArrowLeft, CheckCircle, Star, Award, Target } from "lucide-react";
 import {
   getProgress,
   getOverallAccuracy,
-  getCompletedCount,
-  formatPracticeTime,
+  getQuizzesCompletedCount,
+  getSignsLearnedCount,
 } from "@/lib/learningProgress";
 
 interface Props {
@@ -16,14 +16,19 @@ interface Props {
 export default function ProgressHeader({ title, backTo, backLabel }: Props) {
   const progress = getProgress();
   const accuracy = getOverallAccuracy();
-  const completed = getCompletedCount();
-  const practiceTime = formatPracticeTime(progress.totalPracticeSeconds);
+  const quizzesDone = getQuizzesCompletedCount();
+  const signsLearned = getSignsLearnedCount();
 
   const stats = [
-    { label: "Completed", value: String(completed), icon: CheckCircle, color: "text-green-400" },
+    { label: "Completed quiz", value: String(quizzesDone), icon: CheckCircle, color: "text-green-400" },
     { label: "Stars", value: String(progress.starsEarned), icon: Star, color: "text-yellow-400" },
-    { label: "Practice", value: practiceTime, icon: Clock, color: "text-primary" },
-    { label: "Accuracy", value: accuracy > 0 ? `${Math.round(accuracy * 100)}%` : "—", icon: Target, color: "text-purple-400" },
+    { label: "Signs learned", value: String(signsLearned), icon: Award, color: "text-emerald-400" },
+    {
+      label: "Accuracy",
+      value: accuracy > 0 ? `${Math.round(accuracy * 100)}%` : "—",
+      icon: Target,
+      color: "text-purple-400",
+    },
   ];
 
   return (

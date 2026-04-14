@@ -14,6 +14,10 @@ export interface LearningProgress {
   quizResults: QuizResult[];
   starsEarned: number;
   totalPracticeSeconds: number;
+  /** Local calendar date (YYYY-MM-DD) of last learning activity — used for streak */
+  lastActivityDate?: string;
+  /** Consecutive days with at least one save when streak rules apply */
+  currentStreak?: number;
 }
 
 function defaultProgress(): LearningProgress {
@@ -24,7 +28,36 @@ function defaultProgress(): LearningProgress {
     quizResults: [],
     starsEarned: 0,
     totalPracticeSeconds: 0,
+    lastActivityDate: "",
+    currentStreak: 0,
   };
+}
+
+function toLocalYMD(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Update streak when persisting progress (same calendar day only counts once toward increment). */
+function applyStreakOnActivity(p: LearningProgress) {
+  const today = toLocalYMD(new Date());
+  const last = p.lastActivityDate ?? "";
+  if (last === today) return;
+
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  const yesterday = toLocalYMD(y);
+
+  if (!last) {
+    p.currentStreak = 1;
+  } else if (last === yesterday) {
+    p.currentStreak = (p.currentStreak ?? 0) + 1;
+  } else {
+    p.currentStreak = 1;
+  }
+  p.lastActivityDate = today;
 }
 
 export function getProgress(): LearningProgress {
@@ -38,6 +71,7 @@ export function getProgress(): LearningProgress {
 }
 
 function saveProgress(p: LearningProgress) {
+  applyStreakOnActivity(p);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
 }
 
@@ -91,6 +125,20 @@ export function getOverallAccuracy(): number {
 export function getCompletedCount(): number {
   const p = getProgress();
   return p.completedAlphabets.length + p.completedWords.length + p.completedSentences.length;
+}
+
+/** Letters + words + sentences marked learned in Learn mode (same total as getCompletedCount). */
+export function getSignsLearnedCount(): number {
+  return getCompletedCount();
+}
+
+/** Number of finished quiz runs (alphabets / words / sentences). */
+export function getQuizzesCompletedCount(): number {
+  return getProgress().quizResults.length;
+}
+
+export function getDailyStreak(): number {
+  return getProgress().currentStreak ?? 0;
 }
 
 export function formatPracticeTime(seconds: number): string {

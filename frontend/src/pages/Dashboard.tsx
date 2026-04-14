@@ -1,16 +1,15 @@
 import { Link } from "react-router-dom";
 import {
   Hand, Camera, Type, BookOpen, ArrowRight, TrendingUp,
-  Clock, Award, Activity, LogOut, Settings, User,
+  Award, Activity, LogOut, Settings, User, Star,
 } from "lucide-react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
-
-const stats = [
-  { label: "Signs Learned", value: "127", icon: Award, color: "text-green-400" },
-  { label: "Practice Hours", value: "24.5", icon: Clock, color: "text-primary" },
-  { label: "Accuracy Rate", value: "89%", icon: TrendingUp, color: "text-yellow-400" },
-  { label: "Daily Streak", value: "7", icon: Activity, color: "text-purple-400" },
-];
+import {
+  getProgress,
+  getOverallAccuracy,
+  getSignsLearnedCount,
+  getDailyStreak,
+} from "@/lib/learningProgress";
 
 const features = [
   {
@@ -45,6 +44,22 @@ const recentActivity = [
 
 const Dashboard = () => {
   useScrollAnimate();
+  const progress = getProgress();
+  const accuracy = getOverallAccuracy();
+  const signsLearned = getSignsLearnedCount();
+  const streak = getDailyStreak();
+
+  const stats = [
+    { label: "Signs Learned", value: String(signsLearned), icon: Award, color: "text-green-400" },
+    { label: "Stars", value: String(progress.starsEarned), icon: Star, color: "text-yellow-400" },
+    {
+      label: "Accuracy Rate",
+      value: accuracy > 0 ? `${Math.round(accuracy * 100)}%` : "—",
+      icon: TrendingUp,
+      color: "text-amber-400",
+    },
+    { label: "Daily Streak", value: String(streak), icon: Activity, color: "text-purple-400" },
+  ];
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
