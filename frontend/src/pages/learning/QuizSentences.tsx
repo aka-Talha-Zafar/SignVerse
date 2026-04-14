@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Trophy, RotateCcw, ArrowRight } from "lucide-react";
 import { SENTENCE_CATEGORIES, shuffleArray } from "@/lib/learningData";
 import { addQuizResult } from "@/lib/learningProgress";
@@ -21,6 +21,7 @@ function generateSentenceQuiz(): QuizSentence[] {
 }
 
 export default function QuizSentences() {
+  const navigate = useNavigate();
   const [sentences, setSentences] = useState<QuizSentence[]>(() => generateSentenceQuiz());
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);
@@ -78,9 +79,13 @@ export default function QuizSentences() {
       <div className="min-h-screen bg-gray-950 text-white flex flex-col">
         <header className="border-b border-gray-800 bg-gray-950/90">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
-            <Link to="/learning/quiz" className="text-gray-400 hover:text-white flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="text-gray-400 hover:text-white flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
+            >
               <ArrowLeft className="w-5 h-5" />
-            </Link>
+            </button>
             <h1 className="text-lg font-bold">Results</h1>
           </div>
         </header>
@@ -98,7 +103,7 @@ export default function QuizSentences() {
               <button onClick={restart} className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 font-semibold flex items-center justify-center gap-2">
                 <RotateCcw className="w-4 h-4" /> Try Again
               </button>
-              <Link to="/learning/quiz" className="flex-1 py-3 rounded-xl border border-white/10 font-semibold text-center hover:bg-white/5">
+              <Link to="/learning/quiz" replace className="flex-1 py-3 rounded-xl border border-white/10 font-semibold text-center hover:bg-white/5">
                 Back to Quiz
               </Link>
             </div>
@@ -112,10 +117,14 @@ export default function QuizSentences() {
     <div className="min-h-screen bg-gray-950 text-white">
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link to="/learning/quiz" className="text-gray-400 hover:text-white flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="text-gray-400 hover:text-white flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
+          >
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm">Quiz</span>
-          </Link>
+          </button>
           <h1 className="text-lg font-bold">Sentence Quiz</h1>
           <span className="ml-auto text-sm text-gray-400">{currentIdx + 1}/{sentences.length}</span>
         </div>

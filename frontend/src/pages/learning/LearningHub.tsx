@@ -5,7 +5,7 @@ import ProgressHeader from "./ProgressHeader";
 export default function LearningHub() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <ProgressHeader title="Learning Module" backTo="/dashboard" backLabel="Dashboard" />
+      <ProgressHeader title="Learning Module" backTo="/dashboard" backLabel="Dashboard" backVariant="history" />
 
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-8">
         <div className="text-center space-y-2">

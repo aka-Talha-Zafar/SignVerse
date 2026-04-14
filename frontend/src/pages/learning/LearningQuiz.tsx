@@ -38,7 +38,7 @@ const QUIZ_MODES = [
 export default function LearningQuiz() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <ProgressHeader title="Quiz" backTo="/learning" backLabel="Learning" />
+      <ProgressHeader title="Quiz" backTo="/learning" backLabel="Learning" backVariant="history" />
 
       <main className="max-w-3xl mx-auto px-6 py-10 space-y-8">
         <div className="text-center space-y-2">

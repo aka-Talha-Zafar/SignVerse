@@ -121,7 +121,7 @@ export default function LearnMedium() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <ProgressHeader title="Medium — Words" backTo="/learning/learn" backLabel="Learn" />
+      <ProgressHeader title="Medium — Words" backTo="/learning/learn" backLabel="Learn" backVariant="history" />
 
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         <div className="text-center">

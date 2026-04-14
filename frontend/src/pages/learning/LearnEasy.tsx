@@ -46,7 +46,7 @@ export default function LearnEasy() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <ProgressHeader title="Easy — Alphabets" backTo="/learning/learn" backLabel="Learn" />
+      <ProgressHeader title="Easy — Alphabets" backTo="/learning/learn" backLabel="Learn" backVariant="history" />
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         <div className="text-center">

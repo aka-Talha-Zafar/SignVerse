@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Trophy, RotateCcw, ArrowRight, ImageOff } from "lucide-react";
 import { ALPHABETS, shuffleArray } from "@/lib/learningData";
 import { addQuizResult } from "@/lib/learningProgress";
@@ -98,6 +98,7 @@ function AlphabetMcqTile({
 }
 
 export default function QuizAlphabets() {
+  const navigate = useNavigate();
   const [letters, setLetters] = useState<string[]>(() => generateLetters());
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);
@@ -174,10 +175,14 @@ export default function QuizAlphabets() {
       <div className="min-h-screen bg-gray-950 text-white flex flex-col">
         <header className="border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
-            <Link to="/learning/quiz" className="text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
+            >
               <ArrowLeft className="w-5 h-5" />
               <span className="text-sm">Quiz</span>
-            </Link>
+            </button>
             <h1 className="text-lg font-bold">Results</h1>
           </div>
         </header>
@@ -205,7 +210,7 @@ export default function QuizAlphabets() {
               >
                 <RotateCcw className="w-4 h-4" /> Try Again
               </button>
-              <Link to="/learning/quiz" className="flex-1 py-3 rounded-xl border border-white/10 font-semibold text-center hover:bg-white/5 transition-all">
+              <Link to="/learning/quiz" replace className="flex-1 py-3 rounded-xl border border-white/10 font-semibold text-center hover:bg-white/5 transition-all">
                 Back to Quiz
               </Link>
             </div>
@@ -219,10 +224,14 @@ export default function QuizAlphabets() {
     <div className="min-h-screen bg-gray-950 text-white">
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link to="/learning/quiz" className="text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
+          >
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm">Quiz</span>
-          </Link>
+          </button>
           <h1 className="text-lg font-bold">Alphabet Quiz</h1>
           <span className="ml-auto text-sm text-gray-400">
             {currentIdx + 1}/{letters.length}
