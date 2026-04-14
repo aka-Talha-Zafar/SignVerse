@@ -53,7 +53,7 @@ export default function LearningHub() {
               Take a Quiz
             </h3>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Test your ASL knowledge with interactive quizzes — identify signs and perform them yourself.
+              Test your ASL knowledge with interactive quizzes — alphabet multiple choice, camera checks for words and sentences.
             </p>
             <div className="flex flex-wrap gap-2 mb-6">
               {["MCQ", "Record & Verify", "Score Tracking"].map((tag) => (

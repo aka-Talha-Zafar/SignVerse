@@ -1,15 +1,98 @@
-import { useState, useMemo, useRef, useCallback, useEffect, useLayoutEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Trophy, RotateCcw, ArrowRight, Camera, CameraOff, Aperture, Loader2 } from "lucide-react";
+import { ArrowLeft, Trophy, RotateCcw, ArrowRight, ImageOff } from "lucide-react";
 import { ALPHABETS, shuffleArray } from "@/lib/learningData";
 import { addQuizResult } from "@/lib/learningProgress";
-import { verifyAlphabetSnapshot } from "@/lib/learningApi";
+import { getAlphabetImageUrl, getAlphabetImageUrlFallback } from "@/lib/learningApi";
 
 const QUIZ_COUNT = 5;
-const JPEG_QUALITY = 0.82;
 
 function generateLetters(): string[] {
   return shuffleArray(ALPHABETS).slice(0, QUIZ_COUNT);
+}
+
+/** Pick 3 distractors distinct from `target` and from each other. */
+function pickDistractors(target: string): string[] {
+  const pool = ALPHABETS.filter((l) => l !== target);
+  return shuffleArray(pool).slice(0, 3);
+}
+
+function buildChoices(target: string): string[] {
+  return shuffleArray([target, ...pickDistractors(target)]);
+}
+
+function AlphabetMcqTile({
+  letter,
+  disabled,
+  selected,
+  correctLetter,
+  revealed,
+  onSelect,
+}: {
+  letter: string;
+  disabled: boolean;
+  selected: boolean;
+  correctLetter: string;
+  revealed: boolean;
+  onSelect: () => void;
+}) {
+  const [loadTier, setLoadTier] = useState<0 | 1 | 2>(0);
+  const [imgDead, setImgDead] = useState(false);
+
+  useEffect(() => {
+    setLoadTier(0);
+    setImgDead(false);
+  }, [letter]);
+
+  const src = useMemo(() => {
+    if (loadTier === 0) return getAlphabetImageUrl(letter);
+    if (loadTier === 1)
+      return `${import.meta.env.BASE_URL}learning/alphabet/${letter}.jpg`;
+    return getAlphabetImageUrlFallback(letter);
+  }, [letter, loadTier]);
+
+  const wrongPick = revealed && selected && letter !== correctLetter;
+  const showCorrect = revealed && letter === correctLetter;
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onSelect}
+      className={`relative aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/80 disabled:opacity-60 ${
+        showCorrect
+          ? "border-emerald-500 ring-2 ring-emerald-500/40 bg-emerald-950/40"
+          : wrongPick
+          ? "border-red-500 ring-2 ring-red-500/30 bg-red-950/20"
+          : selected
+          ? "border-white/40 bg-white/5"
+          : "border-white/10 bg-gray-900/80 hover:border-emerald-500/40 hover:bg-gray-800/90"
+      }`}
+      aria-label={`ASL sign choice`}
+    >
+      {!imgDead ? (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className="w-full h-full object-contain bg-gray-950 p-2"
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={() => {
+            if (loadTier === 0) setLoadTier(1);
+            else if (loadTier === 1) setLoadTier(2);
+            else setImgDead(true);
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-gray-600 p-2">
+          <ImageOff className="w-10 h-10 opacity-40" />
+          <span className="text-[10px] text-center leading-tight">Image unavailable</span>
+        </div>
+      )}
+    </button>
+  );
 }
 
 export default function QuizAlphabets() {
@@ -18,108 +101,44 @@ export default function QuizAlphabets() {
   const [answers, setAnswers] = useState<boolean[]>([]);
   const [showFinal, setShowFinal] = useState(false);
 
-  const [cameraOn, setCameraOn] = useState(false);
-  const [error, setError] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [choices, setChoices] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string | null>(null);
   const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null);
-  const pendingAnswerRef = useRef<boolean | null>(null);
+
   const resultsSavedRef = useRef(false);
   const answersRef = useRef<boolean[]>([]);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  const score = useMemo(() => answers.filter(Boolean).length, [answers]);
   const targetLetter = letters[currentIdx];
+  const score = useMemo(() => answers.filter(Boolean).length, [answers]);
   answersRef.current = answers;
 
-  const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
-    setCameraOn(false);
-  }, []);
-
-  useEffect(() => () => stopCamera(), [stopCamera]);
-
-  const startCamera = async () => {
-    setError("");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-        audio: false,
-      });
-      streamRef.current = stream;
-      setCameraOn(true);
-      setTimeout(() => {
-        const v = videoRef.current;
-        if (v) {
-          v.srcObject = stream;
-          v.muted = true;
-          v.playsInline = true;
-          v.play().catch(() => {});
-        }
-      }, 100);
-    } catch {
-      setError("Camera access denied. Please allow camera permission.");
-    }
-  };
-
-  const captureAndVerify = useCallback(async () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas || video.readyState < 2) {
-      setError("Camera not ready — wait a moment and try again.");
-      return;
-    }
-    setError("");
-    setIsProcessing(true);
-    setResult(null);
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      setIsProcessing(false);
-      return;
-    }
-
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.save();
-    ctx.translate(w, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, w, h);
-    ctx.restore();
-
-    const frame = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
-
-    try {
-      const v = await verifyAlphabetSnapshot(frame, targetLetter);
-      setResult({ correct: v.correct, message: v.message });
-      pendingAnswerRef.current = v.correct;
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Prediction failed";
-      setResult({ correct: false, message: msg });
-      pendingAnswerRef.current = false;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [targetLetter]);
-
   useLayoutEffect(() => {
-    if (pendingAnswerRef.current === null) return;
-    const v = pendingAnswerRef.current;
-    pendingAnswerRef.current = null;
-    setAnswers((prev) => [...prev, v]);
-  }, [result]);
+    if (!letters.length || currentIdx >= letters.length) return;
+    const t = letters[currentIdx];
+    setChoices(buildChoices(t));
+    setPicked(null);
+    setResult(null);
+  }, [letters, currentIdx]);
+
+  const handleSelect = useCallback(
+    (letter: string) => {
+      if (picked !== null) return;
+      const correct = letter === targetLetter;
+      setPicked(letter);
+      setResult({
+        correct,
+        message: correct
+          ? "Correct — that is the sign for this letter."
+          : `Not this one. The sign for "${targetLetter}" was another option.`,
+      });
+      setAnswers((prev) => [...prev, correct]);
+    },
+    [picked, targetLetter],
+  );
 
   const goNext = () => {
     if (currentIdx < letters.length - 1) {
       setCurrentIdx((i) => i + 1);
-      setResult(null);
-      setError("");
     } else {
       if (resultsSavedRef.current) return;
       resultsSavedRef.current = true;
@@ -136,16 +155,16 @@ export default function QuizAlphabets() {
 
   const restart = () => {
     resultsSavedRef.current = false;
-    pendingAnswerRef.current = null;
-    setLetters(generateLetters());
+    const nextLetters = generateLetters();
+    setLetters(nextLetters);
     setCurrentIdx(0);
     setAnswers([]);
     setShowFinal(false);
+    setPicked(null);
     setResult(null);
-    setError("");
-    setIsProcessing(false);
-    stopCamera();
   };
+
+  const canAdvance = picked !== null;
 
   if (showFinal) {
     const pct = Math.round((score / letters.length) * 100);
@@ -165,7 +184,11 @@ export default function QuizAlphabets() {
             <Trophy className={`w-20 h-20 mx-auto ${pct >= 80 ? "text-yellow-400" : pct >= 50 ? "text-gray-300" : "text-red-400"}`} />
             <h2 className="text-4xl font-bold">{score}/{letters.length}</h2>
             <p className="text-gray-400">
-              {pct >= 80 ? "Excellent! Your alphabet signing is on point." : pct >= 50 ? "Good job! Keep practicing each letter." : "Keep going — clear lighting and hand framing help a lot."}
+              {pct >= 80
+                ? "Excellent! You are reading the manual alphabet well."
+                : pct >= 50
+                ? "Good progress — keep matching letters to their signs."
+                : "Keep practicing — try Learn → Easy to study each letter first."}
             </p>
             <div className="w-full bg-gray-800 rounded-full h-3">
               <div
@@ -199,50 +222,50 @@ export default function QuizAlphabets() {
             <span className="text-sm">Quiz</span>
           </Link>
           <h1 className="text-lg font-bold">Alphabet Quiz</h1>
-          <span className="ml-auto text-sm text-gray-400">{currentIdx + 1}/{letters.length}</span>
+          <span className="ml-auto text-sm text-gray-400">
+            {currentIdx + 1}/{letters.length}
+          </span>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-lg mx-auto px-6 py-8 space-y-6">
         <div className="w-full bg-gray-800 rounded-full h-2">
-          <div className="bg-emerald-500 h-2 rounded-full transition-all duration-300" style={{ width: `${(currentIdx / letters.length) * 100}%` }} />
+          <div
+            className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${(currentIdx / letters.length) * 100}%` }}
+          />
         </div>
 
         <div className="text-center space-y-2">
-          <p className="text-gray-400 text-sm">Perform the ASL sign for letter:</p>
+          <p className="text-gray-400 text-sm">Which picture shows the ASL sign for this letter?</p>
           <p className="text-5xl font-bold text-emerald-400">{targetLetter}</p>
-          <p className="text-gray-500 text-xs max-w-md mx-auto">
-            Start the camera, hold the sign clearly in frame, then tap <strong>Capture</strong>. One still image is sent to your alphabet model on the same backend as Sign-to-Text.
+          <p className="text-gray-500 text-xs max-w-sm mx-auto leading-relaxed">
+            Tap one of the four images. They load from your learning API when available; otherwise the same fallbacks
+            as Learn → Easy are used.
           </p>
         </div>
 
-        <div className="relative rounded-2xl overflow-hidden bg-gray-900 border border-white/10 aspect-video max-w-md mx-auto">
-          {cameraOn ? (
-            <>
-              <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
-              <canvas ref={canvasRef} className="hidden" />
-              {isProcessing && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
-                  <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-                  <span className="text-sm text-gray-300">Reading your sign…</span>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-500">
-              <Camera className="w-12 h-12 opacity-30" />
-              <p className="text-xs px-4 text-center">Turn on the camera to begin</p>
-            </div>
-          )}
-        </div>
-
-        {error && (
-          <div className="max-w-md mx-auto rounded-xl p-3 bg-red-900/30 border border-red-800 text-red-200 text-sm text-center">{error}</div>
+        {choices.length === 4 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {choices.map((letter) => (
+              <AlphabetMcqTile
+                key={`${currentIdx}-${letter}`}
+                letter={letter}
+                disabled={picked !== null}
+                selected={picked === letter}
+                correctLetter={targetLetter}
+                revealed={picked !== null}
+                onSelect={() => handleSelect(letter)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex justify-center py-16 text-gray-500 text-sm">Preparing question…</div>
         )}
 
         {result && (
           <div
-            className={`max-w-md mx-auto rounded-xl p-4 border text-sm ${
+            className={`rounded-xl p-4 border text-sm text-center ${
               result.correct ? "bg-emerald-900/25 border-emerald-700 text-emerald-200" : "bg-red-900/25 border-red-800 text-red-200"
             }`}
           >
@@ -250,32 +273,8 @@ export default function QuizAlphabets() {
           </div>
         )}
 
-        <div className="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
-          <button
-            type="button"
-            onClick={cameraOn ? stopCamera : startCamera}
-            disabled={isProcessing}
-            className={`flex items-center gap-2 py-2.5 px-4 rounded-xl font-medium text-sm transition-all disabled:opacity-40 ${
-              cameraOn ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"
-            }`}
-          >
-            {cameraOn ? <><CameraOff className="w-4 h-4" /> Stop camera</> : <><Camera className="w-4 h-4" /> Start camera</>}
-          </button>
-
-          {cameraOn && (
-            <button
-              type="button"
-              onClick={captureAndVerify}
-              disabled={isProcessing || answers.length > currentIdx}
-              className="flex items-center gap-2 py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 font-medium text-sm transition-all disabled:opacity-40"
-            >
-              <Aperture className="w-4 h-4" /> Capture &amp; check
-            </button>
-          )}
-        </div>
-
-        {answers.length > currentIdx && (
-          <div className="flex justify-center">
+        {canAdvance && (
+          <div className="flex justify-center pt-1">
             <button
               type="button"
               onClick={goNext}
@@ -283,7 +282,7 @@ export default function QuizAlphabets() {
             >
               {currentIdx < letters.length - 1 ? (
                 <>
-                  Next letter <ArrowRight className="w-4 h-4" />
+                  Next <ArrowRight className="w-4 h-4" />
                 </>
               ) : (
                 <>
