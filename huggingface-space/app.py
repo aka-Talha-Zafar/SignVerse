@@ -873,66 +873,6 @@ def format_sentence(words_with_conf):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TEXT-TO-SIGN
-# ══════════════════════════════════════════════════════════════════════════════
-def generate_sign_keypoints(text: str) -> List[dict]:
-    words = text.lower().strip().split() or ["hello"]
-    def base():
-        return {
-            "nose":[0.50,0.12],"left_eye":[0.52,0.10],"right_eye":[0.48,0.10],
-            "left_ear":[0.55,0.11],"right_ear":[0.45,0.11],
-            "left_shoulder":[0.60,0.28],"right_shoulder":[0.40,0.28],
-            "left_elbow":[0.68,0.42],"right_elbow":[0.32,0.42],
-            "left_wrist":[0.72,0.55],"right_wrist":[0.28,0.55],
-            "left_hip":[0.57,0.60],"right_hip":[0.43,0.60],
-            "left_knee":[0.57,0.78],"right_knee":[0.43,0.78],
-            "left_ankle":[0.57,0.95],"right_ankle":[0.43,0.95],
-        }
-    cfgs = {
-        "hello":{"re":[0.32,0.35],"rw":[0.25,0.20]},
-        "hi":{"re":[0.32,0.35],"rw":[0.25,0.18]},
-        "bye":{"re":[0.30,0.33],"rw":[0.22,0.16]},
-        "please":{"re":[0.35,0.38],"rw":[0.42,0.32]},
-        "thank":{"re":[0.35,0.30],"rw":[0.45,0.25]},
-        "sorry":{"re":[0.38,0.36],"rw":[0.44,0.32]},
-        "yes":{"re":[0.32,0.36],"rw":[0.30,0.28]},
-        "no":{"re":[0.28,0.36],"rw":[0.22,0.30],"le":[0.72,0.36],"lw":[0.78,0.30]},
-        "help":{"re":[0.30,0.40],"rw":[0.28,0.30],"le":[0.65,0.40],"lw":[0.55,0.34]},
-        "love":{"re":[0.38,0.36],"rw":[0.44,0.32],"le":[0.62,0.36],"lw":[0.56,0.32]},
-        "stop":{"re":[0.30,0.36],"rw":[0.24,0.28]},
-        "good":{"re":[0.34,0.34],"rw":[0.42,0.28]},
-        "bad":{"re":[0.34,0.36],"rw":[0.42,0.44]},
-        "want":{"re":[0.30,0.38],"rw":[0.24,0.32]},
-        "eat":{"re":[0.35,0.34],"rw":[0.44,0.22]},
-        "water":{"re":[0.33,0.33],"rw":[0.44,0.21]},
-        "more":{"re":[0.32,0.36],"rw":[0.38,0.30],"le":[0.68,0.36],"lw":[0.62,0.30]},
-    }
-    km = {"re":"right_elbow","rw":"right_wrist","le":"left_elbow","lw":"left_wrist"}
-    default = {"re":[0.32,0.42],"rw":[0.28,0.55]}
-    frames = []
-    for word in words:
-        w = word.strip(".,!?;:").lower(); cfg = cfgs.get(w, default)
-        for fi in range(15):
-            t = fi/14.0; ease = t*t*(3-2*t)
-            pose = base(); b = base()
-            for k, tgt in cfg.items():
-                j = km[k]
-                pose[j] = [b[j][0]+(tgt[0]-b[j][0])*ease, b[j][1]+(tgt[1]-b[j][1])*ease]
-            keys = ["nose","left_eye","left_eye","right_eye","right_eye",
-                    "left_ear","right_ear","left_shoulder","right_shoulder",
-                    "left_elbow","right_elbow","left_wrist","right_wrist",
-                    "left_wrist","right_wrist","left_wrist","right_wrist",
-                    "left_wrist","right_wrist","left_hip","right_hip",
-                    "left_knee","right_knee","left_ankle","right_ankle",
-                    "left_ankle","right_ankle","left_ankle","right_ankle",
-                    "nose","left_eye","right_eye","left_ear","right_ear"]
-            lm = [{"x":float(pose[k][0]),"y":float(pose[k][1]),"z":0.0,"visibility":0.99}
-                  for k in keys[:33]]
-            frames.append({"landmarks":lm,"timestamp":len(frames)*(1000/30)})
-    return frames
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 # REQUEST SCHEMAS
 # ══════════════════════════════════════════════════════════════════════════════
 class LoginRequest(BaseModel):
@@ -941,8 +881,6 @@ class SignToTextRequest(BaseModel):
     frames: List[str]; language: Optional[str] = "en"
 class SignToSentenceRequest(BaseModel):
     frames: List[str]; language: Optional[str] = "en"
-class TextToSignRequest(BaseModel):
-    text: str; language: Optional[str] = "en"
 class TranslateRequest(BaseModel):
     text: str; target: str = "en"
 class LearningPredictRequest(BaseModel):
@@ -1266,20 +1204,6 @@ def text_to_speech(text: str, lang: str = "en"):
         raise HTTPException(status_code=502, detail="TTS service unavailable")
 
 
-@app.post("/api/text-to-sign")
-def text_to_sign(req: TextToSignRequest):
-    if not req.text or not req.text.strip():
-        raise HTTPException(status_code=400, detail="No text provided")
-    try:
-        frames = generate_sign_keypoints(req.text.strip())
-        return {"frames":frames,"fps":30,
-                "word_count":len(req.text.strip().split()),
-                "total_frames":len(frames)}
-    except Exception as e:
-        log.error(f"text-to-sign error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
 @app.post("/api/learning/predict")
 def learning_predict(req: LearningPredictRequest):
     if alphabet_cls is None:
@@ -1329,5 +1253,7 @@ _app_dir_for_learning = os.path.dirname(os.path.abspath(__file__))
 if _app_dir_for_learning not in _sys_for_learning.path:
     _sys_for_learning.path.insert(0, _app_dir_for_learning)
 from learning_backend import integrate_learning_into_signverse
+from text_to_sign_backend import integrate_text_to_sign_into_signverse
 
 integrate_learning_into_signverse(app)
+integrate_text_to_sign_into_signverse(app)

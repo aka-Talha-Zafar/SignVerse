@@ -1,5 +1,5 @@
 # HuggingFace Spaces — Docker space
-# app.py imports learning_backend — BOTH must be COPY'd into the image.
+# app.py imports learning_backend + text_to_sign_backend — copy all into the image.
 FROM python:3.11-slim
 
 # System deps for OpenCV + MediaPipe
@@ -14,8 +14,14 @@ RUN useradd -m -u 1000 user
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Copy API — learning_backend.py is required for integrate_learning_into_signverse(app)
-COPY app.py learning_backend.py /home/user/
+# Copy API modules.
+COPY app.py learning_backend.py text_to_sign_backend.py /home/user/
+#
+# Text-to-sign needs database.json inside the image. Pick one:
+#   1) Put database.json next to this Dockerfile and add:  COPY database.json /home/user/
+#   2) Host it on the Hub; set Space variables TEXT_TO_SIGN_HF_REPO, TEXT_TO_SIGN_HF_FILENAME,
+#      TEXT_TO_SIGN_HF_REPO_TYPE (e.g. dataset), and HF_TOKEN if the repo is private.
+#
 
 # Easy-mode ref images live under static/alphabet_refs/ (see learning_backend REF_IMAGES_DIR).
 # Do not `COPY static` unless that folder exists in THIS Space repo — HF build fails with "not found"
