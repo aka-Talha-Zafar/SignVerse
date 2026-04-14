@@ -59,7 +59,7 @@ function AlphabetMcqTile({
       type="button"
       disabled={disabled}
       onClick={onSelect}
-      className={`relative aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/80 disabled:opacity-60 ${
+      className={`relative aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/80 disabled:opacity-60 min-h-0 ${
         showCorrect
           ? "border-emerald-500 ring-2 ring-emerald-500/40 bg-emerald-950/40"
           : wrongPick
@@ -68,23 +68,25 @@ function AlphabetMcqTile({
           ? "border-white/40 bg-white/5"
           : "border-white/10 bg-gray-900/80 hover:border-emerald-500/40 hover:bg-gray-800/90"
       }`}
-      aria-label={`ASL sign choice`}
+      aria-label="ASL sign choice"
     >
       {!imgDead ? (
-        <img
-          key={src}
-          src={src}
-          alt=""
-          className="w-full h-full object-contain bg-gray-950 p-2"
-          loading="lazy"
-          decoding="async"
-          referrerPolicy="no-referrer"
-          onError={() => {
-            if (loadTier === 0) setLoadTier(1);
-            else if (loadTier === 1) setLoadTier(2);
-            else setImgDead(true);
-          }}
-        />
+        <div className="absolute inset-2 rounded-xl bg-gradient-to-b from-zinc-50 to-zinc-200 flex items-center justify-center overflow-hidden shadow-inner ring-1 ring-black/5">
+          <img
+            key={src}
+            src={src}
+            alt=""
+            className="max-h-full max-w-full object-contain p-2"
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={() => {
+              if (loadTier === 0) setLoadTier(1);
+              else if (loadTier === 1) setLoadTier(2);
+              else setImgDead(true);
+            }}
+          />
+        </div>
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-gray-600 p-2">
           <ImageOff className="w-10 h-10 opacity-40" />

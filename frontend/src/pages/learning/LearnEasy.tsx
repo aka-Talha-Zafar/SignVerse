@@ -104,13 +104,14 @@ export default function LearnEasy() {
                 </p>
               </div>
 
-              <div className="bg-gray-800 rounded-xl overflow-hidden aspect-square max-w-xs mx-auto mb-4">
+              <div className="bg-gray-800 rounded-xl overflow-hidden aspect-square max-w-xs mx-auto mb-4 p-2">
                 {!imgError ? (
+                  <div className="h-full w-full rounded-lg bg-gradient-to-b from-zinc-50 to-zinc-200 flex items-center justify-center overflow-hidden ring-1 ring-black/5">
                   <img
                     key={imageSrc}
                     src={imageSrc}
                     alt={`ASL sign for letter ${selectedLetter}`}
-                    className="w-full h-full object-contain bg-gray-900"
+                    className="max-h-full max-w-full object-contain p-2"
                     loading="lazy"
                     decoding="async"
                     referrerPolicy="no-referrer"
@@ -119,6 +120,7 @@ export default function LearnEasy() {
                     }}
                     onError={handleLetterImageError}
                   />
+                  </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 p-6">
                     <span className="text-8xl font-bold text-emerald-400/30 mb-4">{selectedLetter}</span>
