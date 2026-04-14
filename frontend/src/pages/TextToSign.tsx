@@ -2,220 +2,281 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, Type, Play, Pause, RotateCcw,
-  SkipForward, SkipBack, User as UserIcon, Loader2, AlertCircle,
+  SkipForward, SkipBack, User as UserIcon, AlertCircle, Loader2
 } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
+// ─── OFFLINE ASL PARSER & ANIMATION ENGINE ─────────────────────────────────
+const AUX = new Set(['is','are','was','were','am','be','do','does','did','has','have','will','can']);
 
-// MediaPipe 33-point skeleton connections
-const SKELETON_CONNECTIONS: [number, number][] = [
-  // Torso
-  [11, 12], [11, 23], [12, 24], [23, 24],
-  // Left arm
-  [11, 13], [13, 15],
-  // Right arm
-  [12, 14], [14, 16],
-  // Left leg
-  [23, 25], [25, 27],
-  // Right leg
-  [24, 26], [26, 28],
-  // Face
-  [0, 1], [0, 4], [1, 2], [4, 5],
-];
+function toASL(s: string) {
+  if (!s) return '';
+  s = s.trim().toLowerCase().replace("don't", "do not").replace("doesn't", "does not");
+  let t = (s.match(/[a-z]+/g) || []).filter(x => x !== 'not' && !['a','an','the','to','of','in','at','on','for','with','by','from'].includes(x));
+  if (!t.length) return '';
+  if (['what','where','when','who','why','how'].includes(t[0])) { 
+      t = [t[0]].concat(t.slice(1).filter(x => !AUX.has(x))); 
+  } else { 
+      t = t.filter(x => !AUX.has(x)); 
+  }
+  let tm = t.filter(x => ['yesterday','today','tomorrow','now'].includes(x));
+  t = tm.concat(t.filter(x => !['yesterday','today','tomorrow','now'].includes(x)));
+  if (s.includes('not')) t.push('not');
+  return t.join(' ').toUpperCase();
+}
 
-const JOINT_COLORS: Record<number, string> = {
-  0: "#f472b6",   // nose — pink
-  11: "#818cf8",  // left shoulder
-  12: "#818cf8",  // right shoulder
-  13: "#a78bfa",  // left elbow
-  14: "#a78bfa",  // right elbow
-  15: "#c4b5fd",  // left wrist
-  16: "#c4b5fd",  // right wrist
-  23: "#6ee7b7",  // left hip
-  24: "#6ee7b7",  // right hip
-};
+function isMissing(pt: number[]) { 
+  return Math.abs(pt[0]) < 0.001 && Math.abs(pt[1]) < 0.001; 
+}
 
-interface Landmark { x: number; y: number; z: number; visibility?: number; }
-interface Frame    { landmarks: Landmark[]; timestamp: number; }
+function buildAnim(tokens: string[]) {
+  // @ts-ignore - Accessing global window object
+  const WORDS = window.WORDS_DB || window.INJECTED_DB;
+  if (!WORDS) return null;
 
+  let seq: any[] = []; let TF = 5; let clips: any[] = []; 
+  
+  for(let t of tokens) { 
+      let realKey = Object.keys(WORDS).find(k => k.trim().toUpperCase() === t);
+      if(realKey) clips.push(WORDS[realKey]); 
+  }
+  
+  if(clips.length === 0) return null;
+  for(let f of clips[0]) seq.push(f);
+  
+  for(let i=1; i<clips.length; i++) {
+    let c1 = clips[i-1][clips[i-1].length-1], c2 = clips[i][0];
+
+    for(let t=1; t<=TF; t++) {
+       let a = t / (TF + 1); let x = a < 0.5 ? 2 * a * a : 1 - Math.pow(-2 * a + 2, 2) / 2;
+       let transFrame = [];
+       for(let kp=0; kp<75; kp++) {
+          if (isMissing(c1[kp]) || isMissing(c2[kp])) { transFrame.push([0, 0]); }
+          else { transFrame.push([ c1[kp][0]*(1-x) + c2[kp][0]*x, c1[kp][1]*(1-x) + c2[kp][1]*x ]); }
+       }
+       seq.push(transFrame);
+    }
+    for(let f of clips[i]) seq.push(f);
+  }
+  return seq;
+}
+
+// ─── MAIN REACT COMPONENT ──────────────────────────────────────────────────
 export default function TextToSign() {
-  const [inputText,    setInputText]    = useState("");
-  const [frames,       setFrames]       = useState<Frame[]>([]);
-  const [isLoading,    setIsLoading]    = useState(false);
-  const [isPlaying,    setIsPlaying]    = useState(false);
+  const [inputText, setInputText] = useState("");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLooping, setIsLooping] = useState(true);
   const [currentFrame, setCurrentFrame] = useState(0);
-  const [error,        setError]        = useState("");
-  const [fps,          setFps]          = useState(30);
-  const [hasResult,    setHasResult]    = useState(false);
+  const [totalFrames, setTotalFrames] = useState(0);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+  const [statusMsg, setStatusMsg] = useState("Checking database...");
+  const [hasResult, setHasResult] = useState(false);
+  const [error, setError] = useState("");
 
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const animRef    = useRef<ReturnType<typeof setInterval> | null>(null);
-  const frameIdx   = useRef(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const requestRef = useRef<number>();
+  
+  // Animation Engine State
+  const engine = useRef({
+    anim: null as any[] | null,
+    fi: 0,
+    lastTime: 0,
+    accumulator: 0,
+    BASE_FPS: 20
+  });
 
-  // ── Draw a single skeleton frame ─────────────────────────────────────────
-  const drawFrame = useCallback((frameData: Frame, canvas: HTMLCanvasElement) => {
-    const ctx = canvas.getContext("2d");
-    if (!ctx || !frameData?.landmarks?.length) return;
+  // ─── DRAW PRO MANNEQUIN (Responsive Size) ────────────────────────────────
+  const drawSkeleton = useCallback((frame: any, canvas: HTMLCanvasElement) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const W = canvas.width; const H = canvas.height;
 
-    const W = canvas.width;
-    const H = canvas.height;
-
-    // Background
+    // 1. Draw Tech Background
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = "#0f0f1a";
     ctx.fillRect(0, 0, W, H);
-
-    // Grid lines for depth
     ctx.strokeStyle = "rgba(139,92,246,0.08)";
-    ctx.lineWidth   = 1;
+    ctx.lineWidth = 1;
     for (let i = 0; i <= 10; i++) {
       ctx.beginPath(); ctx.moveTo(i * W / 10, 0); ctx.lineTo(i * W / 10, H); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, i * H / 10); ctx.lineTo(W, i * H / 10); ctx.stroke();
     }
 
-    const lm = frameData.landmarks;
-    const px = (landmark: Landmark) => landmark.x * W;
-    const py = (landmark: Landmark) => landmark.y * H;
+    if (!frame) return;
 
-    // Draw connections
-    SKELETON_CONNECTIONS.forEach(([a, b]) => {
-      if (!lm[a] || !lm[b]) return;
-      const vis = Math.min(lm[a].visibility ?? 1, lm[b].visibility ?? 1);
-      if (vis < 0.1) return;
+    // 2. Responsive Sizing Math (Guarantees avatar never goes out of frame)
+    const CX = W * 0.50; 
+    const CY = H * 0.35; 
+    const SCALE = Math.min(W, H) * 0.85; // Perfectly scales to fit the box
+    
+    const B = (kp: number[]) => ({ x: CX + kp[0]*SCALE, y: CY + kp[1]*SCALE });
 
-      ctx.beginPath();
-      ctx.moveTo(px(lm[a]), py(lm[a]));
-      ctx.lineTo(px(lm[b]), py(lm[b]));
+    const lSh = B(frame[11]), rSh = B(frame[12]);
+    const headCX = (lSh.x + rSh.x) / 2;
+    const headCY = ((lSh.y + rSh.y) / 2) - (SCALE * 0.16); // Dynamic Neck
 
-      // Color arms differently
-      const isRightArm = ([12, 14, 16].includes(a) || [12, 14, 16].includes(b));
-      const isLeftArm  = ([11, 13, 15].includes(a) || [11, 13, 15].includes(b));
-      if (isRightArm)     ctx.strokeStyle = `rgba(167,139,250,${vis * 0.9})`;
-      else if (isLeftArm) ctx.strokeStyle = `rgba(129,140,248,${vis * 0.9})`;
-      else                ctx.strokeStyle = `rgba(110,231,183,${vis * 0.7})`;
+    // --- PROFESSIONAL MANNEQUIN HEAD ---
+    ctx.beginPath(); ctx.moveTo(headCX, headCY + 40); ctx.lineTo(headCX, headCY + 60);
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 14; ctx.stroke();
 
-      ctx.lineWidth   = isRightArm || isLeftArm ? 4 : 3;
-      ctx.lineCap     = "round";
-      ctx.stroke();
+    ctx.beginPath(); ctx.arc(headCX, headCY - 5, 45, Math.PI, 2*Math.PI);
+    ctx.fillStyle = '#0F172A'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(headCX - 42, headCY - 8); ctx.lineTo(headCX - 48, headCY + 15); ctx.lineTo(headCX - 20, headCY - 5); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(headCX + 42, headCY - 8); ctx.lineTo(headCX + 48, headCY + 15); ctx.lineTo(headCX + 20, headCY - 5); ctx.fill();
+
+    ctx.beginPath(); ctx.arc(headCX, headCY, 42, 0, Math.PI*2);
+    ctx.fillStyle = '#E2E8F0'; ctx.fill(); 
+    ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 3; ctx.stroke();
+
+    ctx.fillStyle = '#334155';
+    ctx.beginPath(); ctx.ellipse(headCX - 15, headCY - 3, 6, 8, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(headCX + 15, headCY - 3, 6, 8, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath(); ctx.arc(headCX - 16, headCY - 5, 2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(headCX + 14, headCY - 5, 2, 0, Math.PI*2); ctx.fill();
+
+    ctx.beginPath(); ctx.moveTo(headCX, headCY + 4); ctx.lineTo(headCX - 4, headCY + 14); ctx.lineTo(headCX, headCY + 14);
+    ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 2; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(headCX, headCY + 22, 10, 0.2, Math.PI - 0.2);
+    ctx.strokeStyle = '#E07A5F'; ctx.lineWidth = 3; ctx.stroke();
+
+    // --- GHOSTED TORSO ---
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const lines = [ [11, 12], [11, 23], [12, 24], [23, 24], [11, 13], [13, 15], [12, 14], [14, 16] ];
+    lines.forEach(([s, e]) => { 
+        if(isMissing(frame[s]) || isMissing(frame[e])) return;
+        ctx.beginPath(); ctx.moveTo(B(frame[s]).x, B(frame[s]).y); ctx.lineTo(B(frame[e]).x, B(frame[e]).y); ctx.stroke(); 
     });
 
-    // Draw joints
-    lm.forEach((point, i) => {
-      const vis = point.visibility ?? 1;
-      if (vis < 0.1) return;
+    // --- HANDS (Glue Fix & Missing Safeties) ---
+    const fingers = [ [0,1,2,3,4], [0,5,6,7,8], [0,9,10,11,12], [0,13,14,15,16], [0,17,18,19,20] ];
+    const handColor = '#FBBF24'; 
+    const armColor = 'rgba(148, 163, 184, 0.8)';
 
-      const x = px(point);
-      const y = py(point);
-      const r = [0, 11, 12, 23, 24].includes(i) ? 7 : [13, 14, 15, 16].includes(i) ? 6 : 4;
+    [ {offset: 33, wrist: 15}, {offset: 54, wrist: 16} ].forEach(hand => {
+      if (isMissing(frame[hand.offset]) || isMissing(frame[hand.wrist])) return; 
+      
+      const wristPx = B(frame[hand.wrist]);
+      const handBasePx = B(frame[hand.offset]);
+      const dx = wristPx.x - handBasePx.x;
+      const dy = wristPx.y - handBasePx.y;
 
-      // Glow
-      const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5);
-      const color = JOINT_COLORS[i] || "#ffffff";
-      grd.addColorStop(0,   color + "aa");
-      grd.addColorStop(1,   color + "00");
-      ctx.beginPath(); ctx.arc(x, y, r * 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = grd; ctx.fill();
+      const glued = (index: number) => {
+          const pt = B(frame[index]);
+          return { x: pt.x + dx, y: pt.y + dy };
+      };
 
-      // Joint dot
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle   = color;
-      ctx.shadowColor = color;
-      ctx.shadowBlur  = 8;
-      ctx.fill();
-      ctx.shadowBlur  = 0;
-    });
-
-    // Wrist highlight (active signing hands)
-    [15, 16].forEach(i => {
-      if (!lm[i]) return;
-      const x = px(lm[i]), y = py(lm[i]);
-      ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(196,181,253,0.6)";
-      ctx.lineWidth   = 2;
-      ctx.stroke();
-    });
-  }, []);
-
-  // ── Animation loop ────────────────────────────────────────────────────────
-  const startAnimation = useCallback((frameList: Frame[], fpsRate: number) => {
-    if (animRef.current) clearInterval(animRef.current);
-    frameIdx.current = 0;
-    setCurrentFrame(0);
-
-    animRef.current = setInterval(() => {
-      const canvas = canvasRef.current;
-      if (!canvas || frameList.length === 0) return;
-
-      drawFrame(frameList[frameIdx.current], canvas);
-      setCurrentFrame(frameIdx.current);
-      frameIdx.current = (frameIdx.current + 1) % frameList.length;
-    }, 1000 / fpsRate);
-
-    setIsPlaying(true);
-  }, [drawFrame]);
-
-  const stopAnimation = useCallback(() => {
-    if (animRef.current) { clearInterval(animRef.current); animRef.current = null; }
-    setIsPlaying(false);
-  }, []);
-
-  useEffect(() => () => stopAnimation(), [stopAnimation]);
-
-  // ── Translate text ────────────────────────────────────────────────────────
-  const handleTranslate = async () => {
-    if (!inputText.trim()) return;
-    setError(""); setIsLoading(true); stopAnimation(); setHasResult(false);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/text-to-sign`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ text: inputText.trim() }),
+      // Draw Wrist to Hand
+      ctx.beginPath(); ctx.moveTo(wristPx.x, wristPx.y); ctx.lineTo(glued(hand.offset).x, glued(hand.offset).y);
+      ctx.strokeStyle = armColor; ctx.lineWidth = 6; ctx.stroke();
+      
+      // Draw Fingers
+      ctx.strokeStyle = handColor; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      fingers.forEach((finger) => {
+        ctx.beginPath(); ctx.moveTo(glued(hand.offset).x, glued(hand.offset).y); 
+        for(let j=1; j<finger.length; j++) { 
+            if(isMissing(frame[hand.offset + finger[j]])) continue; 
+            ctx.lineTo(glued(hand.offset + finger[j]).x, glued(hand.offset + finger[j]).y); 
+        }
+        ctx.stroke();
       });
+    });
+  }, []);
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
-        throw new Error(err.detail || `Server error ${res.status}`);
-      }
+  // ─── RENDER LOOP ─────────────────────────────────────────────────────────
+  const renderLoop = useCallback((time: number) => {
+    let en = engine.current;
+    if (!en.lastTime) en.lastTime = time;
+    let dt = time - en.lastTime; en.lastTime = time;
 
-      const data = await res.json();
-      if (!data.frames?.length) throw new Error("No animation data returned");
+    if (isPlaying && en.anim && en.anim.length > 0) {
+        en.accumulator += dt;
+        let frameDuration = 1000 / (en.BASE_FPS * playbackSpeed);
+        while (en.accumulator >= frameDuration) {
+            en.accumulator -= frameDuration; en.fi++;
+            if (en.fi >= en.anim.length) {
+                if (isLooping) { en.fi = 0; } 
+                else { en.fi = en.anim.length - 1; setIsPlaying(false); }
+            }
+        }
+        
+        // Sync React UI Progress Bar (Throttled via frame index change)
+        setCurrentFrame(en.fi);
+    }
 
-      setFrames(data.frames);
-      setFps(data.fps || 30);
-      setHasResult(true);
+    if (canvasRef.current && en.anim) {
+        drawSkeleton(en.anim[en.fi], canvasRef.current);
+    } else if (canvasRef.current && !en.anim) {
+        // Draw empty tech background
+        drawSkeleton(null, canvasRef.current);
+    }
 
-      // Draw first frame immediately
-      setTimeout(() => {
-        const canvas = canvasRef.current;
-        if (canvas && data.frames[0]) drawFrame(data.frames[0], canvas);
-      }, 50);
+    requestRef.current = requestAnimationFrame(renderLoop);
+  }, [isPlaying, isLooping, playbackSpeed, drawSkeleton]);
 
-    } catch (e: any) {
-      setError(`Error: ${e.message}`);
-    } finally {
-      setIsLoading(false);
+  // ─── INITIALIZATION ──────────────────────────────────────────────────────
+  useEffect(() => {
+    // Check for offline database
+    // @ts-ignore
+    if (window.WORDS_DB) { setStatusMsg("Ready. Database loaded."); } 
+    else {
+      const checkDB = setInterval(() => {
+        // @ts-ignore
+        if (window.WORDS_DB) { setStatusMsg("Ready. Database loaded."); clearInterval(checkDB); }
+      }, 500);
+    }
+    
+    requestRef.current = requestAnimationFrame(renderLoop);
+    return () => { if(requestRef.current) cancelAnimationFrame(requestRef.current); };
+  }, [renderLoop]);
+
+  // ─── ACTIONS ─────────────────────────────────────────────────────────────
+  const handleTranslate = () => {
+    // @ts-ignore
+    if (!window.WORDS_DB) { setError("Please wait for database to load."); return; }
+    if (!inputText.trim()) return;
+    setError("");
+    
+    let gloss = toASL(inputText);
+    let sequence = buildAnim(gloss.split(' ').filter(x => x));
+    
+    if(sequence) { 
+        setStatusMsg("ASL Gloss: " + gloss);
+        engine.current.anim = sequence; 
+        engine.current.fi = 0;
+        setTotalFrames(sequence.length);
+        setCurrentFrame(0);
+        setHasResult(true);
+        setIsPlaying(true);
+    } else { 
+        setError("Missing vocabulary for: " + inputText); 
+        setHasResult(false);
+        setIsPlaying(false);
+        engine.current.anim = null;
     }
   };
 
-  const handlePlay  = () => startAnimation(frames, fps);
-  const handlePause = () => stopAnimation();
-  const handleReset = () => { stopAnimation(); frameIdx.current = 0; setCurrentFrame(0);
-    if (canvasRef.current && frames[0]) drawFrame(frames[0], canvasRef.current); };
+  const handlePlay  = () => setIsPlaying(true);
+  const handlePause = () => setIsPlaying(false);
+  const handleReset = () => { engine.current.fi = 0; setCurrentFrame(0); setIsPlaying(true); };
 
   const handlePrev = () => {
-    stopAnimation();
-    const i = Math.max(0, frameIdx.current - 1);
-    frameIdx.current = i; setCurrentFrame(i);
-    if (canvasRef.current && frames[i]) drawFrame(frames[i], canvasRef.current);
+    setIsPlaying(false);
+    if(engine.current.anim) {
+      engine.current.fi = Math.max(0, engine.current.fi - 1);
+      setCurrentFrame(engine.current.fi);
+    }
   };
   const handleNext = () => {
-    stopAnimation();
-    const i = Math.min(frames.length - 1, frameIdx.current + 1);
-    frameIdx.current = i; setCurrentFrame(i);
-    if (canvasRef.current && frames[i]) drawFrame(frames[i], canvasRef.current);
+    setIsPlaying(false);
+    if(engine.current.anim) {
+      engine.current.fi = Math.min(engine.current.anim.length - 1, engine.current.fi + 1);
+      setCurrentFrame(engine.current.fi);
+    }
   };
 
+  // ─── JSX UI ──────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
@@ -228,7 +289,7 @@ export default function TextToSign() {
       </header>
 
       <div className="max-w-6xl mx-auto p-6 grid lg:grid-cols-2 gap-6">
-        {/* Input panel */}
+        {/* INPUT PANEL */}
         <div className="space-y-4">
           <div className="bg-gray-900 rounded-2xl p-5">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
@@ -249,111 +310,94 @@ export default function TextToSign() {
 
           <button
             onClick={handleTranslate}
-            disabled={isLoading || !inputText.trim()}
+            disabled={!inputText.trim()}
             className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50
                        disabled:cursor-not-allowed rounded-xl font-semibold flex items-center
                        justify-center gap-2 transition-all"
           >
-            {isLoading
-              ? <><Loader2 className="w-5 h-5 animate-spin" />Translating…</>
-              : <><Type className="w-5 h-5" />Translate to Sign</>}
+            <Type className="w-5 h-5" />Translate to Sign
           </button>
 
+          {/* Status & Error Messages */}
           {error && (
-            <div className="bg-red-900/40 border border-red-700 rounded-xl px-4 py-3
-                            text-red-300 text-sm flex items-start gap-2">
+            <div className="bg-red-900/40 border border-red-700 rounded-xl px-4 py-3 text-red-300 text-sm flex items-start gap-2">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
               {error}
             </div>
           )}
-
-          {/* Example phrases */}
-          <div className="bg-gray-900 rounded-2xl p-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Try an example
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {["Hello", "Thank you", "How are you", "My name is", "I love you", "Please help me"].map(ex => (
-                <button
-                  key={ex}
-                  onClick={() => setInputText(ex)}
-                  className="text-xs px-3 py-1.5 bg-gray-800 hover:bg-indigo-900/50
-                             border border-gray-700 hover:border-indigo-600 rounded-full
-                             text-gray-300 hover:text-indigo-300 transition-all"
-                >
-                  {ex}
-                </button>
-              ))}
-            </div>
-          </div>
-
+          
           <div className="bg-indigo-900/20 border border-indigo-800/40 rounded-xl p-4 text-sm text-indigo-300">
-            <p className="font-semibold mb-1">ℹ️ About this module</p>
-            <p className="text-indigo-400 text-xs leading-relaxed">
-              The avatar demonstrates ASL signing motions using pose landmarks.
-              Sign accuracy improves with shorter, common phrases.
+            <p className="font-semibold mb-1">Status: {statusMsg}</p>
+            <p className="text-indigo-400 text-xs leading-relaxed mt-2">
+              The avatar is running locally offline. Sign accuracy improves with shorter, common phrases.
             </p>
           </div>
         </div>
 
-        {/* Avatar panel */}
+        {/* AVATAR PANEL */}
         <div className="space-y-4">
-          <div className="bg-gray-900 rounded-2xl overflow-hidden">
+          <div className="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-2xl">
             <canvas
               ref={canvasRef}
-              width={480}
-              height={480}
+              width={600}
+              height={600}
               className="w-full aspect-square"
               style={{ background: "#0f0f1a" }}
             />
           </div>
 
-          {/* Playback controls */}
+          {/* Playback Controls */}
           {hasResult && (
             <div className="bg-gray-900 rounded-2xl p-4 space-y-3">
               {/* Progress bar */}
               <div className="w-full bg-gray-800 rounded-full h-1.5">
                 <div
                   className="bg-indigo-500 h-1.5 rounded-full transition-all"
-                  style={{ width: frames.length ? `${(currentFrame / (frames.length - 1)) * 100}%` : "0%" }}
+                  style={{ width: totalFrames ? `${(currentFrame / (totalFrames - 1)) * 100}%` : "0%" }}
                 />
               </div>
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span>Frame {currentFrame + 1}</span>
-                <span>{frames.length} total</span>
+                <span>{totalFrames} total</span>
               </div>
 
               {/* Buttons */}
-              <div className="flex items-center justify-center gap-3">
-                <button onClick={handlePrev}
-                  className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-all">
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                <button onClick={handlePrev} className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-all">
                   <SkipBack className="w-5 h-5" />
                 </button>
-                <button onClick={handleReset}
-                  className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-all">
+                <button onClick={handleReset} className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-all">
                   <RotateCcw className="w-5 h-5" />
                 </button>
                 <button
                   onClick={isPlaying ? handlePause : handlePlay}
-                  className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold
-                             flex items-center gap-2 transition-all"
+                  className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-2 transition-all"
                 >
-                  {isPlaying
-                    ? <><Pause className="w-5 h-5" />Pause</>
-                    : <><Play  className="w-5 h-5" />Play</>}
+                  {isPlaying ? <><Pause className="w-5 h-5" />Pause</> : <><Play className="w-5 h-5" />Play</>}
                 </button>
-                <button onClick={handleNext}
-                  className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-all">
+                <button onClick={handleNext} className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-all">
                   <SkipForward className="w-5 h-5" />
                 </button>
+                
+                {/* Custom Loop & Speed from Avatar App */}
+                <button 
+                    onClick={() => setIsLooping(!isLooping)} 
+                    className={`ml-4 px-4 py-2 text-xs font-bold rounded-xl transition-all ${isLooping ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400'}`}
+                >
+                    🔁 Loop {isLooping ? '' : 'Off'}
+                </button>
+                <div className="flex items-center gap-2 text-xs font-bold text-gray-400 ml-2">
+                    <label>{playbackSpeed.toFixed(2)}x</label>
+                    <input type="range" min="0.25" max="2" step="0.25" value={playbackSpeed} onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))} className="w-20 accent-indigo-500" />
+                </div>
               </div>
             </div>
           )}
 
-          {!hasResult && !isLoading && (
+          {!hasResult && (
             <div className="bg-gray-900 rounded-2xl p-8 flex flex-col items-center gap-3 text-gray-600">
               <UserIcon className="w-16 h-16 opacity-20" />
-              <p className="text-sm">Enter text and click Translate to see the signing avatar</p>
+              <p className="text-sm text-center">Type an English sentence and click "Translate to Sign" to watch the Pro Avatar perform.</p>
             </div>
           )}
         </div>
