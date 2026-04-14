@@ -1,19 +1,63 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, CheckCircle, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useMemo, useEffect, useCallback, useState } from "react";
+import { ArrowLeft, CheckCircle } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import ProgressHeader from "./ProgressHeader";
 import AvatarPlayer from "./AvatarPlayer";
 import { WORD_CATEGORIES, WordCategory, WordItem } from "@/lib/learningData";
 import { getProgress, markWordCompleted } from "@/lib/learningProgress";
 
 export default function LearnMedium() {
-  const [selectedCategory, setSelectedCategory] = useState<WordCategory | null>(null);
-  const [selectedWord, setSelectedWord] = useState<WordItem | null>(null);
-  const [completedWords, setCompletedWords] = useState<string[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [completedWords, setCompletedWords] = useState<string[]>(() => getProgress().completedWords);
 
   useEffect(() => {
     setCompletedWords(getProgress().completedWords);
   }, []);
+
+  const catId = searchParams.get("cat");
+  const wordKey = searchParams.get("w");
+
+  const selectedCategory = useMemo(
+    () => (catId ? WORD_CATEGORIES.find((c) => c.id === catId) ?? null : null),
+    [catId],
+  );
+
+  const selectedWord = useMemo(() => {
+    if (!selectedCategory || !wordKey) return null;
+    return selectedCategory.words.find((w) => w.word === wordKey) ?? null;
+  }, [selectedCategory, wordKey]);
+
+  const setCategoryOnly = useCallback(
+    (cat: WordCategory) => {
+      setSearchParams({ cat: cat.id }, { replace: false });
+    },
+    [setSearchParams],
+  );
+
+  const openWord = useCallback(
+    (cat: WordCategory, w: WordItem) => {
+      setSearchParams({ cat: cat.id, w: w.word }, { replace: false });
+    },
+    [setSearchParams],
+  );
+
+  /** Drop `w` from URL (same screen as category word grid). */
+  const backToCategoryGrid = useCallback(() => {
+    if (!selectedCategory) return;
+    setSearchParams({ cat: selectedCategory.id }, { replace: true });
+  }, [selectedCategory, setSearchParams]);
+
+  /** Clear category — medium home with all categories. */
+  const backToCategoryPicker = useCallback(() => {
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
+  const setWordInUrl = useCallback(
+    (cat: WordCategory, w: WordItem, replace: boolean) => {
+      setSearchParams({ cat: cat.id, w: w.word }, { replace });
+    },
+    [setSearchParams],
+  );
 
   const handleMarkLearned = (word: string) => {
     markWordCompleted(word);
@@ -30,7 +74,11 @@ export default function LearnMedium() {
       <div className="min-h-screen bg-gray-950 text-white">
         <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
-            <button onClick={() => setSelectedWord(null)} className="text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+            <button
+              type="button"
+              onClick={backToCategoryGrid}
+              className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
+            >
               <ArrowLeft className="w-5 h-5" />
               <span className="text-sm">{selectedCategory.name}</span>
             </button>
@@ -49,8 +97,9 @@ export default function LearnMedium() {
 
             <div className="flex gap-3 w-full max-w-sm">
               <button
+                type="button"
                 onClick={() => {
-                  if (wordIdx > 0) setSelectedWord(selectedCategory.words[wordIdx - 1]);
+                  if (wordIdx > 0) setWordInUrl(selectedCategory, selectedCategory.words[wordIdx - 1], true);
                 }}
                 disabled={wordIdx === 0}
                 className="flex-1 py-2.5 rounded-xl border border-white/10 text-sm font-medium disabled:opacity-30 hover:bg-white/5 transition-all"
@@ -58,12 +107,13 @@ export default function LearnMedium() {
                 Previous
               </button>
               <button
+                type="button"
                 onClick={() => {
                   handleMarkLearned(selectedWord.word);
                   if (wordIdx < selectedCategory.words.length - 1) {
-                    setSelectedWord(selectedCategory.words[wordIdx + 1]);
+                    setWordInUrl(selectedCategory, selectedCategory.words[wordIdx + 1], true);
                   } else {
-                    setSelectedWord(null);
+                    backToCategoryGrid();
                   }
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-sm font-medium transition-all"
@@ -82,11 +132,17 @@ export default function LearnMedium() {
       <div className="min-h-screen bg-gray-950 text-white">
         <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
-            <button onClick={() => setSelectedCategory(null)} className="text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+            <button
+              type="button"
+              onClick={backToCategoryPicker}
+              className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
+            >
               <ArrowLeft className="w-5 h-5" />
               <span className="text-sm">Categories</span>
             </button>
-            <h1 className="text-lg font-bold">{selectedCategory.icon} {selectedCategory.name}</h1>
+            <h1 className="text-lg font-bold">
+              {selectedCategory.icon} {selectedCategory.name}
+            </h1>
             <span className="text-xs text-gray-400 ml-auto">
               {completedInCat(selectedCategory)}/{selectedCategory.words.length} learned
             </span>
@@ -100,7 +156,8 @@ export default function LearnMedium() {
               return (
                 <button
                   key={w.word}
-                  onClick={() => setSelectedWord(w)}
+                  type="button"
+                  onClick={() => openWord(selectedCategory, w)}
                   className={`relative rounded-xl border p-4 text-left transition-all duration-200 hover:scale-[1.02] ${
                     done
                       ? "border-amber-500/30 bg-amber-500/10"
@@ -137,15 +194,14 @@ export default function LearnMedium() {
             return (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat)}
+                type="button"
+                onClick={() => setCategoryOnly(cat)}
                 className="group rounded-xl border border-white/10 bg-white/5 p-5 text-left hover:border-amber-500/40 transition-all duration-200 hover:scale-[1.01]"
               >
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">{cat.icon}</span>
                   <div>
-                    <p className="font-semibold text-white group-hover:text-amber-400 transition-colors">
-                      {cat.name}
-                    </p>
+                    <p className="font-semibold text-white group-hover:text-amber-400 transition-colors">{cat.name}</p>
                     <p className="text-xs text-gray-400">{cat.words.length} words</p>
                   </div>
                 </div>
@@ -155,7 +211,9 @@ export default function LearnMedium() {
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">{done}/{cat.words.length} completed</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {done}/{cat.words.length} completed
+                </p>
               </button>
             );
           })}
