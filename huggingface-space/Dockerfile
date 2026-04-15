@@ -14,13 +14,10 @@ RUN useradd -m -u 1000 user
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Copy API modules.
+# Copy API modules. database.json is loaded at runtime (HTTP from the Hub; avoids Docker COPY
+# when the large file is not in every git clone). Optional faster cold start:
+#   COPY database.json /home/user/
 COPY app.py learning_backend.py text_to_sign_backend.py /home/user/
-#
-# Text-to-sign needs database.json inside the image. Pick one:
-#   1) Put database.json next to this Dockerfile and add:  COPY database.json /home/user/
-#   2) Host it on the Hub; set Space variables TEXT_TO_SIGN_HF_REPO, TEXT_TO_SIGN_HF_FILENAME,
-#      TEXT_TO_SIGN_HF_REPO_TYPE (e.g. dataset), and HF_TOKEN if the repo is private.
 #
 
 # Easy-mode ref images live under static/alphabet_refs/ (see learning_backend REF_IMAGES_DIR).
