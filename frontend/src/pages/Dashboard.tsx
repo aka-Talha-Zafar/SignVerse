@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import {
   Hand, Camera, Type, BookOpen, ArrowRight, TrendingUp,
-  Award, Activity, LogOut, Settings, User, Star,
+  Award, Activity, LogOut, User, Star, CheckCircle, Library, Clock,
 } from "lucide-react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import {
@@ -9,7 +9,10 @@ import {
   getOverallAccuracy,
   getSignsLearnedCount,
   getDailyStreak,
+  getQuizzesCompletedCount,
+  formatPracticeTime,
 } from "@/lib/learningProgress";
+import { ALPHABETS } from "@/lib/learningData";
 
 const features = [
   {
@@ -35,19 +38,21 @@ const features = [
   },
 ];
 
-const recentActivity = [
-  { action: "Completed Lesson: Greetings", time: "2 hours ago" },
-  { action: "Translated 15 signs accurately", time: "5 hours ago" },
-  { action: "Achieved 7-day streak!", time: "1 day ago" },
-  { action: "Unlocked Advanced Module", time: "2 days ago" },
-];
-
 const Dashboard = () => {
   useScrollAnimate();
   const progress = getProgress();
   const accuracy = getOverallAccuracy();
   const signsLearned = getSignsLearnedCount();
   const streak = getDailyStreak();
+  const quizzesDone = getQuizzesCompletedCount();
+  const alphabetDone = progress.completedAlphabets.length;
+  const wordsDone = progress.completedWords.length;
+  const sentencesDone = progress.completedSentences.length;
+  const lastQuiz = progress.quizResults.length
+    ? progress.quizResults[progress.quizResults.length - 1]
+    : null;
+  const lastQuizModeLabel =
+    lastQuiz?.mode === "alphabets" ? "Alphabet" : lastQuiz?.mode === "words" ? "Words" : "Sentences";
 
   const stats = [
     { label: "Signs Learned", value: String(signsLearned), icon: Award, color: "text-green-400" },
@@ -59,6 +64,41 @@ const Dashboard = () => {
       color: "text-amber-400",
     },
     { label: "Daily Streak", value: String(streak), icon: Activity, color: "text-purple-400" },
+  ];
+
+  const insightCards = [
+    {
+      label: "Quizzes completed",
+      value: String(quizzesDone),
+      hint: "Finished alphabet, word, or sentence quiz runs",
+      icon: CheckCircle,
+      color: "text-green-400",
+      to: "/learning/quiz",
+    },
+    {
+      label: "Manual alphabet",
+      value: `${alphabetDone}/${ALPHABETS.length}`,
+      hint: "Letters marked learned in Learn → Easy",
+      icon: BookOpen,
+      color: "text-emerald-400",
+      to: "/learning/learn/easy",
+    },
+    {
+      label: "Words & sentences",
+      value: `${wordsDone} · ${sentencesDone}`,
+      hint: "Items marked learned in Medium and Hard",
+      icon: Library,
+      color: "text-amber-400",
+      to: "/learning/learn",
+    },
+    {
+      label: "Practice time logged",
+      value: progress.totalPracticeSeconds > 0 ? formatPracticeTime(progress.totalPracticeSeconds) : "—",
+      hint: "Time recorded from practice sessions",
+      icon: Clock,
+      color: "text-sky-400",
+      to: "/learning",
+    },
   ];
 
   return (
@@ -79,9 +119,6 @@ const Dashboard = () => {
             </span>
           </Link>
           <div className="flex items-center gap-4">
-            <button className="text-gray-400 hover:text-white transition-colors">
-              <Settings className="w-5 h-5" />
-            </button>
             <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
               <User className="w-4 h-4 text-primary" />
             </div>
@@ -142,20 +179,48 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Learning insights — live data from saved progress (same source as Learning header) */}
         <div>
-          <h2 className="text-xl font-semibold mb-5">Recent Activity</h2>
-          <div className="rounded-xl border border-white/10 bg-white/5 divide-y divide-white/5">
-            {recentActivity.map((a, i) => (
-              <div
-                key={i}
-                className="px-5 py-4 flex items-center justify-between hover:bg-white/5"
+          <h2 className="text-xl font-semibold mb-1">Learning insights</h2>
+          <p className="text-sm text-gray-500 mb-5">
+            Snapshot from your device — tap a card to jump to where you can improve it.
+          </p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {insightCards.map((c) => (
+              <Link
+                key={c.label}
+                to={c.to}
+                className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/10 hover:border-primary/30 transition-all group text-left"
               >
-                <span className="text-sm">{a.action}</span>
-                <span className="text-xs text-gray-500">{a.time}</span>
-              </div>
+                <div className="flex items-center justify-between mb-3">
+                  <c.icon className={`w-5 h-5 ${c.color}`} />
+                  <span className="text-xs text-gray-400 uppercase tracking-wider text-right max-w-[55%] leading-tight">
+                    {c.label}
+                  </span>
+                </div>
+                <p className="text-2xl font-bold mb-2">{c.value}</p>
+                <p className="text-xs text-gray-500 leading-relaxed group-hover:text-gray-400 transition-colors">
+                  {c.hint}
+                </p>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  Go <ArrowRight className="w-3 h-3" />
+                </span>
+              </Link>
             ))}
           </div>
+          {lastQuiz && (
+            <p className="text-sm text-gray-500 mt-5 max-w-2xl">
+              Latest quiz:{" "}
+              <span className="text-gray-300">
+                {lastQuizModeLabel} · {lastQuiz.score}/{lastQuiz.total}
+              </span>
+              {" — "}
+              {new Date(lastQuiz.date).toLocaleString(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </p>
+          )}
         </div>
       </main>
     </div>

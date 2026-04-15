@@ -131,7 +131,7 @@ export default function QuizAlphabets() {
       setResult({
         correct,
         message: correct
-          ? "Correct — that is the sign for this letter."
+          ? `Correct — that is the sign for letter ${targetLetter}.`
           : `Not this one. The sign for "${targetLetter}" was another option.`,
       });
       setAnswers((prev) => [...prev, correct]);
@@ -248,11 +248,12 @@ export default function QuizAlphabets() {
         </div>
 
         <div className="text-center space-y-2">
-          <p className="text-gray-400 text-sm">Which picture shows the ASL sign for this letter?</p>
+          <p className="text-gray-400 text-sm">
+            Which picture shows the ASL sign for letter {targetLetter}?
+          </p>
           <p className="text-5xl font-bold text-emerald-400">{targetLetter}</p>
           <p className="text-gray-500 text-xs max-w-sm mx-auto leading-relaxed">
-            Tap one of the four images. They load from your learning API when available; otherwise the same fallbacks
-            as Learn → Easy are used.
+            Review the four images provided and tap the one that is correct.
           </p>
         </div>
 
