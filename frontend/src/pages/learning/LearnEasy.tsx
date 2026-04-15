@@ -11,7 +11,6 @@ export default function LearnEasy() {
   const [imgError, setImgError] = useState(false);
   /** 0 = learning API (dataset or bundled refs), 1 = frontend public/, 2 = Wikimedia SVG fallback */
   const [loadTier, setLoadTier] = useState<0 | 1 | 2>(0);
-  const [imageAttribution, setImageAttribution] = useState<"none" | "commons">("none");
 
   useEffect(() => {
     setCompleted(getProgress().completedAlphabets);
@@ -21,7 +20,6 @@ export default function LearnEasy() {
     if (selectedLetter) {
       setLoadTier(0);
       setImgError(false);
-      setImageAttribution("none");
     }
   }, [selectedLetter]);
 
@@ -115,9 +113,6 @@ export default function LearnEasy() {
                     loading="lazy"
                     decoding="async"
                     referrerPolicy="no-referrer"
-                    onLoad={() => {
-                      if (loadTier === 2) setImageAttribution("commons");
-                    }}
                     onError={handleLetterImageError}
                   />
                   </div>
@@ -135,13 +130,6 @@ export default function LearnEasy() {
                   </div>
                 )}
               </div>
-              {imageAttribution === "commons" && !imgError && (
-                <p className="text-xs text-gray-600 text-center mb-4 max-w-xs mx-auto -mt-2">
-                  Reference illustration: Wikimedia Commons &ldquo;Sign language {selectedLetter}.svg&rdquo;
-                  (manual alphabet). For Kaggle-style training photos, bundle images on the API (see Space
-                  static/alphabet_refs).
-                </p>
-              )}
 
               <div className="flex gap-3">
                 <button

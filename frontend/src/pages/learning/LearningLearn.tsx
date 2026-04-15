@@ -18,7 +18,7 @@ const MODES = [
   {
     id: "medium",
     label: "Medium",
-    desc: "Learn 250 everyday words organized by category — watch the avatar perform each sign.",
+    desc: "Learn everyday words organized by category — watch the avatar performing each sign.",
     color: "amber",
     href: "/learning/learn/medium",
     stars: 2,
@@ -30,7 +30,7 @@ const MODES = [
   {
     id: "hard",
     label: "Hard",
-    desc: "Learn full sentences built from the 250-word vocabulary — avatar demonstrates multi-word signing.",
+    desc: "Learn everyday sentences organized by category — avatar demonstrates multi-word signing.",
     color: "red",
     href: "/learning/learn/hard",
     stars: 3,

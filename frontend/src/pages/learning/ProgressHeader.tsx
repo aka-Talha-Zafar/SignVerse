@@ -26,7 +26,7 @@ export default function ProgressHeader({ title, backTo, backLabel, backVariant =
   const signsLearned = getSignsLearnedCount();
 
   const stats = [
-    { label: "Completed quiz", value: String(quizzesDone), icon: CheckCircle, color: "text-green-400" },
+    { label: "Completed quizzes", value: String(quizzesDone), icon: CheckCircle, color: "text-green-400" },
     { label: "Stars", value: String(progress.starsEarned), icon: Star, color: "text-yellow-400" },
     { label: "Signs learned", value: String(signsLearned), icon: Award, color: "text-emerald-400" },
     {
