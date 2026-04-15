@@ -21,8 +21,12 @@ export async function fetchAvatarFrames(text: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
   });
-  if (!res.ok) throw new Error(`Failed to fetch avatar animation`);
-  return res.json();
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const detail = typeof (err as { detail?: unknown }).detail === "string" ? (err as { detail: string }).detail : null;
+    throw new Error(detail || `Failed to fetch avatar animation (${res.status})`);
+  }
+  return res.json() as Promise<{ frames?: unknown[]; fps?: number; gloss?: string }>;
 }
 
 export async function verifySignRecording(
