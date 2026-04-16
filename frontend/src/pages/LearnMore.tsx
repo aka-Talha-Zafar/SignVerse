@@ -6,14 +6,16 @@ import { useAuth } from "@/contexts/AuthContext";
 const LearnMore = () => {
   const containerRef = useScrollAnimate();
   const { user } = useAuth();
-  const homeHref = user ? "/dashboard" : "/";
+  /** Marketing home: guests use `/`; signed-in users use `/welcome` so they reach the landing site (not `/` → dashboard redirect). */
+  const marketingHomeHref = user ? "/welcome" : "/";
+  const trySignVerseHref = user ? "/dashboard" : "/login";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass-solid">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to={homeHref} className="flex items-center gap-2.5 group">
+          <Link to={marketingHomeHref} className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/20">
               <Hand className="w-4 h-4 text-primary" />
             </div>
@@ -21,9 +23,8 @@ const LearnMore = () => {
               Sign<span className="text-primary">Verse</span>
             </span>
           </Link>
-          <Link to={homeHref} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
-            <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />{" "}
-            {user ? "Back to dashboard" : "Back to Home"}
+          <Link to={marketingHomeHref} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+            <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" /> Back to Home
           </Link>
         </div>
       </nav>
@@ -171,8 +172,8 @@ const LearnMore = () => {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { name: "Uzair Moazzam", role: "Developer — AI/ML Pipeline & Backend" },
-              { name: "Talha Zafar", role: "Developer — Frontend & System Integration" },
+              { name: "Uzair Moazzam", role: "Developer — AI/ML Pipeline & Frontend" },
+              { name: "Talha Zafar", role: "Developer — AI/ML & System Integration" },
             ].map((m) => (
               <div key={m.name} className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border hover:border-primary/20 transition-all duration-300 group hover:scale-[1.02]">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm group-hover:bg-primary/20 transition-colors">
@@ -192,11 +193,17 @@ const LearnMore = () => {
           <h2 className="text-2xl font-bold text-foreground mb-3">Ready to Try SignVerse?</h2>
           <p className="text-muted-foreground text-sm mb-6">Experience bidirectional ASL translation powered by AI.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/login" className="group px-8 py-3 rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 relative overflow-hidden inline-block">
+            <Link
+              to={trySignVerseHref}
+              className="group px-8 py-3 rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 relative overflow-hidden inline-block"
+            >
               <span className="relative z-10">Try SignVerse</span>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             </Link>
-            <Link to="/" className="px-8 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-secondary transition-all duration-300 hover:scale-105">
+            <Link
+              to={marketingHomeHref}
+              className="px-8 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-secondary transition-all duration-300 hover:scale-105"
+            >
               Back to Home
             </Link>
           </div>

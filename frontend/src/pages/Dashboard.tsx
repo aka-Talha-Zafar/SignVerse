@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Hand, Camera, Type, BookOpen, ArrowRight, TrendingUp,
   Award, Activity, LogOut, User, Star, CheckCircle, BookText, MessagesSquare,
-  Sparkles, ExternalLink,
+  Sparkles, Home,
 } from "lucide-react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import {
@@ -141,7 +141,15 @@ const Dashboard = () => {
               Sign<span className="text-primary">Verse</span>
             </span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              to="/welcome"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 sm:px-3 text-sm text-gray-300 hover:text-white hover:border-primary/35 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              aria-label="Marketing home"
+            >
+              <Home className="h-4 w-4 shrink-0 text-primary" />
+              <span className="hidden sm:inline">Home</span>
+            </Link>
             <span className="text-sm text-gray-400 max-w-[160px] truncate hidden sm:inline" title={user?.email ?? ""}>
               {user?.email}
             </span>
@@ -359,20 +367,13 @@ const Dashboard = () => {
                   </li>
                 ))}
               </ul>
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-6">
                 <Link
                   to="/learn-more"
                   className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   Learn more
                   <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  to="/welcome"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-gray-200 hover:bg-white/[0.08] hover:border-primary/30 transition-colors"
-                >
-                  View landing page
-                  <ExternalLink className="h-4 w-4 opacity-70" />
                 </Link>
               </div>
             </div>

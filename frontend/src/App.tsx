@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LearningProgressProvider } from "@/contexts/LearningProgressContext";
 import RequireAuth from "@/components/RequireAuth";
+import ScrollToTop from "@/components/ScrollToTop";
 import PublicHome from "./pages/PublicHome";
 import Index from "./pages/Index";
 import LearnMore from "./pages/LearnMore";
@@ -39,6 +40,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <Routes>
               <Route path="/" element={<PublicHome />} />
               <Route path="/welcome" element={<Index />} />
