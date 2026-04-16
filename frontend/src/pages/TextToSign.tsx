@@ -16,7 +16,6 @@ export default function TextToSign() {
   const [isPlaying,    setIsPlaying]    = useState(false);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [error,        setError]        = useState("");
-  const [statusMsg,    setStatusMsg]    = useState("");
   const [fpsRate,      setFpsRate]      = useState(20);
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const [isLooping,    setIsLooping]    = useState(true);
@@ -52,7 +51,10 @@ export default function TextToSign() {
     }
 
     if (canvasRef.current) {
-        drawMannequinFrame(en.anim.length > 0 ? en.anim[en.fi] : null, canvasRef.current);
+      const hasAnim = en.anim.length > 0;
+      drawMannequinFrame(hasAnim ? en.anim[en.fi] : null, canvasRef.current, {
+        idlePlaceholder: false,
+      });
     }
     requestRef.current = requestAnimationFrame(renderLoop);
   }, [isPlaying, isLooping, playbackSpeed, fpsRate]);
@@ -65,7 +67,14 @@ export default function TextToSign() {
   // ── Translate text (API Call to Hugging Face) ──────────────────────────
   const handleTranslate = async () => {
     if (!inputText.trim()) return;
-    setError(""); setStatusMsg(""); setIsLoading(true); setIsPlaying(false);
+    setError("");
+    setIsLoading(true);
+    setIsPlaying(false);
+    setFrames([]);
+    engine.current.anim = [];
+    engine.current.fi = 0;
+    engine.current.accumulator = 0;
+    engine.current.lastTime = 0;
 
     try {
       const res = await fetch(`${API_BASE}/api/text-to-sign`, {
@@ -82,7 +91,6 @@ export default function TextToSign() {
       const data = await res.json();
       if (!data.frames?.length) throw new Error("No animation data returned");
 
-      setStatusMsg(`ASL Gloss: ${data.gloss}`);
       setFrames(data.frames);
       setFpsRate(data.fps || 20);
       
@@ -94,6 +102,7 @@ export default function TextToSign() {
     } catch (e: any) {
       setError(e.message);
       engine.current.anim = [];
+      setFrames([]);
     } finally {
       setIsLoading(false);
     }
@@ -163,17 +172,29 @@ export default function TextToSign() {
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" /> {error}
             </div>
           )}
-          {statusMsg && (
-            <div className="rounded-xl border border-primary/25 bg-primary/10 p-4 text-sm text-gray-200">
-              <p className="font-semibold">✅ {statusMsg}</p>
-            </div>
-          )}
         </div>
 
         {/* Avatar panel */}
         <div className="space-y-4">
-          <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/40 shadow-2xl">
-            <canvas ref={canvasRef} width={600} height={600} className="w-full aspect-square" style={{ background: "hsl(220 20% 6%)" }} />
+          <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 shadow-2xl">
+            <canvas ref={canvasRef} width={600} height={600} className="w-full aspect-square block" style={{ background: "hsl(220 20% 6%)" }} />
+            {frames.length === 0 && !isLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[hsl(220_20%_6%)]/95 px-6 text-center pointer-events-none">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                  <Type className="h-7 w-7 text-primary" />
+                </div>
+                <p className="text-sm font-medium text-gray-300">No animation yet</p>
+                <p className="text-xs text-gray-500 max-w-[260px] leading-relaxed">
+                  Type your message, then press <span className="text-gray-400">Translate to Sign</span>. The signer appears here and plays automatically.
+                </p>
+              </div>
+            )}
+            {isLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 backdrop-blur-sm">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-sm text-gray-300">Generating signs…</p>
+              </div>
+            )}
           </div>
 
           {/* Playback controls */}

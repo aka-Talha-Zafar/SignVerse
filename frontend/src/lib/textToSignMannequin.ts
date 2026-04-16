@@ -14,8 +14,17 @@ export function isMannequinFrameList(frames: unknown[] | null | undefined): fram
   return Array.isArray(p0) && p0.length >= 2 && typeof p0[0] === "number" && typeof p0[1] === "number";
 }
 
+export type DrawMannequinFrameOptions = {
+  /** When true (default), a neutral idle pose is drawn if `frame` is null. Set false to only clear to the grid background (e.g. Text to Sign before any translation). */
+  idlePlaceholder?: boolean;
+};
+
 /** Pro mannequin renderer (shared by Text to Sign and learning Medium/Hard). */
-export function drawMannequinFrame(frame: MannequinFrame | null, canvas: HTMLCanvasElement) {
+export function drawMannequinFrame(
+  frame: MannequinFrame | null,
+  canvas: HTMLCanvasElement,
+  options?: DrawMannequinFrameOptions,
+) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
@@ -36,6 +45,11 @@ export function drawMannequinFrame(frame: MannequinFrame | null, canvas: HTMLCan
     ctx.moveTo(0, (i * H) / 10);
     ctx.lineTo(W, (i * H) / 10);
     ctx.stroke();
+  }
+
+  const idlePlaceholder = options?.idlePlaceholder !== false;
+  if (frame == null && !idlePlaceholder) {
+    return;
   }
 
   const currentFrame =
