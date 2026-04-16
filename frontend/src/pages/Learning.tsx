@@ -251,7 +251,7 @@ const Learning = () => {
             { label: "Completed", value: `${completedCount}/${lessons.length}`, icon: CheckCircle, color: "text-green-400" },
             { label: "Stars Earned", value: `${totalStars}/${lessons.length*3}`, icon: Star, color: "text-yellow-400" },
             { label: "Total Practice", value: "4.5 hrs", icon: Clock, color: "text-primary" },
-            { label: "Accuracy", value: prediction ? `${Math.round(prediction.confidence*100)}%` : "89%", icon: Target, color: "text-purple-400" },
+            { label: "Accuracy", value: prediction ? `${Math.round(prediction.confidence*100)}%` : "89%", icon: Target, color: "text-primary" },
           ].map((s) => (
             <div key={s.label} className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-4 glow-card gradient-border">
               <div className="flex items-center justify-between mb-2">

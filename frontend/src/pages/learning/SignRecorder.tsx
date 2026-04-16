@@ -111,7 +111,7 @@ export default function SignRecorder({ onRecordingComplete, isProcessing, result
 
   return (
     <div className="space-y-3">
-      <div className="relative rounded-2xl overflow-hidden bg-gray-900 border border-white/10 aspect-video max-w-md">
+      <div className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10 aspect-video max-w-md">
         {cameraOn ? (
           <>
             <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
@@ -121,14 +121,14 @@ export default function SignRecorder({ onRecordingComplete, isProcessing, result
                 <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold bg-red-500/90">
                   <span className="w-2 h-2 rounded-full bg-white animate-pulse" /> REC
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-800/80">
-                  <div className="h-full bg-purple-500 transition-all duration-200" style={{ width: `${progressPct}%` }} />
+                <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/10">
+                  <div className="h-full bg-primary transition-all duration-200" style={{ width: `${progressPct}%` }} />
                 </div>
               </>
             )}
             {isProcessing && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
             )}
           </>
@@ -156,7 +156,7 @@ export default function SignRecorder({ onRecordingComplete, isProcessing, result
           onClick={cameraOn ? stopCamera : startCamera}
           disabled={disabled || isProcessing}
           className={`flex items-center gap-2 py-2.5 px-4 rounded-xl font-medium text-sm transition-all ${
-            cameraOn ? "bg-red-600 hover:bg-red-700" : "bg-purple-600 hover:bg-purple-700"
+            cameraOn ? "bg-red-600 hover:bg-red-700 text-white" : "bg-primary hover:bg-primary/90 text-primary-foreground"
           } disabled:opacity-40`}
         >
           {cameraOn ? <><CameraOff className="w-4 h-4" /> Stop Camera</> : <><Camera className="w-4 h-4" /> Start Camera</>}
@@ -164,7 +164,7 @@ export default function SignRecorder({ onRecordingComplete, isProcessing, result
 
         {cameraOn && !isProcessing && (
           isRecording ? (
-            <button onClick={sendRecording} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 font-medium text-sm transition-all">
+            <button onClick={sendRecording} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary hover:bg-primary/90 font-medium text-sm transition-all text-primary-foreground">
               <Square className="w-4 h-4" /> Done ({remainingSec}s)
             </button>
           ) : (

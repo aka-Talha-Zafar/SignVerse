@@ -280,13 +280,13 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
 
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl overflow-hidden bg-gray-900 border border-white/10" style={{ maxWidth: size }}>
+      <div className="rounded-2xl overflow-hidden bg-black/40 border border-white/10" style={{ maxWidth: size }}>
         <canvas
           ref={canvasRef}
           width={size}
           height={size}
           className="w-full aspect-square"
-          style={{ background: "#0f0f1a" }}
+          style={{ background: "hsl(220 20% 6%)" }}
         />
       </div>
 
@@ -319,7 +319,7 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
                 }
               }
             }}
-            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-all"
+            className="p-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/10 text-gray-400 hover:text-white transition-all"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -337,7 +337,7 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
                 }
               }
             }}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium flex items-center gap-1.5 transition-all"
+            className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium flex items-center gap-1.5 transition-all"
           >
             {isPlaying ? (
               <>

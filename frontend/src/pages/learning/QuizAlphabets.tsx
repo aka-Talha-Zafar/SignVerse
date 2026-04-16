@@ -66,7 +66,7 @@ function AlphabetMcqTile({
           ? "border-red-500 ring-2 ring-red-500/30 bg-red-950/20"
           : selected
           ? "border-white/40 bg-white/5"
-          : "border-white/10 bg-gray-900/80 hover:border-emerald-500/40 hover:bg-gray-800/90"
+          : "border-white/10 bg-white/5 hover:border-emerald-500/40 hover:bg-white/10"
       }`}
       aria-label="ASL sign choice"
     >
@@ -173,8 +173,8 @@ export default function QuizAlphabets() {
   if (showFinal) {
     const pct = Math.round((score / letters.length) * 100);
     return (
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-        <header className="border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+        <header className="border-b border-white/5 bg-black/50 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
             <button
               type="button"
@@ -198,7 +198,7 @@ export default function QuizAlphabets() {
                 ? "Good progress — keep matching letters to their signs."
                 : "Keep practicing — try Learn → Easy to study each letter first."}
             </p>
-            <div className="w-full bg-gray-800 rounded-full h-3">
+            <div className="w-full bg-white/10 rounded-full h-3">
               <div
                 className={`h-3 rounded-full transition-all duration-1000 ${pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500"}`}
                 style={{ width: `${pct}%` }}
@@ -222,8 +222,8 @@ export default function QuizAlphabets() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
           <button
             type="button"

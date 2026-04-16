@@ -4,10 +4,11 @@ import ProgressHeader from "./ProgressHeader";
 
 export default function LearningHub() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#0a0a0a] text-white relative">
+      <div className="absolute bottom-0 left-1/3 w-[480px] h-[480px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
       <ProgressHeader title="Learning Module" backTo="/dashboard" backLabel="Dashboard" backVariant="history" />
 
-      <main className="max-w-4xl mx-auto px-6 py-10 space-y-8">
+      <main className="relative z-10 max-w-4xl mx-auto px-6 py-10 space-y-8">
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-bold">
             Learn <span className="text-primary">ASL</span> Your Way
@@ -44,12 +45,12 @@ export default function LearningHub() {
 
           <Link
             to="/learning/quiz"
-            className="group relative rounded-2xl border border-white/10 bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-8 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]"
+            className="group relative rounded-2xl border border-white/10 bg-gradient-to-br from-primary/15 to-cyan-500/10 p-8 hover:border-primary/50 transition-all duration-300 hover:scale-[1.02]"
           >
-            <div className="w-16 h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center mb-5">
-              <Brain className="w-8 h-8 text-purple-400" />
+            <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-5 border border-primary/20">
+              <Brain className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-2xl font-bold mb-2 group-hover:text-purple-400 transition-colors">
+            <h3 className="text-2xl font-bold mb-2 group-hover:text-primary transition-colors">
               Take a Quiz
             </h3>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
@@ -57,15 +58,15 @@ export default function LearningHub() {
             </p>
             <div className="flex flex-wrap gap-2 mb-6">
               {["MCQ", "Record & Verify", "Score Tracking"].map((tag) => (
-                <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/20">
+                <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-primary/15 text-primary/90 border border-primary/25">
                   {tag}
                 </span>
               ))}
             </div>
-            <span className="inline-flex items-center gap-1 text-sm text-purple-400 font-medium">
+            <span className="inline-flex items-center gap-1 text-sm text-primary font-medium">
               Start Quiz <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </span>
-            <Trophy className="absolute top-6 right-6 w-5 h-5 text-purple-500/30" />
+            <Trophy className="absolute top-6 right-6 w-5 h-5 text-primary/30" />
           </Link>
         </div>
       </main>

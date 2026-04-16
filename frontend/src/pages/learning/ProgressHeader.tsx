@@ -29,7 +29,7 @@ export default function ProgressHeader({ title, backTo, backLabel, backVariant =
       label: "Accuracy",
       value: accuracy > 0 ? `${Math.round(accuracy * 100)}%` : "—",
       icon: Target,
-      color: "text-purple-400",
+      color: "text-primary",
     },
   ];
 
@@ -38,11 +38,11 @@ export default function ProgressHeader({ title, backTo, backLabel, backVariant =
   };
 
   const backClass =
-    "text-gray-400 hover:text-white transition-colors flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60";
+    "text-gray-400 hover:text-white transition-colors flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
           {backVariant === "history" ? (
             <button type="button" onClick={handleHistoryBack} className={backClass} aria-label={backLabel ? `Back to ${backLabel}` : "Go back"}>

@@ -43,7 +43,7 @@ const MODES = [
 
 export default function LearningLearn() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
       <ProgressHeader title="Learn Signs" backTo="/learning" backLabel="Learning" backVariant="history" />
 
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-8">

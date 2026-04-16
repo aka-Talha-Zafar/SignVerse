@@ -13,6 +13,7 @@ import {
 import { ALPHABETS, getAllWords, SENTENCE_CATEGORIES } from "@/lib/learningData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLearningProgress } from "@/contexts/LearningProgressContext";
+import FooterSection from "@/components/landing/FooterSection";
 
 const features = [
   {
@@ -27,7 +28,7 @@ const features = [
     desc: "Convert written text into animated ASL sign demonstrations",
     icon: Type,
     href: "/text-to-sign",
-    gradient: "from-purple-500/20 to-pink-500/20",
+    gradient: "from-primary/20 to-cyan-500/20",
   },
   {
     title: "Learning Module",
@@ -73,7 +74,7 @@ const Dashboard = () => {
       icon: TrendingUp,
       color: "text-amber-400",
     },
-    { label: "Daily Streak", value: String(streak), icon: Activity, color: "text-purple-400" },
+    { label: "Daily Streak", value: String(streak), icon: Activity, color: "text-sky-400" },
   ];
 
   const insightCards = [
@@ -117,11 +118,11 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden flex flex-col">
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
 
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl shrink-0">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -150,7 +151,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-10 space-y-10">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-10 space-y-10 flex-1 w-full">
         <div className="animate-fade-up">
           <h1 className="text-3xl font-bold">
             Welcome back, <span className="text-primary">{displayName}</span>
@@ -175,7 +176,7 @@ const Dashboard = () => {
 
         <div>
           <h2 className="text-xl font-semibold mb-5">Quick Actions</h2>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 gap-5 max-w-2xl">
             {features.map((f) => (
               <Link
                 key={f.title}
@@ -202,7 +203,7 @@ const Dashboard = () => {
           <p className="text-sm text-gray-500 mb-5">
             Snapshot from your previous learning sessions — tap a card to jump to where you can improve it.
           </p>
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 gap-4 max-w-2xl">
             {insightCards.map((c) => (
               <Link
                 key={c.label}
@@ -240,6 +241,10 @@ const Dashboard = () => {
           )}
         </div>
       </main>
+
+      <div className="relative z-10 mt-auto border-t border-white/5 bg-[#0a0a0a]">
+        <FooterSection />
+      </div>
     </div>
   );
 };

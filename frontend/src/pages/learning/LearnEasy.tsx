@@ -44,7 +44,7 @@ export default function LearnEasy() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
       <ProgressHeader title="Easy — Alphabets" backTo="/learning/learn" backLabel="Learn" backVariant="history" />
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
@@ -52,7 +52,7 @@ export default function LearnEasy() {
           <p className="text-gray-400 text-sm">
             Select a letter to see how it looks in ASL. {completed.length}/{ALPHABETS.length} learned.
           </p>
-          <div className="w-full bg-gray-800 rounded-full h-2 mt-3 max-w-md mx-auto">
+          <div className="w-full bg-white/10 rounded-full h-2 mt-3 max-w-md mx-auto">
             <div
               className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
               style={{ width: `${(completed.length / ALPHABETS.length) * 100}%` }}
@@ -79,7 +79,7 @@ export default function LearnEasy() {
               >
                 {letter}
                 {done && (
-                  <CheckCircle className="absolute -top-1 -right-1 w-4 h-4 text-emerald-400 bg-gray-950 rounded-full" />
+                  <CheckCircle className="absolute -top-1 -right-1 w-4 h-4 text-emerald-400 bg-[#0a0a0a] rounded-full" />
                 )}
               </button>
             );
@@ -88,7 +88,7 @@ export default function LearnEasy() {
 
         {selectedLetter && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="bg-gray-900 border border-white/10 rounded-2xl max-w-lg w-full p-6 relative">
+            <div className="rounded-2xl border border-white/10 bg-white/5 max-w-lg w-full p-6 relative">
               <button
                 onClick={() => setSelectedLetter(null)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -103,7 +103,7 @@ export default function LearnEasy() {
                 </p>
               </div>
 
-              <div className="bg-gray-800 rounded-xl overflow-hidden aspect-square max-w-xs mx-auto mb-4 p-2">
+              <div className="rounded-xl border border-white/10 bg-black/40 overflow-hidden aspect-square max-w-xs mx-auto mb-4 p-2">
                 {!imgError ? (
                   <div className="h-full w-full rounded-lg bg-gradient-to-b from-zinc-50 to-zinc-200 flex items-center justify-center overflow-hidden ring-1 ring-black/5">
                   <img

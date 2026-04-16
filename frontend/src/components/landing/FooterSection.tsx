@@ -1,12 +1,20 @@
-import { Hand, Github, Linkedin, Mail, ExternalLink } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Hand, Github, Linkedin, Mail } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 
 const FooterSection = () => {
   const containerRef = useScrollAnimate();
+  const { pathname, hash } = useLocation();
 
-  const scrollTo = (id: string) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    if (pathname === "/" && hash) {
+      const id = hash.replace("#", "");
+      requestAnimationFrame(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      });
+    }
+  }, [pathname, hash]);
 
   return (
     <footer id="footer" className="relative border-t border-border bg-background">
@@ -57,12 +65,12 @@ const FooterSection = () => {
                 { label: "Team", id: "footer" },
               ].map((link) => (
                 <li key={link.label}>
-                  <button
-                    onClick={() => scrollTo(link.id)}
+                  <Link
+                    to={`/#${link.id}`}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
-                  </button>
+                  </Link>
                 </li>
               ))}
               <li>

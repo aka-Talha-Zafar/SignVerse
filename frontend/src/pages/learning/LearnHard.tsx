@@ -72,8 +72,8 @@ export default function LearnHard() {
     const avatarText = selectedSentence.words.join(" ");
 
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
-        <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
+      <div className="min-h-screen bg-[#0a0a0a] text-white">
+        <header className="sticky top-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
             <button
               type="button"
@@ -140,8 +140,8 @@ export default function LearnHard() {
 
   if (selectedCategory) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
-        <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-xl">
+      <div className="min-h-screen bg-[#0a0a0a] text-white">
+        <header className="sticky top-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
             <button
               type="button"
@@ -188,7 +188,7 @@ export default function LearnHard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
       <ProgressHeader title="Hard — Sentences" backTo="/learning/learn" backLabel="Learn" backVariant="history" />
 
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
@@ -216,7 +216,7 @@ export default function LearnHard() {
                     <p className="text-xs text-gray-400">{cat.sentences.length} sentences</p>
                   </div>
                 </div>
-                <div className="w-full bg-gray-800 rounded-full h-1.5">
+                <div className="w-full bg-white/10 rounded-full h-1.5">
                   <div
                     className="bg-red-500 h-1.5 rounded-full transition-all duration-500"
                     style={{ width: `${pct}%` }}
