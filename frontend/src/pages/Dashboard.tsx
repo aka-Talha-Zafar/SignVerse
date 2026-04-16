@@ -84,6 +84,8 @@ const Dashboard = () => {
       hint: "Finished alphabet, word, or sentence quiz runs",
       icon: CheckCircle,
       color: "text-green-400",
+      iconBg: "bg-green-500/15 border-green-500/25",
+      strip: "border-l-4 border-l-green-500/70",
       to: "/learning/quiz",
     },
     {
@@ -92,6 +94,8 @@ const Dashboard = () => {
       hint: "Total number of alphabets learned (Easy Mode)",
       icon: BookOpen,
       color: "text-emerald-400",
+      iconBg: "bg-emerald-500/15 border-emerald-500/25",
+      strip: "border-l-4 border-l-emerald-500/70",
       to: "/learning/learn/easy",
     },
     {
@@ -100,6 +104,8 @@ const Dashboard = () => {
       hint: "Total number of words learned (Medium Mode)",
       icon: BookText,
       color: "text-amber-400",
+      iconBg: "bg-amber-500/15 border-amber-500/25",
+      strip: "border-l-4 border-l-amber-500/70",
       to: "/learning/learn/medium",
     },
     {
@@ -108,6 +114,8 @@ const Dashboard = () => {
       hint: "Total number of sentences learned (Hard Mode)",
       icon: MessagesSquare,
       color: "text-orange-400",
+      iconBg: "bg-orange-500/15 border-orange-500/25",
+      strip: "border-l-4 border-l-orange-500/70",
       to: "/learning/learn/hard",
     },
   ];
@@ -159,7 +167,6 @@ const Dashboard = () => {
             style={{ animationFillMode: "backwards" }}
           >
             <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-primary/80 mb-2">Dashboard</p>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                 Welcome back, <span className="text-primary">{displayName}</span>
               </h1>
@@ -173,7 +180,7 @@ const Dashboard = () => {
 
           {/* Bento: main (stats + actions) | insights rail */}
           <div className="flex flex-col xl:grid xl:grid-cols-12 xl:gap-8 gap-8">
-            <div className="xl:col-span-8 space-y-6 md:space-y-8">
+            <div className="xl:col-span-7 space-y-6 md:space-y-8">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {stats.map((s, i) => (
                   <div
@@ -223,7 +230,7 @@ const Dashboard = () => {
                       <h3 className="relative text-base font-semibold mb-2 group-hover:text-primary transition-colors">
                         {f.title}
                       </h3>
-                      <p className="relative text-sm text-gray-400 leading-snug flex-1 mb-4 line-clamp-3">
+                      <p className="relative text-sm text-gray-400 leading-relaxed flex-1 mb-4">
                         {f.desc}
                       </p>
                       <span className="relative mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-primary">
@@ -236,60 +243,77 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <aside className="xl:col-span-4">
+            <aside className="xl:col-span-5">
               <div
-                className="xl:sticky xl:top-20 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-5 sm:p-6 shadow-lg shadow-black/20 ring-1 ring-white/[0.04] backdrop-blur-sm animate-fade-up motion-reduce:animate-none"
+                className="relative xl:sticky xl:top-20 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] via-[#0d1117]/90 to-black/60 p-5 sm:p-6 shadow-xl shadow-black/40 ring-1 ring-primary/10 backdrop-blur-md animate-fade-up motion-reduce:animate-none overflow-hidden"
                 style={{ animationDelay: "280ms", animationFillMode: "backwards" }}
               >
-                <h2 className="text-lg font-semibold tracking-tight">Learning insights</h2>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">
-                  Tap a tile to continue where you left off — quizzes, letters, words, or sentences.
-                </p>
-
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  {insightCards.map((c, i) => (
-                    <Link
-                      key={c.label}
-                      to={c.to}
-                      className="group relative flex flex-col rounded-xl border border-white/10 bg-black/30 p-3.5 sm:p-4 transition-all duration-300 hover:border-primary/35 hover:bg-white/[0.06] hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/5 motion-reduce:transform-none animate-fade-up motion-reduce:animate-none"
-                      style={{
-                        animationDelay: `${320 + i * 50}ms`,
-                        animationFillMode: "backwards",
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <c.icon className={`w-4 h-4 shrink-0 ${c.color}`} />
-                        <ArrowRight className="w-3.5 h-3.5 text-gray-600 opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-primary" />
-                      </div>
-                      <p className="text-xl sm:text-2xl font-bold tabular-nums leading-none mb-1">{c.value}</p>
-                      <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider leading-tight">
-                        {c.label}
-                      </p>
-                      <p className="mt-2 text-[11px] sm:text-xs text-gray-500 leading-snug line-clamp-2 group-hover:text-gray-400 transition-colors">
-                        {c.hint}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-
-                {lastQuiz && (
-                  <div className="mt-5 pt-4 border-t border-white/10">
-                    <p className="text-xs font-medium uppercase tracking-wider text-gray-500 mb-1.5">Latest quiz</p>
-                    <p className="text-sm text-gray-300">
-                      <span className="text-white font-medium">
-                        {lastQuizModeLabel} · {lastQuiz.score}/{lastQuiz.total}
-                      </span>
-                      <span className="text-gray-500">
-                        {" "}
-                        ·{" "}
-                        {new Date(lastQuiz.date).toLocaleString(undefined, {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </span>
-                    </p>
+                <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/15 blur-3xl" aria-hidden />
+                <div className="relative">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="h-px flex-1 max-w-12 bg-gradient-to-r from-primary/60 to-transparent rounded-full" />
+                    <h2 className="text-lg font-semibold tracking-tight">Learning insights</h2>
                   </div>
-                )}
+                  <p className="text-xs sm:text-sm text-gray-500 leading-relaxed mt-2">
+                    Continue quizzes, letters, words, or sentences — each row shows the full summary.
+                  </p>
+
+                  <ul className="mt-5 space-y-3">
+                    {insightCards.map((c, i) => (
+                      <li key={c.label}>
+                        <Link
+                          to={c.to}
+                          className={`group flex gap-3 sm:gap-4 rounded-xl border border-white/10 bg-black/25 px-3 py-3.5 sm:gap-4 sm:px-4 sm:py-4 transition-all duration-300 hover:border-primary/40 hover:bg-white/[0.05] hover:shadow-lg hover:shadow-primary/5 motion-reduce:transform-none ${c.strip} animate-fade-up motion-reduce:animate-none`}
+                          style={{
+                            animationDelay: `${320 + i * 55}ms`,
+                            animationFillMode: "backwards",
+                          }}
+                        >
+                          <div
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${c.iconBg}`}
+                          >
+                            <c.icon className={`h-5 w-5 ${c.color}`} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                                {c.label}
+                              </p>
+                              <p className="text-xl font-bold tabular-nums tracking-tight text-white sm:text-2xl">
+                                {c.value}
+                              </p>
+                            </div>
+                            <p className="mt-2 text-sm leading-relaxed text-gray-400 break-words group-hover:text-gray-300 transition-colors">
+                              {c.hint}
+                            </p>
+                          </div>
+                          <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-gray-600 transition-all group-hover:translate-x-0.5 group-hover:text-primary sm:mt-0 sm:self-center" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {lastQuiz && (
+                    <div className="relative mt-5 rounded-xl border border-white/10 bg-primary/5 px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-primary/90 mb-1">
+                        Latest quiz
+                      </p>
+                      <p className="text-sm text-gray-200">
+                        <span className="font-semibold text-white">
+                          {lastQuizModeLabel} · {lastQuiz.score}/{lastQuiz.total}
+                        </span>
+                        <span className="text-gray-500">
+                          {" "}
+                          ·{" "}
+                          {new Date(lastQuiz.date).toLocaleString(undefined, {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </aside>
           </div>
