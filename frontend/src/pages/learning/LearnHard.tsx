@@ -4,15 +4,16 @@ import { useSearchParams } from "react-router-dom";
 import ProgressHeader from "./ProgressHeader";
 import AvatarPlayer from "./AvatarPlayer";
 import { SENTENCE_CATEGORIES, SentenceCategory, SentenceItem } from "@/lib/learningData";
-import { getProgress, markSentenceCompleted } from "@/lib/learningProgress";
+import { useLearningProgress } from "@/contexts/LearningProgressContext";
 
 export default function LearnHard() {
+  const { progress, markSentenceCompleted } = useLearningProgress();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [completedSentences, setCompletedSentences] = useState<string[]>(() => getProgress().completedSentences);
+  const [completedSentences, setCompletedSentences] = useState<string[]>(() => [...progress.completedSentences]);
 
   useEffect(() => {
-    setCompletedSentences(getProgress().completedSentences);
-  }, []);
+    setCompletedSentences([...progress.completedSentences]);
+  }, [progress.completedSentences]);
 
   const catId = searchParams.get("cat");
   const sentenceId = searchParams.get("s");

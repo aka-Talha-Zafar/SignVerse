@@ -3,6 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { LearningProgressProvider } from "@/contexts/LearningProgressContext";
+import RequireAuth from "@/components/RequireAuth";
 import Index from "./pages/Index";
 import LearnMore from "./pages/LearnMore";
 import Login from "./pages/Login";
@@ -29,37 +32,48 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/learn-more" element={<LearnMore />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/sign-to-text" element={<SignToText />} />
-          <Route path="/text-to-sign" element={<TextToSign />} />
+    <AuthProvider>
+      <LearningProgressProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/learn-more" element={<LearnMore />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <RequireAuth>
+                    <Dashboard />
+                  </RequireAuth>
+                }
+              />
+              <Route path="/sign-to-text" element={<SignToText />} />
+              <Route path="/text-to-sign" element={<TextToSign />} />
 
-          <Route path="/learning" element={<LearningHub />} />
-          <Route path="/learning/learn" element={<LearningLearn />} />
-          <Route path="/learning/learn/easy" element={<LearnEasy />} />
-          <Route path="/learning/learn/medium" element={<LearnMedium />} />
-          <Route path="/learning/learn/hard" element={<LearnHard />} />
-          <Route path="/learning/quiz" element={<LearningQuiz />} />
-          <Route path="/learning/quiz/alphabets" element={<QuizAlphabets />} />
-          <Route path="/learning/quiz/words" element={<QuizWords />} />
-          <Route path="/learning/quiz/sentences" element={<QuizSentences />} />
+              <Route path="/learning" element={<LearningHub />} />
+              <Route path="/learning/learn" element={<LearningLearn />} />
+              <Route path="/learning/learn/easy" element={<LearnEasy />} />
+              <Route path="/learning/learn/medium" element={<LearnMedium />} />
+              <Route path="/learning/learn/hard" element={<LearnHard />} />
+              <Route path="/learning/quiz" element={<LearningQuiz />} />
+              <Route path="/learning/quiz/alphabets" element={<QuizAlphabets />} />
+              <Route path="/learning/quiz/words" element={<QuizWords />} />
+              <Route path="/learning/quiz/sentences" element={<QuizSentences />} />
 
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="/accessibility" element={<Accessibility />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/accessibility" element={<Accessibility />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LearningProgressProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } fr
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Trophy, RotateCcw, ArrowRight, ImageOff } from "lucide-react";
 import { ALPHABETS, shuffleArray } from "@/lib/learningData";
-import { addQuizResult } from "@/lib/learningProgress";
+import { useLearningProgress } from "@/contexts/LearningProgressContext";
 import { getAlphabetImageUrl, getAlphabetImageUrlFallback } from "@/lib/learningApi";
 
 const QUIZ_COUNT = 5;
@@ -99,6 +99,7 @@ function AlphabetMcqTile({
 
 export default function QuizAlphabets() {
   const navigate = useNavigate();
+  const { addQuizResult } = useLearningProgress();
   const [letters, setLetters] = useState<string[]>(() => generateLetters());
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);

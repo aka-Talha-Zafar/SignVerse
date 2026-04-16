@@ -1,17 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Hand, Camera, Type, BookOpen, ArrowRight, TrendingUp,
   Award, Activity, LogOut, User, Star, CheckCircle, BookText, MessagesSquare,
 } from "lucide-react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import {
-  getProgress,
-  getOverallAccuracy,
-  getSignsLearnedCount,
   getDailyStreak,
+  getOverallAccuracy,
   getQuizzesCompletedCount,
+  getSignsLearnedCount,
 } from "@/lib/learningProgress";
 import { ALPHABETS, getAllWords, SENTENCE_CATEGORIES } from "@/lib/learningData";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLearningProgress } from "@/contexts/LearningProgressContext";
 
 const features = [
   {
@@ -39,11 +40,19 @@ const features = [
 
 const Dashboard = () => {
   useScrollAnimate();
-  const progress = getProgress();
-  const accuracy = getOverallAccuracy();
-  const signsLearned = getSignsLearnedCount();
-  const streak = getDailyStreak();
-  const quizzesDone = getQuizzesCompletedCount();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { progress } = useLearningProgress();
+
+  const displayName =
+    user?.displayName?.trim() ||
+    (user?.email ? user.email.split("@")[0] : null) ||
+    "Learner";
+
+  const accuracy = getOverallAccuracy(progress);
+  const signsLearned = getSignsLearnedCount(progress);
+  const streak = getDailyStreak(progress);
+  const quizzesDone = getQuizzesCompletedCount(progress);
   const alphabetDone = progress.completedAlphabets.length;
   const wordsDone = progress.completedWords.length;
   const sentencesDone = progress.completedSentences.length;
@@ -102,13 +111,16 @@ const Dashboard = () => {
     },
   ];
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
-      {/* Background Decorative Glows */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Top Bar */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
@@ -119,29 +131,35 @@ const Dashboard = () => {
               Sign<span className="text-primary">Verse</span>
             </span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-400 max-w-[160px] truncate hidden sm:inline" title={user?.email ?? ""}>
+              {user?.email}
+            </span>
             <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
               <User className="w-4 h-4 text-primary" />
             </div>
-            <Link to="/login" className="text-gray-400 hover:text-white transition-colors">
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              className="text-gray-400 hover:text-white transition-colors p-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              aria-label="Sign out"
+            >
               <LogOut className="w-5 h-5" />
-            </Link>
+            </button>
           </div>
         </div>
       </header>
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-10 space-y-10">
-        {/* Welcome */}
         <div className="animate-fade-up">
           <h1 className="text-3xl font-bold">
-            Welcome back, <span className="text-primary">Learner</span>
+            Welcome back, <span className="text-primary">{displayName}</span>
           </h1>
           <p className="text-gray-400 mt-1">Here's your progress overview</p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((s, i) => (
+          {stats.map((s) => (
             <div
               key={s.label}
               className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/10 transition-colors"
@@ -155,7 +173,6 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Feature Cards */}
         <div>
           <h2 className="text-xl font-semibold mb-5">Quick Actions</h2>
           <div className="grid md:grid-cols-3 gap-5">
@@ -180,7 +197,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Learning insights — live data from saved progress (same source as Learning header) */}
         <div>
           <h2 className="text-xl font-semibold mb-1">Learning insights</h2>
           <p className="text-sm text-gray-500 mb-5">

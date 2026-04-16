@@ -4,15 +4,16 @@ import { useSearchParams } from "react-router-dom";
 import ProgressHeader from "./ProgressHeader";
 import AvatarPlayer from "./AvatarPlayer";
 import { WORD_CATEGORIES, WordCategory, WordItem } from "@/lib/learningData";
-import { getProgress, markWordCompleted } from "@/lib/learningProgress";
+import { useLearningProgress } from "@/contexts/LearningProgressContext";
 
 export default function LearnMedium() {
+  const { progress, markWordCompleted } = useLearningProgress();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [completedWords, setCompletedWords] = useState<string[]>(() => getProgress().completedWords);
+  const [completedWords, setCompletedWords] = useState<string[]>(() => [...progress.completedWords]);
 
   useEffect(() => {
-    setCompletedWords(getProgress().completedWords);
-  }, []);
+    setCompletedWords([...progress.completedWords]);
+  }, [progress.completedWords]);
 
   const catId = searchParams.get("cat");
   const wordKey = searchParams.get("w");

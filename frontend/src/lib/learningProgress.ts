@@ -1,4 +1,6 @@
-const STORAGE_KEY = "signverse_learning_progress";
+/** Learning progress types + pure helpers + guest localStorage (used when signed out). */
+
+export const STORAGE_KEY = "signverse_learning_progress";
 
 export interface QuizResult {
   score: number;
@@ -14,13 +16,11 @@ export interface LearningProgress {
   quizResults: QuizResult[];
   starsEarned: number;
   totalPracticeSeconds: number;
-  /** Local calendar date (YYYY-MM-DD) of last learning activity — used for streak */
   lastActivityDate?: string;
-  /** Consecutive days with at least one save when streak rules apply */
   currentStreak?: number;
 }
 
-function defaultProgress(): LearningProgress {
+export function defaultProgress(): LearningProgress {
   return {
     completedAlphabets: [],
     completedWords: [],
@@ -33,6 +33,34 @@ function defaultProgress(): LearningProgress {
   };
 }
 
+export function cloneProgress(p: LearningProgress): LearningProgress {
+  return {
+    ...defaultProgress(),
+    ...p,
+    completedAlphabets: [...(p.completedAlphabets ?? [])],
+    completedWords: [...(p.completedWords ?? [])],
+    completedSentences: [...(p.completedSentences ?? [])],
+    quizResults: [...(p.quizResults ?? [])].map((r) => ({ ...r })),
+  };
+}
+
+export function normalizeProgress(raw: unknown): LearningProgress {
+  if (!raw || typeof raw !== "object") return defaultProgress();
+  try {
+    return cloneProgress({ ...defaultProgress(), ...(raw as object) } as LearningProgress);
+  } catch {
+    return defaultProgress();
+  }
+}
+
+export function clearGuestProgress() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 function toLocalYMD(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -40,8 +68,8 @@ function toLocalYMD(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/** Update streak when persisting progress (same calendar day only counts once toward increment). */
-function applyStreakOnActivity(p: LearningProgress) {
+/** Mutates `p` — call on a clone only. */
+export function applyStreakOnActivity(p: LearningProgress) {
   const today = toLocalYMD(new Date());
   const last = p.lastActivityDate ?? "";
   if (last === today) return;
@@ -60,85 +88,74 @@ function applyStreakOnActivity(p: LearningProgress) {
   p.lastActivityDate = today;
 }
 
-export function getProgress(): LearningProgress {
+export function isProgressEmpty(p: LearningProgress): boolean {
+  return (
+    p.completedAlphabets.length === 0 &&
+    p.completedWords.length === 0 &&
+    p.completedSentences.length === 0 &&
+    p.quizResults.length === 0 &&
+    (p.starsEarned ?? 0) === 0 &&
+    (p.totalPracticeSeconds ?? 0) === 0
+  );
+}
+
+/** Merge anonymous device progress into a user profile (e.g. first sign-in). */
+export function mergeGuestIntoRemote(remote: LearningProgress, guest: LearningProgress): LearningProgress {
+  const merged = cloneProgress(remote);
+  merged.completedAlphabets = [...new Set([...merged.completedAlphabets, ...guest.completedAlphabets])];
+  merged.completedWords = [...new Set([...merged.completedWords, ...guest.completedWords])];
+  merged.completedSentences = [...new Set([...merged.completedSentences, ...guest.completedSentences])];
+  merged.quizResults = [...merged.quizResults, ...guest.quizResults];
+  merged.starsEarned = Math.max(merged.starsEarned, guest.starsEarned);
+  merged.totalPracticeSeconds = merged.totalPracticeSeconds + guest.totalPracticeSeconds;
+  const streak = Math.max(merged.currentStreak ?? 0, guest.currentStreak ?? 0);
+  merged.currentStreak = streak;
+  const dates = [merged.lastActivityDate, guest.lastActivityDate].filter(Boolean) as string[];
+  merged.lastActivityDate = dates.sort().at(-1) ?? merged.lastActivityDate;
+  return merged;
+}
+
+export function loadGuestProgress(): LearningProgress {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultProgress();
-    return { ...defaultProgress(), ...JSON.parse(raw) };
+    return normalizeProgress(JSON.parse(raw));
   } catch {
     return defaultProgress();
   }
 }
 
-function saveProgress(p: LearningProgress) {
-  applyStreakOnActivity(p);
+/** Persist guest progress to disk (caller should apply streak first if needed). */
+export function writeGuestProgress(p: LearningProgress) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
 }
 
-export function markAlphabetCompleted(letter: string) {
-  const p = getProgress();
-  if (!p.completedAlphabets.includes(letter)) {
-    p.completedAlphabets.push(letter);
-  }
-  saveProgress(p);
+export function saveGuestProgress(p: LearningProgress) {
+  applyStreakOnActivity(p);
+  writeGuestProgress(p);
 }
 
-export function markWordCompleted(word: string) {
-  const p = getProgress();
-  if (!p.completedWords.includes(word)) {
-    p.completedWords.push(word);
-  }
-  saveProgress(p);
-}
-
-export function markSentenceCompleted(sentenceId: string) {
-  const p = getProgress();
-  if (!p.completedSentences.includes(sentenceId)) {
-    p.completedSentences.push(sentenceId);
-  }
-  saveProgress(p);
-}
-
-export function addQuizResult(result: QuizResult) {
-  const p = getProgress();
-  p.quizResults.push(result);
-  const stars = Math.floor(result.score / result.total * 3);
-  p.starsEarned += stars;
-  saveProgress(p);
-  return stars;
-}
-
-export function addPracticeTime(seconds: number) {
-  const p = getProgress();
-  p.totalPracticeSeconds += seconds;
-  saveProgress(p);
-}
-
-export function getOverallAccuracy(): number {
-  const p = getProgress();
+export function getOverallAccuracy(p: LearningProgress): number {
   if (p.quizResults.length === 0) return 0;
   const totalScore = p.quizResults.reduce((a, r) => a + r.score, 0);
   const totalQuestions = p.quizResults.reduce((a, r) => a + r.total, 0);
   return totalQuestions > 0 ? totalScore / totalQuestions : 0;
 }
 
-export function getCompletedCount(): number {
-  const p = getProgress();
+export function getCompletedCount(p: LearningProgress): number {
   return p.completedAlphabets.length + p.completedWords.length + p.completedSentences.length;
 }
 
-/** Letters + words + sentences marked learned in Learn mode (same total as getCompletedCount). */
-export function getSignsLearnedCount(): number {
-  return getCompletedCount();
+export function getSignsLearnedCount(p: LearningProgress): number {
+  return getCompletedCount(p);
 }
 
-/** Number of finished quiz runs (alphabets / words / sentences). */
-export function getQuizzesCompletedCount(): number {
-  return getProgress().quizResults.length;
+export function getQuizzesCompletedCount(p: LearningProgress): number {
+  return p.quizResults.length;
 }
 
-export function getDailyStreak(): number {
-  return getProgress().currentStreak ?? 0;
+export function getDailyStreak(p: LearningProgress): number {
+  return p.currentStreak ?? 0;
 }
 
 export function formatPracticeTime(seconds: number): string {

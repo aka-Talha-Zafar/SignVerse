@@ -1,29 +1,25 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, CheckCircle, Star, Award, Target } from "lucide-react";
 import {
-  getProgress,
   getOverallAccuracy,
   getQuizzesCompletedCount,
   getSignsLearnedCount,
 } from "@/lib/learningProgress";
+import { useLearningProgress } from "@/contexts/LearningProgressContext";
 
 interface Props {
   title: string;
   backTo: string;
   backLabel?: string;
-  /**
-   * "link" — push/replace target route (can duplicate history entries).
-   * "history" — prefer one browser `back` step (same as OS back); falls back to `backTo` if there is nowhere to go.
-   */
   backVariant?: "link" | "history";
 }
 
 export default function ProgressHeader({ title, backTo, backLabel, backVariant = "link" }: Props) {
   const navigate = useNavigate();
-  const progress = getProgress();
-  const accuracy = getOverallAccuracy();
-  const quizzesDone = getQuizzesCompletedCount();
-  const signsLearned = getSignsLearnedCount();
+  const { progress } = useLearningProgress();
+  const accuracy = getOverallAccuracy(progress);
+  const quizzesDone = getQuizzesCompletedCount(progress);
+  const signsLearned = getSignsLearnedCount(progress);
 
   const stats = [
     { label: "Completed quizzes", value: String(quizzesDone), icon: CheckCircle, color: "text-green-400" },

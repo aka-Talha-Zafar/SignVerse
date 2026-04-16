@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Trophy, RotateCcw, ArrowRight } from "lucide-react";
 import { SENTENCE_CATEGORIES, shuffleArray } from "@/lib/learningData";
-import { addQuizResult } from "@/lib/learningProgress";
+import { useLearningProgress } from "@/contexts/LearningProgressContext";
 import { verifySignSentence } from "@/lib/learningApi";
 import SignRecorder from "./SignRecorder";
 
@@ -22,6 +22,7 @@ function generateSentenceQuiz(): QuizSentence[] {
 
 export default function QuizSentences() {
   const navigate = useNavigate();
+  const { addQuizResult } = useLearningProgress();
   const [sentences, setSentences] = useState<QuizSentence[]>(() => generateSentenceQuiz());
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);

@@ -1,19 +1,46 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Hand, Eye, EyeOff, ArrowRight, ArrowLeft, Mail, Lock, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Hand, Eye, EyeOff, ArrowRight, ArrowLeft, Mail, Lock, User, AlertCircle } from "lucide-react";
 import FloatingOrbs from "@/components/landing/FloatingOrbs";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Signup = () => {
+  const navigate = useNavigate();
+  const { signUp, user, loading: authLoading, firebaseReady } = useAuth();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [authLoading, user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!firebaseReady) {
+      setError("Firebase is not configured. Add the VITE_FIREBASE_* variables from .env.example to your .env file.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    setError("");
     setLoading(true);
-    setTimeout(() => setLoading(false), 2000);
+    try {
+      await signUp(name, email, password);
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create account.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const strength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
@@ -25,7 +52,6 @@ const Signup = () => {
       <FloatingOrbs />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Back button - top left */}
       <div className="absolute top-6 left-6 z-20 animate-fade-up" style={{ animationDelay: "0.05s", animationFillMode: "both" }}>
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -52,6 +78,13 @@ const Signup = () => {
           style={{ animationDelay: "0.2s", animationFillMode: "both" }}
         >
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-destructive text-sm flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                {error}
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Full Name</label>
               <div className="relative group">
@@ -102,7 +135,6 @@ const Signup = () => {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {/* Password strength */}
               {password.length > 0 && (
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex gap-1 flex-1">
@@ -122,7 +154,7 @@ const Signup = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || authLoading}
               className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] disabled:opacity-50 disabled:scale-100 shimmer"
             >
               {loading ? (

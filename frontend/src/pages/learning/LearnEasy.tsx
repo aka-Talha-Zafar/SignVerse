@@ -2,19 +2,20 @@ import { useState, useEffect, useMemo } from "react";
 import { CheckCircle, X } from "lucide-react";
 import ProgressHeader from "./ProgressHeader";
 import { ALPHABETS, ASL_ALPHABET_DESCRIPTIONS } from "@/lib/learningData";
-import { getProgress, markAlphabetCompleted } from "@/lib/learningProgress";
+import { useLearningProgress } from "@/contexts/LearningProgressContext";
 import { getAlphabetImageUrl, getAlphabetImageUrlFallback } from "@/lib/learningApi";
 
 export default function LearnEasy() {
+  const { progress, markAlphabetCompleted } = useLearningProgress();
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
-  const [completed, setCompleted] = useState<string[]>([]);
+  const [completed, setCompleted] = useState<string[]>(() => [...progress.completedAlphabets]);
   const [imgError, setImgError] = useState(false);
   /** 0 = learning API (dataset or bundled refs), 1 = frontend public/, 2 = Wikimedia SVG fallback */
   const [loadTier, setLoadTier] = useState<0 | 1 | 2>(0);
 
   useEffect(() => {
-    setCompleted(getProgress().completedAlphabets);
-  }, []);
+    setCompleted([...progress.completedAlphabets]);
+  }, [progress.completedAlphabets]);
 
   useEffect(() => {
     if (selectedLetter) {

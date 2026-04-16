@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Trophy, RotateCcw, ArrowRight } from "lucide-react";
 import { shuffleArray, getAllWords } from "@/lib/learningData";
-import { addQuizResult } from "@/lib/learningProgress";
+import { useLearningProgress } from "@/contexts/LearningProgressContext";
 import { verifySignRecording } from "@/lib/learningApi";
 import SignRecorder from "./SignRecorder";
 
@@ -14,6 +14,7 @@ function generateWordQuiz(): string[] {
 
 export default function QuizWords() {
   const navigate = useNavigate();
+  const { addQuizResult } = useLearningProgress();
   const [words, setWords] = useState<string[]>(() => generateWordQuiz());
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);

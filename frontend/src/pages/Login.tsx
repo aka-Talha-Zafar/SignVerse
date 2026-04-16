@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Hand, Eye, EyeOff, AlertCircle, ArrowLeft, Mail, Lock, ArrowRight } from "lucide-react";
 import FloatingOrbs from "@/components/landing/FloatingOrbs";
-
-// ⚠️  Uses FastAPI /login endpoint — NOT the old localhost:3000 Node server
-const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn, user, loading: authLoading, firebaseReady } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,8 +15,20 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const from = (location.state as { from?: { pathname?: string } })?.from?.pathname ?? "/dashboard";
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate(from, { replace: true });
+    }
+  }, [authLoading, user, navigate, from]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!firebaseReady) {
+      setError("Firebase is not configured. Add the VITE_FIREBASE_* variables from .env.example to your .env file.");
+      return;
+    }
     if (!email.trim() || !password.trim()) {
       setError("Please enter your email and password.");
       return;
@@ -26,38 +38,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.user) {
-        localStorage.setItem("signverse_user", JSON.stringify(data.user));
-        navigate("/dashboard");
-      } else {
-        setError(data.detail || data.message || "Invalid email or password.");
-      }
-    } catch {
-      try {
-        await new Promise((r) => setTimeout(r, 2000));
-        const res2 = await fetch(`${API_BASE}/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), password }),
-        });
-        const data2 = await res2.json();
-        if (res2.ok && data2.user) {
-          localStorage.setItem("signverse_user", JSON.stringify(data2.user));
-          navigate("/dashboard");
-          return;
-        }
-        setError(data2.detail || "Login failed. Please try again.");
-      } catch {
-        setError("Cannot reach server. It may be starting up — please wait 30 seconds and try again.");
-      }
+      await signIn(email, password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign in failed.");
     } finally {
       setLoading(false);
     }
@@ -143,7 +127,7 @@ export default function Login() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || authLoading}
               className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] disabled:opacity-50 disabled:scale-100 shimmer"
             >
               {loading ? (
