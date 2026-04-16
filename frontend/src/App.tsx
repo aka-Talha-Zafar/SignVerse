@@ -7,7 +7,6 @@ import Index from "./pages/Index";
 import LearnMore from "./pages/LearnMore";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import SignToText from "./pages/SignToText";
 import TextToSign from "./pages/TextToSign";
@@ -39,7 +38,6 @@ const App = () => (
           <Route path="/learn-more" element={<LearnMore />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/sign-to-text" element={<SignToText />} />
           <Route path="/text-to-sign" element={<TextToSign />} />

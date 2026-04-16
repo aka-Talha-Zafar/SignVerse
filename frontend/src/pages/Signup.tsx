@@ -33,7 +33,7 @@ const Signup = () => {
         </Link>
       </div>
 
-        <div className="relative z-10 w-full max-w-md px-6 mt-16">
+      <div className="relative z-10 w-full max-w-md px-6">
         <div className="text-center mb-8 animate-fade-up" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
           <Link to="/" className="inline-flex items-center gap-2.5 group mb-6">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300">
