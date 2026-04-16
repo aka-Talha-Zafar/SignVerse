@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { Hand, Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { pathname } = useLocation();
+  const { user } = useAuth();
+  const brandHref = pathname.startsWith("/welcome") ? "/welcome" : "/";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -31,7 +35,7 @@ const Navbar = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5 group">
+        <Link to={brandHref} className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/20">
             <Hand className="w-4 h-4 text-primary transition-transform duration-300 group-hover:scale-110" />
           </div>
@@ -59,12 +63,21 @@ const Navbar = () => {
           </Link>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            to="/login"
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 hover:scale-105"
-          >
-            Get Started
-          </Link>
+          {user ? (
+            <Link
+              to="/dashboard"
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 hover:scale-105"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 hover:scale-105"
+            >
+              Get Started
+            </Link>
+          )}
           <button
             className="md:hidden text-foreground"
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -96,6 +109,15 @@ const Navbar = () => {
           >
             Learn More
           </Link>
+          {user && (
+            <Link
+              to="/dashboard"
+              className="block py-2 text-sm font-medium text-primary hover:text-primary/90 transition-colors"
+              onClick={() => setMobileOpen(false)}
+            >
+              Dashboard
+            </Link>
+          )}
         </div>
       </div>
     </nav>

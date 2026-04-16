@@ -2,13 +2,17 @@ import { Hand, Github, Linkedin, Mail } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
+import { useAuth } from "@/contexts/AuthContext";
 
 const FooterSection = () => {
   const containerRef = useScrollAnimate();
   const { pathname, hash } = useLocation();
+  const { user } = useAuth();
+  const brandHref = user ? "/dashboard" : "/";
+  const marketingHref = user ? "/welcome" : "/";
 
   useEffect(() => {
-    if (pathname === "/" && hash) {
+    if ((pathname === "/" || pathname === "/welcome") && hash) {
       const id = hash.replace("#", "");
       requestAnimationFrame(() => {
         document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -23,7 +27,7 @@ const FooterSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
           {/* Brand — spans 5 cols */}
           <div className="md:col-span-5 scroll-animate">
-            <Link to="/" className="flex items-center gap-2.5 mb-4 group">
+            <Link to={brandHref} className="flex items-center gap-2.5 mb-4 group">
               <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300">
                 <Hand className="w-4 h-4 text-primary" />
               </div>
@@ -66,7 +70,7 @@ const FooterSection = () => {
               ].map((link) => (
                 <li key={link.label}>
                   <Link
-                    to={`/#${link.id}`}
+                    to={`${marketingHref}#${link.id}`}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
@@ -104,8 +108,8 @@ const FooterSection = () => {
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-5">Team</h4>
             <div className="space-y-4">
               {[
-                { name: "Uzair Moazzam", role: "AI/ML Pipeline & Backend", initials: "UM" },
-                { name: "Talha Zafar", role: "Frontend & System Integration", initials: "TZ" },
+                { name: "Uzair Moazzam", role: "AI/ML Pipeline & Frontend", initials: "UM" },
+                { name: "Talha Zafar", role: "AI/ML & System Integration", initials: "TZ" },
               ].map((m) => (
                 <div key={m.name} className="flex items-center gap-3 group">
                   <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-[10px] font-bold group-hover:bg-primary/20 transition-all">
@@ -133,15 +137,17 @@ const FooterSection = () => {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} SignVerse. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
-            <Link to="/login" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              Sign In
-            </Link>
-            <span className="text-border">·</span>
-            <Link to="/signup" className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
-              Get Started
-            </Link>
-          </div>
+          {!user && (
+            <div className="flex items-center gap-4">
+              <Link to="/login" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Sign In
+              </Link>
+              <span className="text-border">·</span>
+              <Link to="/signup" className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
+                Get Started
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </footer>

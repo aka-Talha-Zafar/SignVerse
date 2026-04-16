@@ -1,16 +1,19 @@
 import { Link } from "react-router-dom";
 import { Hand, ArrowLeft, Camera, Type, GraduationCap, ArrowLeftRight, MessageSquareText, Layers, Ear, Users, BookOpen, CheckCircle2 } from "lucide-react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LearnMore = () => {
   const containerRef = useScrollAnimate();
+  const { user } = useAuth();
+  const homeHref = user ? "/dashboard" : "/";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass-solid">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to={homeHref} className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/20">
               <Hand className="w-4 h-4 text-primary" />
             </div>
@@ -18,8 +21,9 @@ const LearnMore = () => {
               Sign<span className="text-primary">Verse</span>
             </span>
           </Link>
-          <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
-            <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" /> Back to Home
+          <Link to={homeHref} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+            <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />{" "}
+            {user ? "Back to dashboard" : "Back to Home"}
           </Link>
         </div>
       </nav>

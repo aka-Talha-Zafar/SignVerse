@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Hand, Camera, Type, BookOpen, ArrowRight, TrendingUp,
   Award, Activity, LogOut, User, Star, CheckCircle, BookText, MessagesSquare,
+  Sparkles, ExternalLink,
 } from "lucide-react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import {
@@ -132,7 +133,7 @@ const Dashboard = () => {
 
       <header className="sticky top-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl shrink-0">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to="/dashboard" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
               <Hand className="w-4 h-4 text-primary" />
             </div>
@@ -317,6 +318,65 @@ const Dashboard = () => {
               </div>
             </aside>
           </div>
+
+          <section
+            className="mt-10 md:mt-14 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-6 sm:p-8 relative overflow-hidden"
+            aria-labelledby="dash-about-heading"
+          >
+            <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-primary/10 blur-3xl pointer-events-none" aria-hidden />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="h-5 w-5 text-primary shrink-0" aria-hidden />
+                <h2 id="dash-about-heading" className="text-lg font-semibold tracking-tight">
+                  About SignVerse
+                </h2>
+              </div>
+              <p className="text-sm text-gray-400 max-w-3xl leading-relaxed">
+                A bidirectional ASL translation and learning platform — real-time recognition, animated signing, and
+                structured lessons so deaf and hearing communities can connect more easily.
+              </p>
+              <ul className="mt-5 grid gap-3 sm:grid-cols-3 sm:gap-4">
+                {[
+                  {
+                    title: "Sign ↔ text",
+                    body: "Camera capture with live translation and optional speech output.",
+                  },
+                  {
+                    title: "Learn & quiz",
+                    body: "Alphabets, words, and sentences with progress tracked on this dashboard.",
+                  },
+                  {
+                    title: "Built for access",
+                    body: "Vision, NLP, and animation orchestrated behind a focused learner experience.",
+                  },
+                ].map((item) => (
+                  <li
+                    key={item.title}
+                    className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-left"
+                  >
+                    <p className="text-sm font-medium text-white">{item.title}</p>
+                    <p className="mt-1 text-xs text-gray-500 leading-relaxed">{item.body}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  to="/learn-more"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  Learn more
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/welcome"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-gray-200 hover:bg-white/[0.08] hover:border-primary/30 transition-colors"
+                >
+                  View landing page
+                  <ExternalLink className="h-4 w-4 opacity-70" />
+                </Link>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
 
