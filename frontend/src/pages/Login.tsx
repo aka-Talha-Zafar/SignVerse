@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Hand, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 
 // ⚠️  Uses FastAPI /login endpoint — NOT the old localhost:3000 Node server
@@ -61,12 +61,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Demo quick-login
-  const quickLogin = (role: "admin" | "user") => {
-    if (role === "admin") { setEmail("fa22-bscs-212@lgu.edu.pk"); setPassword("talha123"); }
-    else                  { setEmail("demo@signverse.com");         setPassword("demo123");  }
   };
 
   return (
@@ -148,29 +142,15 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Quick login helpers for demo */}
-          <div className="mt-6 pt-5 border-t border-gray-800">
-            <p className="text-xs text-gray-500 text-center mb-3">Quick demo login</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => quickLogin("admin")}
-                className="flex-1 text-xs py-2 rounded-lg bg-gray-800 hover:bg-gray-700
-                           text-gray-400 hover:text-white transition-colors border border-gray-700"
-              >
-                Admin
-              </button>
-              <button
-                onClick={() => quickLogin("user")}
-                className="flex-1 text-xs py-2 rounded-lg bg-gray-800 hover:bg-gray-700
-                           text-gray-400 hover:text-white transition-colors border border-gray-700"
-              >
-                Demo User
-              </button>
-            </div>
-            <p className="text-xs text-gray-600 text-center mt-2">
-              Admin: fa22-bscs-212@lgu.edu.pk / talha123
-            </p>
-          </div>
+          <p className="text-center text-sm text-gray-400 mt-6">
+            Don't have an account?{" "}
+            <Link
+              to="/signup"
+              className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+            >
+              Sign up
+            </Link>
+          </p>
         </div>
       </div>
     </div>

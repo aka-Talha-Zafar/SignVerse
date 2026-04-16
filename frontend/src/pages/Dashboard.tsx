@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import {
   Hand, Camera, Type, BookOpen, ArrowRight, TrendingUp,
-  Award, Activity, LogOut, User, Star, CheckCircle, Library, Clock,
+  Award, Activity, LogOut, User, Star, CheckCircle, BookText, MessagesSquare,
 } from "lucide-react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import {
@@ -10,9 +10,8 @@ import {
   getSignsLearnedCount,
   getDailyStreak,
   getQuizzesCompletedCount,
-  formatPracticeTime,
 } from "@/lib/learningProgress";
-import { ALPHABETS } from "@/lib/learningData";
+import { ALPHABETS, getAllWords, SENTENCE_CATEGORIES } from "@/lib/learningData";
 
 const features = [
   {
@@ -48,6 +47,8 @@ const Dashboard = () => {
   const alphabetDone = progress.completedAlphabets.length;
   const wordsDone = progress.completedWords.length;
   const sentencesDone = progress.completedSentences.length;
+  const wordsTotal = getAllWords().length;
+  const sentencesTotal = SENTENCE_CATEGORIES.reduce((n, c) => n + c.sentences.length, 0);
   const lastQuiz = progress.quizResults.length
     ? progress.quizResults[progress.quizResults.length - 1]
     : null;
@@ -76,28 +77,28 @@ const Dashboard = () => {
       to: "/learning/quiz",
     },
     {
-      label: "Manual alphabet",
+      label: "Alphabets",
       value: `${alphabetDone}/${ALPHABETS.length}`,
-      hint: "Letters marked learned in Learn → Easy",
+      hint: "Total number of alphabets learned (Easy Mode)",
       icon: BookOpen,
       color: "text-emerald-400",
       to: "/learning/learn/easy",
     },
     {
-      label: "Words & sentences",
-      value: `${wordsDone} · ${sentencesDone}`,
-      hint: "Items marked learned in Medium and Hard",
-      icon: Library,
+      label: "Words",
+      value: `${wordsDone}/${wordsTotal}`,
+      hint: "Total number of words learned (Medium Mode)",
+      icon: BookText,
       color: "text-amber-400",
-      to: "/learning/learn",
+      to: "/learning/learn/medium",
     },
     {
-      label: "Practice time logged",
-      value: progress.totalPracticeSeconds > 0 ? formatPracticeTime(progress.totalPracticeSeconds) : "—",
-      hint: "Time recorded from practice sessions",
-      icon: Clock,
-      color: "text-sky-400",
-      to: "/learning",
+      label: "Sentences",
+      value: `${sentencesDone}/${sentencesTotal}`,
+      hint: "Total number of sentences learned (Hard Mode)",
+      icon: MessagesSquare,
+      color: "text-orange-400",
+      to: "/learning/learn/hard",
     },
   ];
 
@@ -183,9 +184,9 @@ const Dashboard = () => {
         <div>
           <h2 className="text-xl font-semibold mb-1">Learning insights</h2>
           <p className="text-sm text-gray-500 mb-5">
-            Snapshot from your device — tap a card to jump to where you can improve it.
+            Snapshot from your previous learning sessions — tap a card to jump to where you can improve it.
           </p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {insightCards.map((c) => (
               <Link
                 key={c.label}
