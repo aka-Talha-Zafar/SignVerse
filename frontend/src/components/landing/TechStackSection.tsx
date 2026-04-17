@@ -1,33 +1,34 @@
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
+import { cn } from "@/lib/utils";
 import stackFastapi from "@/assets/stack-fastapi.svg";
-import pytorchLogo from "@/assets/pytorch-logo.svg";
 import stackNsor from "@/assets/stack-nsor.svg";
 import stackKeyframes from "@/assets/stack-keyframes.svg";
-import reactLogo from "@/assets/react-logo.svg";
+import brandVite from "@/assets/brand-vite.svg";
+import brandTypescript from "@/assets/brand-typescript.svg";
+import brandTailwind from "@/assets/brand-tailwindcss.svg";
+import brandReact from "@/assets/brand-react.svg";
+import brandReactQuery from "@/assets/brand-reactquery.svg";
+import brandRadix from "@/assets/brand-radixui.svg";
+import brandOpenCV from "@/assets/brand-opencv.svg";
+import brandPyTorch from "@/assets/brand-pytorch.svg";
+import brandFirebase from "@/assets/brand-firebase.svg";
 import mediapipeLogo from "@/assets/mediapipe-logo.png";
-import firebaseLogo from "@/assets/firebase-logo.png";
-import opencvLogo from "@/assets/opencv-logo.png";
-import stackVite from "@/assets/stack-vite.svg";
-import stackTypescript from "@/assets/stack-typescript.svg";
-import stackTailwind from "@/assets/stack-tailwind.svg";
-import stackTanstack from "@/assets/stack-tanstack.svg";
-import stackShadcn from "@/assets/stack-shadcn.svg";
-import stackHuggingface from "@/assets/stack-huggingface.svg";
+import huggingfaceLogo from "@/assets/huggingface-logo.png";
 
-/** Ordered: frontend platform → app libraries → vision & ML → APIs & data (BERT / TensorFlow / PoseFormer intentionally omitted). */
+/** Industry-standard marks (Simple Icons SVGs where available) + official HF asset + product-specific marks. */
 const techs = [
-  { name: "React 18", desc: "UI, hooks, React Router & client-side NSOR pipeline", logo: reactLogo },
-  { name: "TypeScript", desc: "Typed components, API clients & shared models", logo: stackTypescript },
-  { name: "Vite", desc: "Fast dev server & optimized production bundles", logo: stackVite },
-  { name: "Tailwind CSS", desc: "Utility-first styling with design tokens", logo: stackTailwind },
-  { name: "TanStack Query", desc: "Server-state, caching & async data for APIs", logo: stackTanstack },
-  { name: "shadcn/ui", desc: "Radix-based accessible primitives & forms", logo: stackShadcn },
+  { name: "React 18", desc: "UI, hooks, React Router & client-side NSOR pipeline", logo: brandReact },
+  { name: "TypeScript", desc: "Typed components, API clients & shared models", logo: brandTypescript },
+  { name: "Vite", desc: "Fast dev server & optimized production bundles", logo: brandVite },
+  { name: "Tailwind CSS", desc: "Utility-first styling with design tokens", logo: brandTailwind },
+  { name: "TanStack Query", desc: "Server-state, caching & async data for APIs", logo: brandReactQuery },
+  { name: "shadcn/ui", desc: "Radix primitives & accessible component patterns", logo: brandRadix },
   { name: "MediaPipe", desc: "Holistic hand, face & pose landmarks", logo: mediapipeLogo },
-  { name: "OpenCV", desc: "Server-side JPEG decode & resize before vision", logo: opencvLogo },
-  { name: "PyTorch", desc: "Conv1D + Transformer sign model & alphabet CNN", logo: pytorchLogo },
+  { name: "OpenCV", desc: "Server-side JPEG decode & resize before vision", logo: brandOpenCV },
+  { name: "PyTorch", desc: "Conv1D + Transformer sign model & alphabet CNN", logo: brandPyTorch },
   { name: "FastAPI", desc: "Python REST — sign, translate, TTS, learning", logo: stackFastapi },
-  { name: "Hugging Face", desc: "Hosted Spaces for GPU-ready API deployment", logo: stackHuggingface },
-  { name: "Firebase", desc: "Auth, Firestore & learning progress sync", logo: firebaseLogo },
+  { name: "Hugging Face", desc: "Hosted Spaces for GPU-ready API deployment", logo: huggingfaceLogo },
+  { name: "Firebase", desc: "Auth, Firestore & learning progress sync", logo: brandFirebase },
   { name: "NSOR", desc: "Display polish: caps, punctuation, spacing only", logo: stackNsor },
   { name: "Keyframe lexicon", desc: "Text-to-sign clips from database.json", logo: stackKeyframes },
 ];
@@ -46,24 +47,32 @@ const TechStackSection = () => {
           </h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children">
-          {techs.map((tech, i) => (
+          {techs.map((tech, i) => {
+            const isSecondLast = i === techs.length - 2;
+            const isLast = i === techs.length - 1;
+            return (
             <div
               key={tech.name}
-              className="scroll-animate-scale group p-6 rounded-2xl bg-card border border-border text-center hover:border-primary/30 transition-all duration-500 hover:scale-105 magnetic-hover shimmer"
+              className={cn(
+                "scroll-animate-scale group p-6 rounded-2xl bg-card border border-border text-center hover:border-primary/30 transition-all duration-500 hover:scale-105 magnetic-hover shimmer",
+                isSecondLast && "col-start-1 sm:col-start-2 lg:col-start-2",
+                isLast && "col-start-2 sm:col-start-3 lg:col-start-3",
+              )}
               style={{ transitionDelay: `${i * 0.05}s` }}
             >
-              <div className="w-16 h-16 rounded-xl bg-primary/5 mx-auto mb-4 flex items-center justify-center group-hover:bg-primary/10 transition-all duration-500 overflow-hidden group-hover:shadow-lg group-hover:shadow-primary/10">
+              <div className="w-16 h-16 rounded-xl bg-white mx-auto mb-4 flex items-center justify-center shadow-sm ring-1 ring-black/5 group-hover:ring-primary/20 transition-all duration-500 overflow-hidden group-hover:shadow-md">
                 <img
                   src={tech.logo}
                   alt=""
                   aria-hidden
-                  className="w-12 h-12 object-contain transition-transform duration-500 group-hover:scale-110"
+                  className="h-10 w-10 object-contain transition-transform duration-500 group-hover:scale-110"
                 />
               </div>
               <h3 className="font-semibold text-foreground text-sm mb-1">{tech.name}</h3>
               <p className="text-muted-foreground text-xs leading-snug">{tech.desc}</p>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
