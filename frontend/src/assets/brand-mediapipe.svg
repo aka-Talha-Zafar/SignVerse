@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-  <title>MediaPipe</title>
-  <rect width="48" height="48" rx="10" fill="#0F9D58"/>
-  <path fill="#fff" d="M14 12h4.5v24H14V12zm7.75 6h4.5v18h-4.5V18zm7.75-4h4.5v22h-4.5V14z" opacity="0.95"/>
-  <circle cx="16.25" cy="10" r="2.25" fill="#E8F5E9"/>
-  <circle cx="31.5" cy="12" r="2.25" fill="#E8F5E9"/>
-</svg>

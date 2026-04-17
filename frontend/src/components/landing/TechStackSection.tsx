@@ -13,12 +13,12 @@ import brandRadix from "@/assets/brand-radixui.svg";
 import brandOpenCV from "@/assets/brand-opencv.svg";
 import brandPyTorch from "@/assets/brand-pytorch.svg";
 import brandFirebase from "@/assets/brand-firebase.svg";
-import brandMediapipe from "@/assets/brand-mediapipe.svg";
+import mediapipeLogo from "@/assets/mediapipe-logo.png";
 import huggingfaceLogo from "@/assets/huggingface-logo.png";
 
 type Tech = { name: string; desc: string; logo: string };
 
-/** Single technology grid — brand SVGs use explicit fills so `<img>` renders in color. */
+/** Single technology grid — SVG marks use explicit fills; MediaPipe uses the official PNG asset. */
 const techs: Tech[] = [
   { name: "React 18", desc: "UI, hooks & React Router", logo: brandReact },
   { name: "TypeScript", desc: "Typed components, API clients & shared models", logo: brandTypescript },
@@ -26,7 +26,7 @@ const techs: Tech[] = [
   { name: "Tailwind CSS", desc: "Utility-first styling with design tokens", logo: brandTailwind },
   { name: "TanStack Query", desc: "Server-state, caching & async data for APIs", logo: brandReactQuery },
   { name: "shadcn/ui", desc: "Radix primitives & accessible component patterns", logo: brandRadix },
-  { name: "MediaPipe", desc: "Holistic hand, face & pose landmarks", logo: brandMediapipe },
+  { name: "MediaPipe", desc: "Holistic hand, face & pose landmarks", logo: mediapipeLogo },
   { name: "OpenCV", desc: "Server-side JPEG decode & resize before vision", logo: brandOpenCV },
   { name: "PyTorch", desc: "Conv1D + Transformer sign model & alphabet CNN", logo: brandPyTorch },
   { name: "FastAPI", desc: "Python REST — sign, translate, TTS, learning", logo: stackFastapi },
