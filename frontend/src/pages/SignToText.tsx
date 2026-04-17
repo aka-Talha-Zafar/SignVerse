@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Hand, ArrowLeft, Camera, CameraOff, Volume2, Copy,
   RefreshCw, Languages, Loader2, AlertCircle, MessageSquare, Type,
   Square, Circle,
 } from "lucide-react";
+import { DEFAULT_NSOR_OPTIONS, refineNonSemantic } from "@/lib/nsor";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
 
@@ -37,7 +38,8 @@ interface SentenceWord {
 export default function SignToText() {
   /* ── Shared state ───────────────────────────────────────────────────────── */
   const [cameraOn,     setCameraOn]     = useState(false);
-  const [translation,  setTranslation]  = useState("");
+  /** Raw English from API (unchanged for history + /api/translate input). */
+  const [translationRaw, setTranslationRaw] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [confidence,   setConfidence]   = useState<number | null>(null);
   const [status,       setStatus]       = useState("Camera off");
@@ -71,6 +73,12 @@ export default function SignToText() {
   useEffect(() => { modeRef.current = mode; }, [mode]);
 
   const maxDuration = mode === "word" ? WORD_MAX_DURATION : SENTENCE_MAX_DURATION;
+
+  /** NSOR: surface-only display string (capitalize, punctuation, whitespace). */
+  const translationDisplay = useMemo(
+    () => refineNonSemantic(translationRaw, DEFAULT_NSOR_OPTIONS).display,
+    [translationRaw],
+  );
 
   /* ── Backend health check ───────────────────────────────────────────────── */
   useEffect(() => {
@@ -178,7 +186,7 @@ export default function SignToText() {
         : data.sentence;
 
       if (resultText && resultText.trim()) {
-        setTranslation(resultText);
+        setTranslationRaw(resultText);
         setConfidence(data.confidence ?? null);
         setStatus(currentMode === "word"
           ? `Detected: ${data.sign || "sign"}`
@@ -210,7 +218,7 @@ export default function SignToText() {
     setIsRecording(true);
     setRecordingElapsed(0);
     setSentenceWords([]);
-    setTranslation("");
+    setTranslationRaw("");
     setTranslatedText("");
     setConfidence(null);
     setError("");
@@ -283,7 +291,7 @@ export default function SignToText() {
     if (newMode === mode) return;
     stopRecording();
     recordingFramesRef.current = [];
-    setTranslation("");
+    setTranslationRaw("");
     setTranslatedText("");
     setConfidence(null);
     setSentenceWords([]);
@@ -296,16 +304,17 @@ export default function SignToText() {
 
   /* ── Re-translate when language changes ─────────────────────────────────── */
   useEffect(() => {
-    if (translation && language !== "en") {
-      translateText(translation);
+    if (translationRaw && language !== "en") {
+      translateText(translationRaw);
     } else {
       setTranslatedText("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
-  /* ── Speak / copy helpers ───────────────────────────────────────────────── */
-  const displayText = translatedText || translation;
+  /* ── Speak / copy helpers — MT uses raw English; English line uses NSOR display. ─ */
+  const displayText =
+    language !== "en" && translatedText ? translatedText : translationDisplay;
   const speakText = () => {
     if (!displayText) return;
 
@@ -517,9 +526,9 @@ export default function SignToText() {
             </div>
 
             <div className="flex-1">
-              {translation ? (
+              {translationRaw ? (
                 <div>
-                  <p className="text-2xl font-medium leading-relaxed text-white">{translation}</p>
+                  <p className="text-2xl font-medium leading-relaxed text-white">{translationDisplay}</p>
                   {/* Translated text in selected language */}
                   {translatedText && language !== "en" && (
                     <div className="mt-3 pt-3 border-t border-white/10">
@@ -563,7 +572,7 @@ export default function SignToText() {
               </div>
             )}
 
-            {translation && (
+            {translationRaw && (
               <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
                 <button onClick={speakText}
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-primary transition-colors">
@@ -573,7 +582,7 @@ export default function SignToText() {
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-primary transition-colors">
                   <Copy className="w-4 h-4" />Copy
                 </button>
-                <button onClick={() => { setTranslation(""); setTranslatedText(""); setConfidence(null); setSentenceWords([]); }}
+                <button onClick={() => { setTranslationRaw(""); setTranslatedText(""); setConfidence(null); setSentenceWords([]); }}
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-400 transition-colors ml-auto">
                   <RefreshCw className="w-4 h-4" />Clear
                 </button>
@@ -588,10 +597,10 @@ export default function SignToText() {
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {history.map((h, i) => (
                   <div key={i}
-                    onClick={() => { setTranslation(h); translateText(h); }}
+                    onClick={() => { setTranslationRaw(h); translateText(h); }}
                     className="text-sm text-gray-300 hover:text-white px-3 py-2
                                bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-colors border border-white/5">
-                    {h}
+                    {refineNonSemantic(h, DEFAULT_NSOR_OPTIONS).display}
                   </div>
                 ))}
               </div>

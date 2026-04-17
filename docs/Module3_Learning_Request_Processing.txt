@@ -1,0 +1,183 @@
+================================================================================
+SignVerse — Module 3 (Learning): Request processing & core techniques
+================================================================================
+This document describes how each user-visible action in the Learning module
+maps to client-side steps and HTTP/API processing. Module 3 combines:
+  (A) a dedicated Learning API slice (learning_backend.py), and
+  (B) the main SignVerse API (app.py + text_to_sign_backend.py), reused from
+      Sign-to-Text / Text-to-Sign flows where quizzes or “watch the sign” need
+      recognition or animation data.
+
+--------------------------------------------------------------------------------
+1. Shared client building blocks
+--------------------------------------------------------------------------------
+
+1.1 Progress (no server “ML” request)
+  - Techniques: React context, localStorage for guests, Firestore merge for
+    signed-in users (learningProgress field).
+  - Used when marking letters/words/sentences learned or saving quiz scores.
+
+1.2 Curriculum
+  - Static lists in frontend (alphabets, word categories, sentence items).
+  - No request until the user opens media, runs a quiz, or loads an avatar.
+
+--------------------------------------------------------------------------------
+2. Learn — Easy (alphabet reference images)
+--------------------------------------------------------------------------------
+User action: open a letter; the UI loads a reference still.
+
+Request: GET /api/learning/alphabet/image/{A–Z}
+Server (learning_backend.py):
+  - Validate single alphabetic character.
+  - Resolve image paths from ASL_ALPHABET_DATASET_DIR (per-letter folders) or
+    ASL_ALPHABET_REF_IMAGES_DIR (bundled refs).
+  - Technique: pseudo-random choice among available JPEG/PNG/WebP for variety.
+  - Response: binary image file (FileResponse), Cache-Control: no-cache.
+
+Client fallback (no extra API):
+  - If the URL fails: try static files under the app, then a public SVG map.
+
+Core techniques: filesystem-backed content delivery; tiered client fallback.
+
+--------------------------------------------------------------------------------
+3. Learn — Medium / Hard (watch avatar perform word or sentence)
+--------------------------------------------------------------------------------
+User action: select a word or sentence; the UI shows an animated signing avatar.
+
+Request: POST /api/text-to-sign  { "text": "<word or space-joined words>" }
+Server (text_to_sign_backend.py):
+  - Load/prepare a gloss/animation database (WORDS_DB).
+  - Technique: English → ASL-oriented gloss string (to_asl).
+  - Tokenize gloss; build_anim concatenates per-token motion clips from the DB.
+  - Technique: smooth transitions between clips (easing interpolation between
+    keypoint states).
+  - Response: { gloss, frames: 2D keypoint sequences per frame, fps }.
+
+Client (AvatarPlayer):
+  - Fetches JSON; detects frame format (mannequin rig vs MediaPipe-style).
+  - Technique: canvas rendering — either requestAnimationFrame-driven mannequin
+    draw or fixed-interval playback for landmark frames; optional auto-play.
+
+Core techniques: lexicon-driven animation synthesis; client-side temporal
+playback (not streaming video files from the server).
+
+--------------------------------------------------------------------------------
+4. Quiz — Alphabets (multiple choice)
+--------------------------------------------------------------------------------
+User action: pick one of four images for the prompted letter.
+
+Requests:
+  - Same as §2: GET /api/learning/alphabet/image/{letter} for each choice tile
+    (each call may return a different random file from the letter’s pool).
+
+Scoring:
+  - Entirely on the client (selected letter vs correct letter). No predict call.
+
+Core techniques: reference-image sampling; MCQ UX; optional image fallback chain.
+
+--------------------------------------------------------------------------------
+5. Quiz — Words (perform sign; server judges gloss)
+--------------------------------------------------------------------------------
+User action: enable camera, record briefly, submit.
+
+Client (SignRecorder):
+  - getUserMedia → live <video> preview (mirrored).
+  - Technique: periodic frame grab — draw video to hidden canvas every ~150 ms,
+    export JPEG data URLs (~0.75 quality), cap total duration (~5 s).
+  - Sends an array of base64/JPEG strings as JSON.
+
+Request: POST /api/sign-to-text  { "frames": [...], "language": "en" }
+Server (app.py) — same pipeline as Module 1 for this endpoint:
+
+  Step A — Decode & prepare images (OpenCV)
+    - Parallel per-frame: base64 decode → cv2.imdecode (BGR).
+    - Technique: downscale large frames (max side env MEDIAPIPE_MAX_FRAME_SIDE,
+      default 480) with cv2.resize + INTER_AREA to cut CPU before landmarks.
+    - Purpose: efficiency; landmarks remain in normalized image coordinates.
+
+  Step B — Feature extraction (MediaPipe Holistic)
+    - BGR → RGB; MediaPipe Holistic (static_image_mode) per frame.
+    - Technique: pack right hand (≤21), left hand (≤21), pose (≤33) landmarks
+      into a fixed-length feature vector per frame; count frames with hands;
+      collect wrist positions for motion.
+
+  Step C — Quality gates
+    - Hand-presence ratio vs HAND_PRESENCE_MIN (reject if too few frames with
+      hands → no_sign_detected).
+    - Motion gate: wrist motion across time vs MOTION_THRESHOLD; skipped when
+      hands appear in ≥50% of frames (hold-still signs).
+
+  Step D — Temporal model input
+    - Technique: resample_and_normalize — interpolate variable-length sequence
+      to fixed SEQ_LEN, wrist-relative normalization for invariance.
+
+  Step E — Classification (PyTorch)
+    - Forward ASL sequence classifier; softmax; top-3 gloss candidates.
+    - Confidence gate vs CONF_THRESHOLD; may return unclear / no sign.
+
+  Step F — Output mapping
+    - Map class index to gloss; optional sign_to_sentence phrase for display.
+
+Client (learningApi.verifySignRecording):
+  - Compares returned gloss string to expected word (case-insensitive).
+
+Core techniques: sampled “video” as discrete JPEGs; OpenCV decode/resize;
+MediaPipe landmark extraction; motion + presence gating; resampled normalized
+skeleton sequences; neural gloss classification; string match for quiz scoring.
+
+--------------------------------------------------------------------------------
+6. Quiz — Sentences (perform several signs in one clip)
+--------------------------------------------------------------------------------
+User action: same camera capture pattern as §5.
+
+Request: POST /api/sign-to-sentence  { "frames": [...], "language": "en" }
+Server (app.py):
+
+  Steps A–B: same extract_landmarks_batch as §5 (decode/resize, MediaPipe, vectors).
+
+  Step C — Sentence-specific processing
+    - Trim leading/trailing idle frames (_trim_idle_margins).
+    - Technique: segment the landmark sequence into chunks (_segment_for_sentence).
+    - Classify each segment with the same ASL model / thresholding pattern as
+      single-sign path; deduplicate consecutive identical high-confidence preds.
+    - format_sentence builds a readable sentence; returns words[] with confidences.
+
+Client (learningApi.verifySignSentence):
+  - Matches expected vocabulary tokens to detected words (each detection used
+    once); marks quiz correct if enough words match (e.g. ≥70% of expected).
+
+Core techniques: multi-sign temporal segmentation; repeated single-sign
+classifier application; deduplication; client-side fuzzy agreement with expected
+word list.
+
+--------------------------------------------------------------------------------
+7. Optional / API capability — Alphabet from a single photo (Learning backend)
+--------------------------------------------------------------------------------
+Not used by the current /learning quiz MCQ flow, but implemented for tools or
+future UI (e.g. live alphabet practice):
+
+Request: POST /api/learning/predict  { "frame": "<data URL>" }
+Server (learning_backend.py):
+  - Base64 decode → cv2.imdecode (BGR).
+  - Resize to model input side (env ALPHABET_INPUT_SIZE, or inferred from
+    checkpoint, else 224), clamped to a safe range.
+  - RGB tensor, scale to [0,1], ImageNet mean/std normalization.
+  - CNN forward (alphabet-only weights); softmax; top-3 letters.
+  - Label via class_mapping.json or default A–Z + del + space.
+
+Core techniques: single-frame image classification; ImageNet-style normalization;
+robust checkpoint loading (multiple export formats in the same module).
+
+--------------------------------------------------------------------------------
+8. Quick reference — which module owns each request
+--------------------------------------------------------------------------------
+  GET  /api/learning/health              → learning_backend (diagnostics)
+  GET  /api/learning/alphabet/image/{L}  → learning_backend (static refs)
+  POST /api/learning/predict             → learning_backend (letter from image)
+  POST /api/sign-to-text                 → app.py (word quiz verification)
+  POST /api/sign-to-sentence             → app.py (sentence quiz verification)
+  POST /api/text-to-sign                 → text_to_sign_backend (Learn avatar)
+
+================================================================================
+End of document
+================================================================================
