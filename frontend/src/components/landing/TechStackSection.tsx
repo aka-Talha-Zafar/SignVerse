@@ -1,22 +1,35 @@
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
-import tensorflowLogo from "@/assets/tensorflow-logo.svg";
-import pytorchLogo from "@/assets/pytorch-logo.png";
-import bertLogo from "@/assets/bert-logo.svg";
+import stackFastapi from "@/assets/stack-fastapi.svg";
+import pytorchLogo from "@/assets/pytorch-logo.svg";
+import stackNsor from "@/assets/stack-nsor.svg";
+import stackKeyframes from "@/assets/stack-keyframes.svg";
 import reactLogo from "@/assets/react-logo.svg";
 import mediapipeLogo from "@/assets/mediapipe-logo.png";
-import poseformerLogo from "@/assets/poseformer-logo.png";
 import firebaseLogo from "@/assets/firebase-logo.png";
 import opencvLogo from "@/assets/opencv-logo.png";
+import stackVite from "@/assets/stack-vite.svg";
+import stackTypescript from "@/assets/stack-typescript.svg";
+import stackTailwind from "@/assets/stack-tailwind.svg";
+import stackTanstack from "@/assets/stack-tanstack.svg";
+import stackShadcn from "@/assets/stack-shadcn.svg";
+import stackHuggingface from "@/assets/stack-huggingface.svg";
 
+/** Ordered: frontend platform → app libraries → vision & ML → APIs & data (BERT / TensorFlow / PoseFormer intentionally omitted). */
 const techs = [
-  { name: "MediaPipe", desc: "Hand & Pose Tracking", logo: mediapipeLogo },
-  { name: "TensorFlow", desc: "Deep Learning", logo: tensorflowLogo },
-  { name: "PyTorch", desc: "Model Training", logo: pytorchLogo },
-  { name: "BERT", desc: "NLP Processing", logo: bertLogo },
-  { name: "PoseFormer", desc: "3D Pose Estimation", logo: poseformerLogo },
-  { name: "React.js", desc: "Frontend UI", logo: reactLogo },
-  { name: "Firebase", desc: "Backend & Auth", logo: firebaseLogo },
-  { name: "OpenCV", desc: "Computer Vision", logo: opencvLogo },
+  { name: "React 18", desc: "UI, hooks, React Router & client-side NSOR pipeline", logo: reactLogo },
+  { name: "TypeScript", desc: "Typed components, API clients & shared models", logo: stackTypescript },
+  { name: "Vite", desc: "Fast dev server & optimized production bundles", logo: stackVite },
+  { name: "Tailwind CSS", desc: "Utility-first styling with design tokens", logo: stackTailwind },
+  { name: "TanStack Query", desc: "Server-state, caching & async data for APIs", logo: stackTanstack },
+  { name: "shadcn/ui", desc: "Radix-based accessible primitives & forms", logo: stackShadcn },
+  { name: "MediaPipe", desc: "Holistic hand, face & pose landmarks", logo: mediapipeLogo },
+  { name: "OpenCV", desc: "Server-side JPEG decode & resize before vision", logo: opencvLogo },
+  { name: "PyTorch", desc: "Conv1D + Transformer sign model & alphabet CNN", logo: pytorchLogo },
+  { name: "FastAPI", desc: "Python REST — sign, translate, TTS, learning", logo: stackFastapi },
+  { name: "Hugging Face", desc: "Hosted Spaces for GPU-ready API deployment", logo: stackHuggingface },
+  { name: "Firebase", desc: "Auth, Firestore & learning progress sync", logo: firebaseLogo },
+  { name: "NSOR", desc: "Display polish: caps, punctuation, spacing only", logo: stackNsor },
+  { name: "Keyframe lexicon", desc: "Text-to-sign clips from database.json", logo: stackKeyframes },
 ];
 
 const TechStackSection = () => {
@@ -32,22 +45,23 @@ const TechStackSection = () => {
             <span className="heading-underline">Built on Cutting-Edge AI</span>
           </h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 stagger-children">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children">
           {techs.map((tech, i) => (
             <div
               key={tech.name}
               className="scroll-animate-scale group p-6 rounded-2xl bg-card border border-border text-center hover:border-primary/30 transition-all duration-500 hover:scale-105 magnetic-hover shimmer"
-              style={{ transitionDelay: `${i * 0.08}s` }}
+              style={{ transitionDelay: `${i * 0.05}s` }}
             >
               <div className="w-16 h-16 rounded-xl bg-primary/5 mx-auto mb-4 flex items-center justify-center group-hover:bg-primary/10 transition-all duration-500 overflow-hidden group-hover:shadow-lg group-hover:shadow-primary/10">
                 <img
                   src={tech.logo}
-                  alt={tech.name}
+                  alt=""
+                  aria-hidden
                   className="w-12 h-12 object-contain transition-transform duration-500 group-hover:scale-110"
                 />
               </div>
               <h3 className="font-semibold text-foreground text-sm mb-1">{tech.name}</h3>
-              <p className="text-muted-foreground text-xs">{tech.desc}</p>
+              <p className="text-muted-foreground text-xs leading-snug">{tech.desc}</p>
             </div>
           ))}
         </div>

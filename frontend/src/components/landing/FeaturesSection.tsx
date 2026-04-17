@@ -7,7 +7,7 @@ const features = [
     icon: Camera,
     title: "Sign-to-Text / Speech",
     description:
-      "Your webcam captures ASL signs in real-time. Our AI converts them into grammatically correct English text and multi-lingual speech output.",
+      "Your webcam captures ASL signs in real-time. Our backend classifies signs and returns English text; the app refines display (NSOR) and can speak or translate to other languages.",
     gradient: "from-blue-500/20 to-cyan-500/20",
     iconGlow: "shadow-blue-500/20",
   },

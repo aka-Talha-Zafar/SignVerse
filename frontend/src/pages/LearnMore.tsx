@@ -72,10 +72,10 @@ const LearnMore = () => {
               title="Sign-to-Text / Speech"
               details={[
                 "Webcam captures ASL signs using MediaPipe for hand, face, and body pose tracking",
-                "3D CNN + Transformer architecture processes spatial-temporal sign patterns",
-                "BERT-based NLP converts ASL gloss to grammatically correct English",
-                "Multi-lingual text-to-speech engine outputs natural audio in multiple languages",
-                "Works in real-time with minimal latency for natural conversation flow",
+                "PyTorch classifies landmark sequences (Conv1D + Transformer encoder) for word and short sentence modes",
+                "English output is formatted in the browser with NSOR (capitalization, punctuation) without changing model tokens",
+                "Multi-lingual display and speech via Google Translate endpoints and browser or proxied TTS",
+                "Interactive capture with Record / Done and clear pauses between signs for best sentence accuracy",
               ]}
             />
             <FeatureDetail
@@ -83,9 +83,9 @@ const LearnMore = () => {
               title="Text-to-Sign"
               details={[
                 "Type or paste any English text into the input field",
-                "NLP engine parses sentence structure and maps to ASL grammar",
+                "Rule-based gloss mapping selects ASL sign clips from a keyframe lexicon (database.json)",
                 "Animated 2D skeleton avatar performs corresponding ASL signs",
-                "Smooth, natural motion between signs for readability",
+                "Smooth interpolation between clips for readability",
                 "Adjustable playback speed for learning and comprehension",
               ]}
             />
@@ -111,13 +111,13 @@ const LearnMore = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { label: "MediaPipe", desc: "Real-time hand, face & pose landmark extraction — 33 body, 21 hand, 468 face landmarks" },
-              { label: "3D CNN + Transformer", desc: "Spatial-temporal feature extraction and sequence modeling for sign recognition" },
-              { label: "BERT / NLP", desc: "ASL gloss-to-English conversion with grammatical correction and context awareness" },
-              { label: "PoseFormer", desc: "3D human pose estimation from 2D landmarks for accurate sign interpretation" },
+              { label: "PyTorch + Conv1D / Transformer", desc: "Landmark sequence classification for sign-to-text; CNN for alphabet learning" },
+              { label: "FastAPI", desc: "Python REST API on Hugging Face Spaces — sign, sentence, translate, TTS, text-to-sign, learning" },
+              { label: "NSOR", desc: "Non-Semantic Output Refiner in the SPA — trim, spacing, first-letter cap, terminal punctuation only" },
+              { label: "Keyframe lexicon", desc: "Text-to-sign uses stored 2D pose keyframe sequences per gloss (e.g. database.json)" },
               { label: "React.js", desc: "Modern, responsive frontend with real-time webcam integration and smooth animations" },
               { label: "Firebase", desc: "Authentication, real-time database, cloud storage, and serverless backend functions" },
-              { label: "TensorFlow / PyTorch", desc: "Model training and inference for sign language recognition and generation" },
-              { label: "OpenCV", desc: "Image preprocessing, frame capture, and computer vision utilities" },
+              { label: "OpenCV", desc: "Server-side JPEG decode, resize, and color conversion before MediaPipe and alphabet models" },
             ].map((tech) => (
               <div key={tech.label} className="p-5 rounded-xl bg-card border border-border hover:border-primary/20 transition-all duration-300 hover:scale-[1.02]">
                 <h4 className="font-semibold text-foreground text-sm mb-1.5">{tech.label}</h4>
@@ -149,7 +149,7 @@ const LearnMore = () => {
           <div className="space-y-4">
             {[
               { icon: ArrowLeftRight, title: "Bidirectional", desc: "Both Sign→Text and Text→Sign in a single platform — most competitors only do one." },
-              { icon: MessageSquareText, title: "Full Sentences", desc: "Recognizes complete sentences with grammar correction, not just isolated words." },
+              { icon: MessageSquareText, title: "Full Sentences", desc: "Sentence mode chains several signs with pauses; word mode uses template English per sign." },
               { icon: Layers, title: "All-in-One", desc: "Translation and learning combined — no need for separate apps." },
             ].map((d) => (
               <div key={d.title} className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border hover:border-primary/20 transition-all duration-300 group hover:scale-[1.01]">

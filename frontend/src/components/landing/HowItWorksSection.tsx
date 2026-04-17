@@ -10,12 +10,14 @@ const steps = [
   {
     icon: Cpu,
     title: "AI Processing",
-    description: "3D CNN + Transformer models analyze spatial-temporal sign patterns with high accuracy.",
+    description:
+      "MediaPipe landmarks feed a PyTorch model (Conv1D + Transformer encoder) for sign classification on each clip.",
   },
   {
     icon: Brain,
-    title: "NLP Refinement",
-    description: "BERT-based models convert ASL gloss sequences into grammatically correct English sentences.",
+    title: "Output polish",
+    description:
+      "English from the API is shown with NSOR (capitalize, punctuation) and optional translation / speech for other languages.",
   },
   {
     icon: MessageSquare,
