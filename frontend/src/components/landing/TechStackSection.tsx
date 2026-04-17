@@ -1,12 +1,9 @@
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import stackFastapi from "@/assets/stack-fastapi.svg";
-import stackNsor from "@/assets/stack-nsor.svg";
-import stackKeyframes from "@/assets/stack-keyframes.svg";
 import stackBertEncdec from "@/assets/stack-bert-encdec.svg";
 import stackTransformersLib from "@/assets/stack-transformers-lib.svg";
 import stackPoseformer from "@/assets/stack-poseformer.svg";
 import stackBonetransformer from "@/assets/stack-bonetransformer.svg";
-import stackHow2sign from "@/assets/stack-how2sign.svg";
 import brandVite from "@/assets/brand-vite.svg";
 import brandTypescript from "@/assets/brand-typescript.svg";
 import brandTailwind from "@/assets/brand-tailwindcss.svg";
@@ -21,9 +18,9 @@ import huggingfaceLogo from "@/assets/huggingface-logo.png";
 
 type Tech = { name: string; desc: string; logo: string };
 
-/** Product & inference stack — brand SVGs use explicit fills so `<img>` renders in color. */
-const runtimeTechs: Tech[] = [
-  { name: "React 18", desc: "UI, hooks, React Router & client-side NSOR pipeline", logo: brandReact },
+/** Single technology grid — brand SVGs use explicit fills so `<img>` renders in color. */
+const techs: Tech[] = [
+  { name: "React 18", desc: "UI, hooks & React Router", logo: brandReact },
   { name: "TypeScript", desc: "Typed components, API clients & shared models", logo: brandTypescript },
   { name: "Vite", desc: "Fast dev server & optimized production bundles", logo: brandVite },
   { name: "Tailwind CSS", desc: "Utility-first styling with design tokens", logo: brandTailwind },
@@ -35,37 +32,10 @@ const runtimeTechs: Tech[] = [
   { name: "FastAPI", desc: "Python REST — sign, translate, TTS, learning", logo: stackFastapi },
   { name: "Hugging Face", desc: "Hosted Spaces for GPU-ready API deployment", logo: huggingfaceLogo },
   { name: "Firebase", desc: "Auth, Firestore & learning progress sync", logo: brandFirebase },
-  { name: "NSOR", desc: "Display polish: caps, punctuation, spacing only", logo: stackNsor },
-  { name: "Keyframe lexicon", desc: "Text-to-sign clips from database.json", logo: stackKeyframes },
-];
-
-/** Offline text-to-sign training (How2Sign Holistic) — see Codes_for_training.txt / SRS. */
-const trainingTechs: Tech[] = [
-  {
-    name: "How2Sign Holistic",
-    desc: "Holistic .npy pose clips & metadata for T2S training",
-    logo: stackHow2sign,
-  },
-  {
-    name: "Transformers",
-    desc: "EncoderDecoderModel, BertTokenizer (e.g. v4.41) for gloss training",
-    logo: stackTransformersLib,
-  },
-  {
-    name: "BERT (EncoderDecoder)",
-    desc: "English → ASL gloss refinement on top of rule-based gloss",
-    logo: stackBertEncdec,
-  },
-  {
-    name: "PoseFormer",
-    desc: "Causal Transformer + Conv1D smoothing on 3D pose sequences",
-    logo: stackPoseformer,
-  },
-  {
-    name: "BoneTransformer",
-    desc: "Bone-vector sequence model with temporal Conv1D decoder",
-    logo: stackBonetransformer,
-  },
+  { name: "Transformers", desc: "EncoderDecoderModel & BertTokenizer for gloss training", logo: stackTransformersLib },
+  { name: "BERT (EncoderDecoder)", desc: "English → ASL gloss refinement in text-to-sign training", logo: stackBertEncdec },
+  { name: "PoseFormer", desc: "Causal Transformer + Conv1D smoothing on 3D pose", logo: stackPoseformer },
+  { name: "BoneTransformer", desc: "Bone-vector sequence model with temporal Conv1D decoder", logo: stackBonetransformer },
 ];
 
 function TechCard({ tech, i }: { tech: Tech; i: number }) {
@@ -102,29 +72,12 @@ const TechStackSection = () => {
           </h2>
         </div>
 
-        <p className="scroll-animate text-center text-sm text-muted-foreground mb-6 max-w-2xl mx-auto">
-          Logos use official brand colors where applicable (SVG fills). Training row documents the offline
-          text-to-sign pipeline; the live app serves keyframes from <code className="text-foreground/80">database.json</code>.
+        <p className="scroll-animate text-center text-sm text-muted-foreground mb-10 max-w-2xl mx-auto">
+          Logos use official brand colors where applicable (SVG fills).
         </p>
 
-        <p className="scroll-animate text-xs font-semibold uppercase tracking-widest text-muted-foreground text-center mb-4">
-          Runtime &amp; product
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children mb-20 justify-items-center lg:justify-items-stretch">
-          {runtimeTechs.map((tech, i) => (
-            <TechCard key={tech.name} tech={tech} i={i} />
-          ))}
-        </div>
-
-        <p className="scroll-animate text-xs font-semibold uppercase tracking-widest text-primary/90 text-center mb-4">
-          Text-to-sign model training (offline)
-        </p>
-        <p className="scroll-animate text-center text-sm text-muted-foreground mb-8 max-w-2xl mx-auto">
-          PyTorch modules and Hugging Face APIs used when training on How2Sign Holistic features (not executed on each
-          user request at inference).
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 stagger-children justify-items-center lg:justify-items-stretch">
-          {trainingTechs.map((tech, i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children justify-items-center lg:justify-items-stretch">
+          {techs.map((tech, i) => (
             <TechCard key={tech.name} tech={tech} i={i} />
           ))}
         </div>
