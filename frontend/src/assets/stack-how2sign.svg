@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+  <title>How2Sign</title>
+  <defs>
+    <linearGradient id="h2s" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="10" fill="url(#h2s)"/>
+  <text x="24" y="22" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="9" font-weight="700">How2</text>
+  <text x="24" y="34" text-anchor="middle" fill="#E0E7FF" font-family="system-ui,sans-serif" font-size="9" font-weight="700">Sign</text>
+</svg>

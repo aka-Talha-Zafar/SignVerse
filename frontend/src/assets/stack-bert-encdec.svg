@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+  <title>BERT</title>
+  <defs>
+    <linearGradient id="bertBg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FB923C"/>
+      <stop offset="1" stop-color="#EA580C"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="10" fill="url(#bertBg)"/>
+  <text x="24" y="31" text-anchor="middle" fill="#fff" font-family="system-ui,Segoe UI,sans-serif" font-size="15" font-weight="800">B</text>
+</svg>

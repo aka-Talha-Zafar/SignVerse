@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+  <title>BoneTransformer</title>
+  <rect width="48" height="48" rx="10" fill="#0c4a6e"/>
+  <path d="M14 12 L24 24 L14 36" stroke="#F97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M34 12 L24 24 L34 36" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="14" cy="12" r="3" fill="#FBBF24"/>
+  <circle cx="24" cy="24" r="3.2" fill="#FBBF24"/>
+  <circle cx="14" cy="36" r="3" fill="#FBBF24"/>
+  <circle cx="34" cy="12" r="3" fill="#38BDF8"/>
+  <circle cx="34" cy="36" r="3" fill="#38BDF8"/>
+</svg>

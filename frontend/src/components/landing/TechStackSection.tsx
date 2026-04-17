@@ -1,8 +1,12 @@
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
-import { cn } from "@/lib/utils";
 import stackFastapi from "@/assets/stack-fastapi.svg";
 import stackNsor from "@/assets/stack-nsor.svg";
 import stackKeyframes from "@/assets/stack-keyframes.svg";
+import stackBertEncdec from "@/assets/stack-bert-encdec.svg";
+import stackTransformersLib from "@/assets/stack-transformers-lib.svg";
+import stackPoseformer from "@/assets/stack-poseformer.svg";
+import stackBonetransformer from "@/assets/stack-bonetransformer.svg";
+import stackHow2sign from "@/assets/stack-how2sign.svg";
 import brandVite from "@/assets/brand-vite.svg";
 import brandTypescript from "@/assets/brand-typescript.svg";
 import brandTailwind from "@/assets/brand-tailwindcss.svg";
@@ -12,18 +16,20 @@ import brandRadix from "@/assets/brand-radixui.svg";
 import brandOpenCV from "@/assets/brand-opencv.svg";
 import brandPyTorch from "@/assets/brand-pytorch.svg";
 import brandFirebase from "@/assets/brand-firebase.svg";
-import mediapipeLogo from "@/assets/mediapipe-logo.png";
+import brandMediapipe from "@/assets/brand-mediapipe.svg";
 import huggingfaceLogo from "@/assets/huggingface-logo.png";
 
-/** Industry-standard marks (Simple Icons SVGs where available) + official HF asset + product-specific marks. */
-const techs = [
+type Tech = { name: string; desc: string; logo: string };
+
+/** Product & inference stack — brand SVGs use explicit fills so `<img>` renders in color. */
+const runtimeTechs: Tech[] = [
   { name: "React 18", desc: "UI, hooks, React Router & client-side NSOR pipeline", logo: brandReact },
   { name: "TypeScript", desc: "Typed components, API clients & shared models", logo: brandTypescript },
   { name: "Vite", desc: "Fast dev server & optimized production bundles", logo: brandVite },
   { name: "Tailwind CSS", desc: "Utility-first styling with design tokens", logo: brandTailwind },
   { name: "TanStack Query", desc: "Server-state, caching & async data for APIs", logo: brandReactQuery },
   { name: "shadcn/ui", desc: "Radix primitives & accessible component patterns", logo: brandRadix },
-  { name: "MediaPipe", desc: "Holistic hand, face & pose landmarks", logo: mediapipeLogo },
+  { name: "MediaPipe", desc: "Holistic hand, face & pose landmarks", logo: brandMediapipe },
   { name: "OpenCV", desc: "Server-side JPEG decode & resize before vision", logo: brandOpenCV },
   { name: "PyTorch", desc: "Conv1D + Transformer sign model & alphabet CNN", logo: brandPyTorch },
   { name: "FastAPI", desc: "Python REST — sign, translate, TTS, learning", logo: stackFastapi },
@@ -32,6 +38,55 @@ const techs = [
   { name: "NSOR", desc: "Display polish: caps, punctuation, spacing only", logo: stackNsor },
   { name: "Keyframe lexicon", desc: "Text-to-sign clips from database.json", logo: stackKeyframes },
 ];
+
+/** Offline text-to-sign training (How2Sign Holistic) — see Codes_for_training.txt / SRS. */
+const trainingTechs: Tech[] = [
+  {
+    name: "How2Sign Holistic",
+    desc: "Holistic .npy pose clips & metadata for T2S training",
+    logo: stackHow2sign,
+  },
+  {
+    name: "Transformers",
+    desc: "EncoderDecoderModel, BertTokenizer (e.g. v4.41) for gloss training",
+    logo: stackTransformersLib,
+  },
+  {
+    name: "BERT (EncoderDecoder)",
+    desc: "English → ASL gloss refinement on top of rule-based gloss",
+    logo: stackBertEncdec,
+  },
+  {
+    name: "PoseFormer",
+    desc: "Causal Transformer + Conv1D smoothing on 3D pose sequences",
+    logo: stackPoseformer,
+  },
+  {
+    name: "BoneTransformer",
+    desc: "Bone-vector sequence model with temporal Conv1D decoder",
+    logo: stackBonetransformer,
+  },
+];
+
+function TechCard({ tech, i }: { tech: Tech; i: number }) {
+  return (
+    <div
+      className="scroll-animate-scale group p-6 rounded-2xl bg-card border border-border text-center hover:border-primary/30 transition-all duration-500 hover:scale-105 magnetic-hover shimmer w-full max-w-[280px]"
+      style={{ transitionDelay: `${i * 0.05}s` }}
+    >
+      <div className="w-16 h-16 rounded-xl bg-white mx-auto mb-4 flex items-center justify-center shadow-sm ring-1 ring-black/5 group-hover:ring-primary/20 transition-all duration-500 overflow-hidden group-hover:shadow-md">
+        <img
+          src={tech.logo}
+          alt=""
+          aria-hidden
+          className="h-10 w-10 object-contain transition-transform duration-500 group-hover:scale-110"
+        />
+      </div>
+      <h3 className="font-semibold text-foreground text-sm mb-1">{tech.name}</h3>
+      <p className="text-muted-foreground text-xs leading-snug">{tech.desc}</p>
+    </div>
+  );
+}
 
 const TechStackSection = () => {
   const containerRef = useScrollAnimate();
@@ -46,33 +101,32 @@ const TechStackSection = () => {
             <span className="heading-underline">Built on Cutting-Edge AI</span>
           </h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children">
-          {techs.map((tech, i) => {
-            const isSecondLast = i === techs.length - 2;
-            const isLast = i === techs.length - 1;
-            return (
-            <div
-              key={tech.name}
-              className={cn(
-                "scroll-animate-scale group p-6 rounded-2xl bg-card border border-border text-center hover:border-primary/30 transition-all duration-500 hover:scale-105 magnetic-hover shimmer",
-                isSecondLast && "col-start-1 sm:col-start-2 lg:col-start-2",
-                isLast && "col-start-2 sm:col-start-3 lg:col-start-3",
-              )}
-              style={{ transitionDelay: `${i * 0.05}s` }}
-            >
-              <div className="w-16 h-16 rounded-xl bg-white mx-auto mb-4 flex items-center justify-center shadow-sm ring-1 ring-black/5 group-hover:ring-primary/20 transition-all duration-500 overflow-hidden group-hover:shadow-md">
-                <img
-                  src={tech.logo}
-                  alt=""
-                  aria-hidden
-                  className="h-10 w-10 object-contain transition-transform duration-500 group-hover:scale-110"
-                />
-              </div>
-              <h3 className="font-semibold text-foreground text-sm mb-1">{tech.name}</h3>
-              <p className="text-muted-foreground text-xs leading-snug">{tech.desc}</p>
-            </div>
-            );
-          })}
+
+        <p className="scroll-animate text-center text-sm text-muted-foreground mb-6 max-w-2xl mx-auto">
+          Logos use official brand colors where applicable (SVG fills). Training row documents the offline
+          text-to-sign pipeline; the live app serves keyframes from <code className="text-foreground/80">database.json</code>.
+        </p>
+
+        <p className="scroll-animate text-xs font-semibold uppercase tracking-widest text-muted-foreground text-center mb-4">
+          Runtime &amp; product
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children mb-20 justify-items-center lg:justify-items-stretch">
+          {runtimeTechs.map((tech, i) => (
+            <TechCard key={tech.name} tech={tech} i={i} />
+          ))}
+        </div>
+
+        <p className="scroll-animate text-xs font-semibold uppercase tracking-widest text-primary/90 text-center mb-4">
+          Text-to-sign model training (offline)
+        </p>
+        <p className="scroll-animate text-center text-sm text-muted-foreground mb-8 max-w-2xl mx-auto">
+          PyTorch modules and Hugging Face APIs used when training on How2Sign Holistic features (not executed on each
+          user request at inference).
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 stagger-children justify-items-center lg:justify-items-stretch">
+          {trainingTechs.map((tech, i) => (
+            <TechCard key={tech.name} tech={tech} i={i} />
+          ))}
         </div>
       </div>
     </section>
