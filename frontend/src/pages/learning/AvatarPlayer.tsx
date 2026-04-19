@@ -275,7 +275,7 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
     };
   }, [format, mannequinFrames, fps, stopMannequinRaf]);
 
-  const size = compact ? 280 : 380;
+  const size = compact ? 360 : 520;
   const frameCount = format === "mannequin" ? mannequinFrames.length : mediaFrames.length;
 
   return (

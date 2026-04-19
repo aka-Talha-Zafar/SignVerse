@@ -7,7 +7,6 @@ v6.2 — Translation & record-based flow:
 
 v6.1 — Sentence-level recognition:
   - Velocity-based sign boundary detection
-  - Bigram LM (Viterbi) for word-sequence refinement
   - POST /api/sign-to-sentence endpoint
   - Sliding-window fallback segmentation
 

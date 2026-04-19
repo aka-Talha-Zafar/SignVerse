@@ -17,6 +17,11 @@ export function isMannequinFrameList(frames: unknown[] | null | undefined): fram
 export type DrawMannequinFrameOptions = {
   /** When true (default), a neutral idle pose is drawn if `frame` is null. Set false to only clear to the grid background (e.g. Text to Sign before any translation). */
   idlePlaceholder?: boolean;
+  /**
+   * Vertical anchor for the pose (fraction of canvas height). Slightly higher = figure moves up.
+   * Default balances the figure in the frame for typical ASL poses.
+   */
+  verticalAnchor?: number;
 };
 
 /** Pro mannequin renderer (shared by Text to Sign and learning Medium/Hard). */
@@ -61,8 +66,11 @@ export function drawMannequinFrame(
     }) as MannequinFrame);
 
   const CX = W * 0.5;
-  const CY = H * 0.35;
-  const SCALE = Math.min(W, H) * 0.85;
+  const anchorY = options?.verticalAnchor ?? 0.43;
+  const CY = H * anchorY;
+  const SCALE = Math.min(W, H) * 0.94;
+  /** Head / face size tracks SCALE so small canvases (e.g. learning) stay proportional to limbs. */
+  const HR = SCALE * 0.083;
 
   const B = (kp: number[]) => ({ x: CX + kp[0] * SCALE, y: CY + kp[1] * SCALE });
 
@@ -71,80 +79,87 @@ export function drawMannequinFrame(
   const headCX = (lSh.x + rSh.x) / 2;
   const headCY = (lSh.y + rSh.y) / 2 - SCALE * 0.16;
 
+  const bodyLines = [[11, 12], [11, 23], [12, 24], [23, 24]] as const;
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.45)";
+  ctx.lineWidth = Math.max(5, SCALE * 0.018);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  bodyLines.forEach(([s, e]) => {
+    if (isMissingPt(currentFrame[s]) || isMissingPt(currentFrame[e])) return;
+    ctx.beginPath();
+    ctx.moveTo(B(currentFrame[s]).x, B(currentFrame[s]).y);
+    ctx.lineTo(B(currentFrame[e]).x, B(currentFrame[e]).y);
+    ctx.stroke();
+  });
+
+  const neckTop = headCY + HR * 0.88;
+  const neckBot = headCY + HR * 1.42;
   ctx.beginPath();
-  ctx.moveTo(headCX, headCY + 40);
-  ctx.lineTo(headCX, headCY + 60);
+  ctx.moveTo(headCX, neckTop);
+  ctx.lineTo(headCX, neckBot);
   ctx.strokeStyle = "#334155";
-  ctx.lineWidth = 14;
+  ctx.lineWidth = Math.max(6, SCALE * 0.028);
+  ctx.lineCap = "round";
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.arc(headCX, headCY - 5, 45, Math.PI, 2 * Math.PI);
+  ctx.arc(headCX, headCY - HR * 0.12, HR * 1.07, Math.PI, 2 * Math.PI);
   ctx.fillStyle = "#0F172A";
   ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(headCX - 42, headCY - 8);
-  ctx.lineTo(headCX - 48, headCY + 15);
-  ctx.lineTo(headCX - 20, headCY - 5);
+  ctx.moveTo(headCX - HR, headCY - HR * 0.19);
+  ctx.lineTo(headCX - HR * 1.14, headCY + HR * 0.36);
+  ctx.lineTo(headCX - HR * 0.48, headCY - HR * 0.12);
   ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(headCX + 42, headCY - 8);
-  ctx.lineTo(headCX + 48, headCY + 15);
-  ctx.lineTo(headCX + 20, headCY - 5);
+  ctx.moveTo(headCX + HR, headCY - HR * 0.19);
+  ctx.lineTo(headCX + HR * 1.14, headCY + HR * 0.36);
+  ctx.lineTo(headCX + HR * 0.48, headCY - HR * 0.12);
   ctx.fill();
 
   ctx.beginPath();
-  ctx.arc(headCX, headCY, 42, 0, Math.PI * 2);
+  ctx.arc(headCX, headCY, HR, 0, Math.PI * 2);
   ctx.fillStyle = "#E2E8F0";
   ctx.fill();
   ctx.strokeStyle = "#94A3B8";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = Math.max(2, SCALE * 0.006);
   ctx.stroke();
 
   ctx.fillStyle = "#334155";
   ctx.beginPath();
-  ctx.ellipse(headCX - 15, headCY - 3, 6, 8, 0, 0, Math.PI * 2);
+  ctx.ellipse(headCX - HR * 0.36, headCY - HR * 0.07, HR * 0.14, HR * 0.19, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.ellipse(headCX + 15, headCY - 3, 6, 8, 0, 0, Math.PI * 2);
+  ctx.ellipse(headCX + HR * 0.36, headCY - HR * 0.07, HR * 0.14, HR * 0.19, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#FFF";
   ctx.beginPath();
-  ctx.arc(headCX - 16, headCY - 5, 2, 0, Math.PI * 2);
+  ctx.arc(headCX - HR * 0.38, headCY - HR * 0.12, HR * 0.05, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(headCX + 14, headCY - 5, 2, 0, Math.PI * 2);
+  ctx.arc(headCX + HR * 0.33, headCY - HR * 0.12, HR * 0.05, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.beginPath();
-  ctx.moveTo(headCX, headCY + 4);
-  ctx.lineTo(headCX - 4, headCY + 14);
-  ctx.lineTo(headCX, headCY + 14);
+  ctx.moveTo(headCX, headCY + HR * 0.1);
+  ctx.lineTo(headCX - HR * 0.1, headCY + HR * 0.33);
+  ctx.lineTo(headCX, headCY + HR * 0.33);
   ctx.strokeStyle = "#94A3B8";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = Math.max(1.5, SCALE * 0.004);
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.arc(headCX, headCY + 22, 10, 0.2, Math.PI - 0.2);
+  ctx.arc(headCX, headCY + HR * 0.52, HR * 0.24, 0.2, Math.PI - 0.2);
   ctx.strokeStyle = "#E07A5F";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = Math.max(2, SCALE * 0.006);
   ctx.stroke();
 
+  const armLines = [[11, 13], [13, 15], [12, 14], [14, 16]] as const;
   ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
-  ctx.lineWidth = 8;
+  ctx.lineWidth = Math.max(5, SCALE * 0.016);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  const lines = [
-    [11, 12],
-    [11, 23],
-    [12, 24],
-    [23, 24],
-    [11, 13],
-    [13, 15],
-    [12, 14],
-    [14, 16],
-  ] as const;
-  lines.forEach(([s, e]) => {
+  armLines.forEach(([s, e]) => {
     if (isMissingPt(currentFrame[s]) || isMissingPt(currentFrame[e])) return;
     ctx.beginPath();
     ctx.moveTo(B(currentFrame[s]).x, B(currentFrame[s]).y);
@@ -181,11 +196,11 @@ export function drawMannequinFrame(
     ctx.moveTo(wristPx.x, wristPx.y);
     ctx.lineTo(glued(hand.offset).x, glued(hand.offset).y);
     ctx.strokeStyle = armColor;
-    ctx.lineWidth = 6;
+    ctx.lineWidth = Math.max(4, SCALE * 0.014);
     ctx.stroke();
 
     ctx.strokeStyle = handColor;
-    ctx.lineWidth = 5;
+    ctx.lineWidth = Math.max(4, SCALE * 0.012);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     fingers.forEach((finger) => {
