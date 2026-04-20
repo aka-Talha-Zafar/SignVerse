@@ -14,15 +14,14 @@ Modes:
      When app.py sets SIGNVERSE_LEARNING_INTEGRATED=1 before calling this, `load_models()` in app.py
      skips loading the alphabet weights so they exist only in this module (one copy in RAM).
 
-Env: MODEL_DIR, HF_TOKEN, HF_MODELS_REPO, ASL_ALPHABET_DATASET_DIR, ASL_ALPHABET_REF_IMAGES_DIR,
-     ALPHABET_NUM_CLASSES, ALPHABET_INPUT_SIZE, ALPHABET_IMAGENET_NORM, LEARNING_API_PORT
+Env: MODEL_DIR, HF_TOKEN, HF_MODELS_REPO, ASL_ALPHABET_DATASET_DIR, ALPHABET_NUM_CLASSES,
+     ALPHABET_INPUT_SIZE, ALPHABET_IMAGENET_NORM, LEARNING_API_PORT
 """
 
 from __future__ import annotations
 
 import base64
 import logging
-import mimetypes
 import math
 import os
 import random
@@ -55,10 +54,6 @@ class_mapping: Optional[dict] = None
 DATASET_DIR = os.environ.get(
     "ASL_ALPHABET_DATASET_DIR",
     os.path.join(os.path.dirname(__file__), "datasets", "asl_alphabet_train"),
-)
-REF_IMAGES_DIR = os.environ.get(
-    "ASL_ALPHABET_REF_IMAGES_DIR",
-    os.path.join(os.path.dirname(__file__), "static", "alphabet_refs"),
 )
 _image_cache: dict[str, list[str]] = {}
 
@@ -660,19 +655,14 @@ def _alphabet_forward_logits(model: nn.Module, x: torch.Tensor) -> torch.Tensor:
 def _load_letter_images(letter: str) -> list[str]:
     if letter in _image_cache:
         return _image_cache[letter]
-    u = letter.upper()
-    images: list[str] = []
-    letter_dir = os.path.join(DATASET_DIR, u)
-    if os.path.isdir(letter_dir):
-        for fname in os.listdir(letter_dir):
-            if fname.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
-                images.append(os.path.join(letter_dir, fname))
-    if not images and os.path.isdir(REF_IMAGES_DIR):
-        for ext in (".jpg", ".jpeg", ".png", ".webp"):
-            p = os.path.join(REF_IMAGES_DIR, f"{u}{ext}")
-            if os.path.isfile(p):
-                images = [p]
-                break
+    letter_dir = os.path.join(DATASET_DIR, letter.upper())
+    if not os.path.isdir(letter_dir):
+        _image_cache[letter] = []
+        return []
+    images = []
+    for fname in os.listdir(letter_dir):
+        if fname.lower().endswith((".jpg", ".jpeg", ".png")):
+            images.append(os.path.join(letter_dir, fname))
     _image_cache[letter] = images
     return images
 
@@ -796,8 +786,6 @@ def learning_health():
         "class_mapping_loaded": class_mapping is not None,
         "dataset_found": os.path.isdir(DATASET_DIR),
         "dataset_path": DATASET_DIR,
-        "ref_images_dir": REF_IMAGES_DIR,
-        "ref_images_dir_found": os.path.isdir(REF_IMAGES_DIR),
         "sample_letter_a_images": len(sample),
         "model_dir": MODEL_DIR,
     }
@@ -894,18 +882,10 @@ def alphabet_image(letter: str):
     if not images:
         raise HTTPException(
             status_code=404,
-            detail=(
-                f"No images for '{letter}'. Set ASL_ALPHABET_DATASET_DIR to the Kaggle asl_alphabet_train "
-                f"tree, or add static/alphabet_refs/{letter}.jpg (override with ASL_ALPHABET_REF_IMAGES_DIR)."
-            ),
+            detail=f"No images for '{letter}'. Set ASL_ALPHABET_DATASET_DIR to the Kaggle asl_alphabet_train folder.",
         )
     chosen = random.choice(images)
-    mime, _ = mimetypes.guess_type(chosen)
-    return FileResponse(
-        chosen,
-        media_type=mime or "application/octet-stream",
-        headers={"Cache-Control": "no-cache"},
-    )
+    return FileResponse(chosen, media_type="image/jpeg", headers={"Cache-Control": "no-cache"})
 
 
 def _remove_route_by_path_and_method(main_app: FastAPI, path: str, method: str) -> int:
@@ -946,10 +926,9 @@ def integrate_learning_into_signverse(main_app: FastAPI) -> None:
     async def _learning_startup():
         load_alphabet_models()
         log.info(
-            "Learning (integrated) ready | alphabet=%s | kaggle_dataset_dir=%s | bundled_ref_dir=%s",
+            "Learning (integrated) ready | alphabet=%s | dataset_dir_exists=%s",
             alphabet_cls is not None,
             os.path.isdir(DATASET_DIR),
-            os.path.isdir(REF_IMAGES_DIR),
         )
 
 
@@ -969,10 +948,9 @@ def create_standalone_learning_app() -> FastAPI:
     async def _standalone_startup():
         load_alphabet_models()
         log.info(
-            "Learning backend (standalone) | alphabet=%s | kaggle_dataset_dir=%s | bundled_ref_dir=%s",
+            "Learning backend (standalone) | alphabet=%s | dataset_dir_exists=%s",
             alphabet_cls is not None,
             os.path.isdir(DATASET_DIR),
-            os.path.isdir(REF_IMAGES_DIR),
         )
 
     @a.get("/")
