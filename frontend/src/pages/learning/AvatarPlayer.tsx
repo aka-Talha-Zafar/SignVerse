@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, RotateCcw, Loader2 } from "lucide-react";
+import { Play, Pause, RotateCcw, Loader2, SkipForward, SkipBack } from "lucide-react";
 import { fetchAvatarFrames } from "@/lib/learningApi";
 import { drawMannequinFrame, isMannequinFrameList, type MannequinFrame } from "@/lib/textToSignMannequin";
 
@@ -120,6 +120,8 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
   const [currentFrame, setCurrentFrame] = useState(0);
   const [error, setError] = useState("");
   const [fps, setFps] = useState(20);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+  const [isLooping, setIsLooping] = useState(true);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -127,10 +129,16 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
   const mannequinRafRef = useRef<number | null>(null);
   const engine = useRef({ anim: [] as MannequinFrame[], fi: 0, lastTime: 0, accumulator: 0 });
   const isPlayingRef = useRef(false);
+  const isLoopingRef = useRef(true);
+  const prevMannequinFramesRef = useRef<MannequinFrame[] | null>(null);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  useEffect(() => {
+    isLoopingRef.current = isLooping;
+  }, [isLooping]);
 
   const stopMediaAnimation = useCallback(() => {
     if (mediaIntervalRef.current) {
@@ -151,23 +159,6 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
     stopMannequinRaf();
     setIsPlaying(false);
   }, [stopMediaAnimation, stopMannequinRaf]);
-
-  const startMediaAnimation = useCallback(
-    (frameList: MediaPipeFrame[], fpsRate: number) => {
-      stopMediaAnimation();
-      mediaFrameIdx.current = 0;
-      setCurrentFrame(0);
-      mediaIntervalRef.current = setInterval(() => {
-        const canvas = canvasRef.current;
-        if (!canvas || frameList.length === 0) return;
-        drawMediaPipeFrame(frameList[mediaFrameIdx.current], canvas);
-        setCurrentFrame(mediaFrameIdx.current);
-        mediaFrameIdx.current = (mediaFrameIdx.current + 1) % frameList.length;
-      }, 1000 / fpsRate);
-      setIsPlaying(true);
-    },
-    [stopMediaAnimation],
-  );
 
   useEffect(() => () => stopAll(), [stopAll]);
 
@@ -212,11 +203,14 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
         } else {
           setFormat("mediapipe");
           setMediaFrames(frames as MediaPipeFrame[]);
+          mediaFrameIdx.current = 0;
           setTimeout(() => {
             if (cancelled || !canvasRef.current) return;
             const first = (frames as MediaPipeFrame[])[0];
             if (first) drawMediaPipeFrame(first, canvasRef.current);
-            if (autoPlay) startMediaAnimation(frames as MediaPipeFrame[], rate);
+            setCurrentFrame(0);
+            if (autoPlay) setIsPlaying(true);
+            else setIsPlaying(false);
           }, 50);
         }
       })
@@ -229,7 +223,7 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
       cancelled = true;
       stopAll();
     };
-  }, [word, autoPlay, stopAll, startMediaAnimation]);
+  }, [word, autoPlay, stopAll]);
 
   useEffect(() => {
     if (format !== "mannequin" || mannequinFrames.length === 0) {
@@ -238,9 +232,12 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
     }
 
     engine.current.anim = mannequinFrames;
-    engine.current.fi = 0;
-    engine.current.lastTime = 0;
-    engine.current.accumulator = 0;
+    if (prevMannequinFramesRef.current !== mannequinFrames) {
+      engine.current.fi = 0;
+      engine.current.lastTime = 0;
+      engine.current.accumulator = 0;
+      prevMannequinFramesRef.current = mannequinFrames;
+    }
 
     const loop = (time: number) => {
       const en = engine.current;
@@ -250,11 +247,18 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
 
       if (isPlayingRef.current && en.anim.length > 0) {
         en.accumulator += dt;
-        const frameDuration = 1000 / fps;
+        const frameDuration = 1000 / (fps * playbackSpeed);
         while (en.accumulator >= frameDuration) {
           en.accumulator -= frameDuration;
           en.fi++;
-          if (en.fi >= en.anim.length) en.fi = 0;
+          if (en.fi >= en.anim.length) {
+            if (isLoopingRef.current) {
+              en.fi = 0;
+            } else {
+              en.fi = en.anim.length - 1;
+              setIsPlaying(false);
+            }
+          }
         }
         setCurrentFrame(en.fi);
       }
@@ -273,14 +277,116 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
         mannequinRafRef.current = null;
       }
     };
-  }, [format, mannequinFrames, fps, stopMannequinRaf]);
+  }, [format, mannequinFrames, fps, playbackSpeed, stopMannequinRaf]);
+
+  /** MediaPipe clips: drive frames from interval (speed + loop match Text to Sign). */
+  useEffect(() => {
+    if (format !== "mediapipe" || mediaFrames.length === 0) {
+      stopMediaAnimation();
+      return;
+    }
+
+    if (!isPlaying) {
+      stopMediaAnimation();
+      const canvas = canvasRef.current;
+      if (canvas && mediaFrames[mediaFrameIdx.current]) {
+        drawMediaPipeFrame(mediaFrames[mediaFrameIdx.current], canvas);
+      }
+      return;
+    }
+
+    const period = Math.max(16, 1000 / (fps * playbackSpeed));
+    stopMediaAnimation();
+    mediaIntervalRef.current = setInterval(() => {
+      const canvas = canvasRef.current;
+      if (!canvas || mediaFrames.length === 0) return;
+      drawMediaPipeFrame(mediaFrames[mediaFrameIdx.current], canvas);
+      setCurrentFrame(mediaFrameIdx.current);
+
+      const next = mediaFrameIdx.current + 1;
+      if (next >= mediaFrames.length) {
+        if (isLoopingRef.current) {
+          mediaFrameIdx.current = 0;
+        } else {
+          mediaFrameIdx.current = mediaFrames.length - 1;
+          setIsPlaying(false);
+        }
+      } else {
+        mediaFrameIdx.current = next;
+      }
+    }, period);
+
+    return () => {
+      if (mediaIntervalRef.current) {
+        clearInterval(mediaIntervalRef.current);
+        mediaIntervalRef.current = null;
+      }
+    };
+  }, [format, mediaFrames, isPlaying, fps, playbackSpeed, stopMediaAnimation]);
 
   const size = compact ? 360 : 520;
   const frameCount = format === "mannequin" ? mannequinFrames.length : mediaFrames.length;
 
+  const handleReset = () => {
+    if (format === "mannequin") {
+      engine.current.fi = 0;
+      engine.current.accumulator = 0;
+      setCurrentFrame(0);
+      if (canvasRef.current && mannequinFrames[0]) {
+        drawMannequinFrame(mannequinFrames[0], canvasRef.current);
+      }
+    } else if (format === "mediapipe") {
+      mediaFrameIdx.current = 0;
+      setCurrentFrame(0);
+      if (canvasRef.current && mediaFrames[0]) {
+        drawMediaPipeFrame(mediaFrames[0], canvasRef.current);
+      }
+    }
+    setIsPlaying(true);
+  };
+
+  const handlePrev = () => {
+    setIsPlaying(false);
+    if (format === "mannequin" && engine.current.anim.length > 0) {
+      engine.current.fi = Math.max(0, engine.current.fi - 1);
+      engine.current.accumulator = 0;
+      setCurrentFrame(engine.current.fi);
+      if (canvasRef.current) {
+        drawMannequinFrame(engine.current.anim[engine.current.fi], canvasRef.current);
+      }
+    } else if (format === "mediapipe" && mediaFrames.length > 0) {
+      mediaFrameIdx.current = Math.max(0, mediaFrameIdx.current - 1);
+      setCurrentFrame(mediaFrameIdx.current);
+      if (canvasRef.current) {
+        drawMediaPipeFrame(mediaFrames[mediaFrameIdx.current], canvasRef.current);
+      }
+    }
+  };
+
+  const handleNext = () => {
+    setIsPlaying(false);
+    if (format === "mannequin" && engine.current.anim.length > 0) {
+      engine.current.fi = Math.min(engine.current.anim.length - 1, engine.current.fi + 1);
+      engine.current.accumulator = 0;
+      setCurrentFrame(engine.current.fi);
+      if (canvasRef.current) {
+        drawMannequinFrame(engine.current.anim[engine.current.fi], canvasRef.current);
+      }
+    } else if (format === "mediapipe" && mediaFrames.length > 0) {
+      mediaFrameIdx.current = Math.min(mediaFrames.length - 1, mediaFrameIdx.current + 1);
+      setCurrentFrame(mediaFrameIdx.current);
+      if (canvasRef.current) {
+        drawMediaPipeFrame(mediaFrames[mediaFrameIdx.current], canvasRef.current);
+      }
+    }
+  };
+
+  const progressPct =
+    frameCount <= 1 ? 100 : (currentFrame / Math.max(1, frameCount - 1)) * 100;
+
   return (
-    <div className="space-y-3">
-      <div className="rounded-2xl overflow-hidden bg-black/40 border border-white/10" style={{ maxWidth: size }}>
+    <div className="space-y-3 w-full" style={{ maxWidth: size }}>
+      <div className="rounded-2xl overflow-hidden bg-black/40 border border-white/10">
         <canvas
           ref={canvasRef}
           width={size}
@@ -299,59 +405,86 @@ export default function AvatarPlayer({ word, autoPlay = false, compact = false }
       {error && <p className="text-red-400 text-xs text-center max-w-md mx-auto">{error}</p>}
 
       {frameCount > 0 && !isLoading && (
-        <div className="flex items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              if (format === "mannequin") {
-                engine.current.fi = 0;
-                engine.current.accumulator = 0;
-                setCurrentFrame(0);
-                if (canvasRef.current && mannequinFrames[0]) {
-                  drawMannequinFrame(mannequinFrames[0], canvasRef.current);
-                }
-              } else {
-                stopMediaAnimation();
-                mediaFrameIdx.current = 0;
-                setCurrentFrame(0);
-                if (canvasRef.current && mediaFrames[0]) {
-                  drawMediaPipeFrame(mediaFrames[0], canvasRef.current);
-                }
-              }
-            }}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/10 text-gray-400 hover:text-white transition-all"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (format === "mannequin") {
-                setIsPlaying((p) => !p);
-              } else {
-                if (isPlaying) {
-                  stopMediaAnimation();
-                  setIsPlaying(false);
-                } else {
-                  startMediaAnimation(mediaFrames, fps);
-                }
-              }
-            }}
-            className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium flex items-center gap-1.5 transition-all"
-          >
-            {isPlaying ? (
-              <>
-                <Pause className="w-4 h-4" /> Pause
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4" /> Play
-              </>
-            )}
-          </button>
-          <span className="text-xs text-gray-500">
-            {currentFrame + 1}/{frameCount}
-          </span>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+          <div className="w-full bg-white/10 rounded-full h-1.5">
+            <div
+              className="bg-primary h-1.5 rounded-full transition-all"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>
+              Frame {currentFrame + 1}
+            </span>
+            <span>{frameCount} total</span>
+          </div>
+
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/15 text-gray-400 hover:text-white transition-all border border-white/10"
+              aria-label="Previous frame"
+            >
+              <SkipBack className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/15 text-gray-400 hover:text-white transition-all border border-white/10"
+              aria-label="Restart"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsPlaying((p) => !p)}
+              className="px-6 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold flex items-center gap-2 transition-all"
+            >
+              {isPlaying ? (
+                <>
+                  <Pause className="w-5 h-5" /> Pause
+                </>
+              ) : (
+                <>
+                  <Play className="w-5 h-5" /> Play
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/15 text-gray-400 hover:text-white transition-all border border-white/10"
+              aria-label="Next frame"
+            >
+              <SkipForward className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsLooping(!isLooping)}
+              className={`ml-4 px-4 py-2 text-xs font-bold rounded-xl transition-all border ${
+                isLooping
+                  ? "bg-emerald-600 text-white border-emerald-500/50"
+                  : "bg-white/5 text-gray-400 border-white/10"
+              }`}
+            >
+              🔁 Loop {isLooping ? "" : "Off"}
+            </button>
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 ml-2">
+              <label htmlFor="learn-playback-speed">{playbackSpeed.toFixed(2)}x</label>
+              <input
+                id="learn-playback-speed"
+                type="range"
+                min={0.25}
+                max={2}
+                step={0.25}
+                value={playbackSpeed}
+                onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
+                className="w-20 accent-[hsl(217_91%_60%)]"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
