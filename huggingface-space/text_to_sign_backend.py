@@ -264,8 +264,9 @@ def to_asl(s: str) -> str:
     else:
         t = [x for x in t if x not in AUX]
 
-    tm = [x for x in t if x in ["yesterday", "today", "tomorrow", "now"]]
-    t = tm + [x for x in t if x not in ["yesterday", "today", "tomorrow", "now"]]
+    # Preserve spoken order for time adverbs (e.g. "come now", "go home now"). Moving
+    # "now" / "today" to the front matched some ASL topic–comment orders but made the
+    # text-to-sign avatar perform time before the verb — confusing for learners.
 
     if "not" in s:
         t.append("not")
