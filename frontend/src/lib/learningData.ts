@@ -74,7 +74,10 @@ export interface WordCategory {
   words: WordItem[];
 }
 
-/** Full word-level practice vocabulary (categories for Medium mode). */
+/**
+ * Word-level practice (Medium). Excludes glosses the user retired from the module;
+ * replacements favor common dictionary signs that typically animate smoothly.
+ */
 export const WORD_CATEGORIES: WordCategory[] = [
   {
     id: "greetings",
@@ -82,12 +85,9 @@ export const WORD_CATEGORIES: WordCategory[] = [
     icon: "👋",
     words: [
       { word: "hello", label: "Hello" },
-      { word: "hi", label: "Hi" },
       { word: "bye", label: "Bye" },
-      { word: "goodbye", label: "Goodbye" },
       { word: "thank", label: "Thank You" },
       { word: "please", label: "Please" },
-      { word: "sorry", label: "Sorry" },
       { word: "yes", label: "Yes" },
       { word: "no", label: "No" },
     ],
@@ -99,8 +99,6 @@ export const WORD_CATEGORIES: WordCategory[] = [
     words: [
       { word: "happy", label: "Happy" },
       { word: "sad", label: "Sad" },
-      { word: "angry", label: "Angry" },
-      { word: "tired", label: "Tired" },
       { word: "sick", label: "Sick" },
       { word: "good", label: "Good" },
       { word: "bad", label: "Bad" },
@@ -116,17 +114,14 @@ export const WORD_CATEGORIES: WordCategory[] = [
     icon: "🏃",
     words: [
       { word: "help", label: "Help" },
-      { word: "want", label: "Want" },
       { word: "need", label: "Need" },
       { word: "go", label: "Go" },
       { word: "come", label: "Come" },
       { word: "stop", label: "Stop" },
-      { word: "wait", label: "Wait" },
       { word: "eat", label: "Eat" },
       { word: "drink", label: "Drink" },
       { word: "work", label: "Work" },
       { word: "like", label: "Like" },
-      { word: "love", label: "Love" },
       { word: "know", label: "Know" },
       { word: "think", label: "Think" },
       { word: "sign", label: "Sign" },
@@ -141,10 +136,8 @@ export const WORD_CATEGORIES: WordCategory[] = [
     words: [
       { word: "mother", label: "Mother" },
       { word: "father", label: "Father" },
-      { word: "dad", label: "Dad" },
       { word: "grandpa", label: "Grandpa" },
       { word: "aunt", label: "Aunt" },
-      { word: "friend", label: "Friend" },
       { word: "family", label: "Family" },
       { word: "man", label: "Man" },
       { word: "person", label: "Person" },
@@ -156,14 +149,11 @@ export const WORD_CATEGORIES: WordCategory[] = [
     name: "Animals",
     icon: "🐾",
     words: [
-      { word: "dog", label: "Dog" },
       { word: "cat", label: "Cat" },
       { word: "bird", label: "Bird" },
-      { word: "animal", label: "Animal" },
       { word: "bee", label: "Bee" },
       { word: "alligator", label: "Alligator" },
       { word: "wolf", label: "Wolf" },
-      { word: "zebra", label: "Zebra" },
     ],
   },
   {
@@ -183,12 +173,10 @@ export const WORD_CATEGORIES: WordCategory[] = [
     name: "Places",
     icon: "🏠",
     words: [
-      { word: "home", label: "Home" },
       { word: "school", label: "School" },
       { word: "store", label: "Store" },
       { word: "bathroom", label: "Bathroom" },
       { word: "bedroom", label: "Bedroom" },
-      { word: "backyard", label: "Backyard" },
       { word: "closet", label: "Closet" },
     ],
   },
@@ -199,7 +187,6 @@ export const WORD_CATEGORIES: WordCategory[] = [
     words: [
       { word: "book", label: "Book" },
       { word: "car", label: "Car" },
-      { word: "bus", label: "Bus" },
       { word: "airplane", label: "Airplane" },
       { word: "phone", label: "Phone" },
       { word: "TV", label: "TV" },
@@ -265,12 +252,12 @@ export const SENTENCE_CATEGORIES: SentenceCategory[] = [
     name: "Greetings",
     icon: "👋",
     sentences: [
-      { id: "s1", words: ["hello", "friend"], display: "Hello, friend" },
-      { id: "s2", words: ["goodbye", "family"], display: "Goodbye, family" },
-      { id: "s3", words: ["bye", "go", "home"], display: "Bye — go home" },
-      { id: "s4", words: ["hi", "friend"], display: "Hi, friend" },
-      { id: "s5", words: ["thank", "friend"], display: "Thanks, friend" },
-      { id: "s6", words: ["sorry", "please"], display: "Sorry — please" },
+      { id: "s1", words: ["hello", "family"], display: "Hello, family" },
+      { id: "s2", words: ["bye", "family"], display: "Bye, family" },
+      { id: "s3", words: ["bye", "go", "school"], display: "Bye, go to school" },
+      { id: "s4", words: ["thank", "please"], display: "Thank you, please" },
+      { id: "s5", words: ["thank", "mother"], display: "Thanks, mother" },
+      { id: "s6", words: ["please", "help"], display: "Please help" },
     ],
   },
   {
@@ -293,7 +280,7 @@ export const SENTENCE_CATEGORIES: SentenceCategory[] = [
     sentences: [
       { id: "s13", words: ["eat", "food", "now"], display: "Eat food now" },
       { id: "s14", words: ["drink", "water", "now"], display: "Drink water now" },
-      { id: "s15", words: ["go", "home", "now"], display: "Go home now" },
+      { id: "s15", words: ["go", "school", "now"], display: "Go to school now" },
       { id: "s16", words: ["go", "school", "tomorrow"], display: "Go to school tomorrow" },
       { id: "s17", words: ["go", "work", "now"], display: "Go to work now" },
       { id: "s18", words: ["go", "store", "now"], display: "Go to the store now" },
@@ -304,11 +291,11 @@ export const SENTENCE_CATEGORIES: SentenceCategory[] = [
     name: "Family",
     icon: "👨‍👩‍👧",
     sentences: [
-      { id: "s19", words: ["mother", "go", "home"], display: "Mother, go home" },
+      { id: "s19", words: ["mother", "go", "store"], display: "Mother, go to the store" },
       { id: "s20", words: ["father", "go", "work"], display: "Father, go to work" },
-      { id: "s21", words: ["dad", "come", "home"], display: "Dad, come home" },
+      { id: "s21", words: ["mother", "come", "school"], display: "Mother, come to school" },
       { id: "s22", words: ["family", "happy"], display: "Family is happy" },
-      { id: "s23", words: ["friend", "come", "home"], display: "Friend, come home" },
+      { id: "s23", words: ["mother", "come", "work"], display: "Mother, come from work" },
       { id: "s24", words: ["mother", "help", "please"], display: "Mother needs help, please" },
     ],
   },
@@ -319,10 +306,10 @@ export const SENTENCE_CATEGORIES: SentenceCategory[] = [
     sentences: [
       { id: "s25", words: ["happy", "today"], display: "Happy today" },
       { id: "s26", words: ["sad", "today"], display: "Sad today" },
-      { id: "s27", words: ["tired", "now"], display: "Tired now" },
-      { id: "s28", words: ["sick", "doctor", "please"], display: "Sick — need a doctor, please" },
-      { id: "s29", words: ["cold", "home", "please"], display: "Cold — home, please" },
-      { id: "s30", words: ["angry", "stop", "please"], display: "Angry — stop, please" },
+      { id: "s27", words: ["sick", "now"], display: "Sick now" },
+      { id: "s28", words: ["sick", "doctor", "please"], display: "Sick, need a doctor, please" },
+      { id: "s29", words: ["cold", "bed", "please"], display: "Cold, bed, please" },
+      { id: "s30", words: ["bad", "stop", "please"], display: "Bad, stop, please" },
     ],
   },
   {
@@ -331,11 +318,11 @@ export const SENTENCE_CATEGORIES: SentenceCategory[] = [
     icon: "❓",
     sentences: [
       { id: "s31", words: ["where", "bathroom"], display: "Where is the bathroom?" },
-      { id: "s32", words: ["where", "home"], display: "Where is home?" },
+      { id: "s32", words: ["where", "school"], display: "Where is school?" },
       { id: "s33", words: ["what", "time", "now"], display: "What time is it now?" },
       { id: "s34", words: ["what", "name"], display: "What is your name?" },
       { id: "s35", words: ["who", "person"], display: "Who is that person?" },
-      { id: "s36", words: ["when", "go", "home"], display: "When do we go home?" },
+      { id: "s36", words: ["when", "go", "school"], display: "When do we go to school?" },
     ],
   },
   {
@@ -345,10 +332,10 @@ export const SENTENCE_CATEGORIES: SentenceCategory[] = [
     sentences: [
       { id: "s37", words: ["stop", "now"], display: "Stop now" },
       { id: "s38", words: ["come", "now"], display: "Come now" },
-      { id: "s39", words: ["wait", "please"], display: "Wait, please" },
+      { id: "s39", words: ["come", "please"], display: "Come, please" },
       { id: "s40", words: ["more", "food"], display: "More food" },
-      { id: "s41", words: ["all", "go", "home"], display: "We all go home" },
-      { id: "s42", words: ["want", "go", "home"], display: "I want to go home" },
+      { id: "s41", words: ["all", "go", "school"], display: "We all go to school" },
+      { id: "s42", words: ["need", "go", "school"], display: "Need to go to school" },
     ],
   },
 ];
