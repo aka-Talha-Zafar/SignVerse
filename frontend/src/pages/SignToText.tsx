@@ -491,10 +491,10 @@ export default function SignToText() {
               <select
                 value={language}
                 onChange={e => setLanguage(e.target.value)}
-                className="appearance-none bg-white/5 border border-white/10 rounded-xl
+                className="appearance-none bg-[#111111] text-white border border-white/10 rounded-xl
                            px-4 py-3 pr-8 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/40"
               >
-                {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                {LANGUAGES.map(l => <option key={l.code} value={l.code} className="bg-[#111111] text-white">{l.label}</option>)}
               </select>
               <Languages className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
