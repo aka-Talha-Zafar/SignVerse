@@ -40,7 +40,7 @@ const Navbar = () => {
             <Hand className="w-4 h-4 text-primary transition-transform duration-300 group-hover:scale-110" />
           </div>
           <span className="text-lg font-bold text-foreground tracking-tight">
-            Sign<span className="text-primary">Verse</span>
+            Sign<span className="text-primary">Vox</span>
           </span>
         </Link>
         <div className="hidden md:flex items-center gap-8">

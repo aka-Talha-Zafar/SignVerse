@@ -37,7 +37,7 @@ type LearningProgressContextValue = {
 
 const LearningProgressContext = createContext<LearningProgressContextValue | null>(null);
 
-const guestMigratedKey = (uid: string) => `signverse_guest_merged_${uid}`;
+const guestMigratedKey = (uid: string) => `signvox_guest_merged_${uid}`;
 
 export function LearningProgressProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();

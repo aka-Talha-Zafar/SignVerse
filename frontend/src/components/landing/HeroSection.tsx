@@ -46,7 +46,7 @@ const HeroSection = () => (
         style={{ animationDelay: "0.6s", animationFillMode: "both" }}
       >
         <Link to="/login" className="group px-8 py-3.5 rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:shadow-xl hover:scale-105 relative overflow-hidden inline-block">
-          <span className="relative z-10">Try SignVerse</span>
+          <span className="relative z-10">Try SignVox</span>
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
         </Link>
         <Link to="/learn-more" className="px-8 py-3.5 rounded-xl font-semibold border border-border text-foreground hover:bg-secondary transition-all duration-300 hover:scale-105 hover:border-primary/30">

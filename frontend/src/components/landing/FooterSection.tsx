@@ -32,7 +32,7 @@ const FooterSection = () => {
                 <Hand className="w-4 h-4 text-primary" />
               </div>
               <span className="text-xl font-bold text-foreground tracking-tight">
-                Sign<span className="text-primary">Verse</span>
+                Sign<span className="text-primary">Vox</span>
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mt-3">
@@ -135,7 +135,7 @@ const FooterSection = () => {
       <div className="border-t border-border">
         <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} SignVerse. All rights reserved.
+            © {new Date().getFullYear()} SignVox. All rights reserved.
           </p>
           {!user && (
             <div className="flex items-center gap-4">

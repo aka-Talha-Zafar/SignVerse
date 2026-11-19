@@ -8,7 +8,7 @@ const LearnMore = () => {
   const { user } = useAuth();
   /** Marketing home: guests use `/`; signed-in users use `/welcome` so they reach the landing site (not `/` → dashboard redirect). */
   const marketingHomeHref = user ? "/welcome" : "/";
-  const trySignVerseHref = user ? "/dashboard" : "/login";
+  const trySignVoxHref = user ? "/dashboard" : "/login";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -20,7 +20,7 @@ const LearnMore = () => {
               <Hand className="w-4 h-4 text-primary" />
             </div>
             <span className="text-lg font-bold text-foreground tracking-tight">
-              Sign<span className="text-primary">Verse</span>
+              Sign<span className="text-primary">Vox</span>
             </span>
           </Link>
           <Link to={marketingHomeHref} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
@@ -32,13 +32,13 @@ const LearnMore = () => {
       <main ref={containerRef} className="pt-28 pb-20 max-w-4xl mx-auto px-6">
         {/* Header */}
         <div className="scroll-animate mb-16">
-          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">About SignVerse</p>
+          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">About SignVox</p>
           <h1 className="text-4xl sm:text-5xl font-extrabold mb-6">
             Everything You Need to Know About{" "}
-            <span className="text-gradient-animated">SignVerse</span>
+            <span className="text-gradient-animated">SignVox</span>
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            SignVerse is a comprehensive bidirectional American Sign Language (ASL) translation and learning system.
+            SignVox is a comprehensive bidirectional American Sign Language (ASL) translation and learning system.
             It bridges the communication gap between deaf and hearing communities using cutting-edge AI technology.
           </p>
         </div>
@@ -47,7 +47,7 @@ const LearnMore = () => {
         <AnimatedSection title="Our Mission">
           <p className="text-muted-foreground leading-relaxed mb-4">
             Over 70 million deaf individuals worldwide face daily communication barriers. Most existing tools only offer one-way translation
-            and recognize isolated words — far from natural conversation. SignVerse was created to solve this by providing:
+            and recognize isolated words — far from natural conversation. SignVox was created to solve this by providing:
           </p>
           <ul className="space-y-3">
             {[
@@ -106,7 +106,7 @@ const LearnMore = () => {
         {/* Technical Architecture */}
         <AnimatedSection title="Technical Architecture">
           <p className="text-muted-foreground leading-relaxed mb-6">
-            SignVerse leverages a modern AI pipeline combining computer vision, deep learning, and natural language processing.
+            SignVox leverages a modern AI pipeline combining computer vision, deep learning, and natural language processing.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
@@ -128,7 +128,7 @@ const LearnMore = () => {
         </AnimatedSection>
 
         {/* Who It's For */}
-        <AnimatedSection title="Who Is SignVerse For?">
+        <AnimatedSection title="Who Is SignVox For?">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               { icon: Ear, title: "Deaf & Hard-of-Hearing", desc: "Express yourself freely — signs are translated to text and speech instantly." },
@@ -168,7 +168,7 @@ const LearnMore = () => {
         {/* Team */}
         <AnimatedSection title="The Team">
           <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-            SignVerse is a Final Year Project developed at <span className="text-foreground font-medium">Lahore Garrison University</span>, supervised by <span className="text-foreground font-medium">M. Mugees Asif</span>.
+            SignVox is a Final Year Project developed at <span className="text-foreground font-medium">Lahore Garrison University</span>, supervised by <span className="text-foreground font-medium">M. Mugees Asif</span>.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
@@ -190,14 +190,14 @@ const LearnMore = () => {
 
         {/* CTA */}
         <div className="scroll-animate mt-16 text-center p-10 rounded-2xl bg-card border border-border glow-border animate-glow-breathe">
-          <h2 className="text-2xl font-bold text-foreground mb-3">Ready to Try SignVerse?</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-3">Ready to Try SignVox?</h2>
           <p className="text-muted-foreground text-sm mb-6">Experience bidirectional ASL translation powered by AI.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to={trySignVerseHref}
+              to={trySignVoxHref}
               className="group px-8 py-3 rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 relative overflow-hidden inline-block"
             >
-              <span className="relative z-10">Try SignVerse</span>
+              <span className="relative z-10">Try SignVox</span>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             </Link>
             <Link

@@ -16,7 +16,7 @@ const Accessibility = () => {
           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
             <Hand className="w-4 h-4 text-primary" />
           </div>
-          <span className="text-xl font-bold tracking-tight">Sign<span className="text-primary">Verse</span></span>
+          <span className="text-xl font-bold tracking-tight">Sign<span className="text-primary">Vox</span></span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-bold mb-8">Accessibility Statement</h1>
@@ -25,7 +25,7 @@ const Accessibility = () => {
         <div className="space-y-8 text-muted-foreground text-sm leading-relaxed">
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">Our Commitment</h2>
-            <p>SignVerse is built with accessibility at its core. As a platform designed to bridge the communication gap between deaf and hearing communities, we are deeply committed to making our platform usable by everyone, regardless of ability.</p>
+            <p>SignVox is built with accessibility at its core. As a platform designed to bridge the communication gap between deaf and hearing communities, we are deeply committed to making our platform usable by everyone, regardless of ability.</p>
           </section>
 
           <section>
@@ -47,7 +47,7 @@ const Accessibility = () => {
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">Continuous Improvement</h2>
-            <p>We are continuously working to improve the accessibility of our platform. If you encounter any accessibility barriers or have suggestions for improvement, please contact us at <span className="text-primary">accessibility@signverse.app</span>.</p>
+            <p>We are continuously working to improve the accessibility of our platform. If you encounter any accessibility barriers or have suggestions for improvement, please contact us at <span className="text-primary">accessibility@signvox.app</span>.</p>
           </section>
         </div>
       </div>

@@ -69,7 +69,7 @@ export default function Login() {
               <Hand className="w-5 h-5 text-primary" />
             </div>
             <span className="text-2xl font-bold text-foreground tracking-tight">
-              Sign<span className="text-primary">Verse</span>
+              Sign<span className="text-primary">Vox</span>
             </span>
           </Link>
           <h1 className="text-2xl font-bold text-foreground mt-4">Sign in to your account</h1>

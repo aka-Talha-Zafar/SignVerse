@@ -29,7 +29,7 @@ const DifferentiatorsSection = () => {
     <section className="relative py-24 sm:py-32 bg-card/30">
       <div ref={containerRef} className="max-w-6xl mx-auto px-6">
         <div className="scroll-animate text-center mb-16">
-          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">Why SignVerse</p>
+          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">Why SignVox</p>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
             <span className="heading-underline">What Makes Us Different</span>
           </h2>

@@ -16,7 +16,7 @@ const TermsOfService = () => {
           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
             <Hand className="w-4 h-4 text-primary" />
           </div>
-          <span className="text-xl font-bold tracking-tight">Sign<span className="text-primary">Verse</span></span>
+          <span className="text-xl font-bold tracking-tight">Sign<span className="text-primary">Vox</span></span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-bold mb-8">Terms of Service</h1>
@@ -25,12 +25,12 @@ const TermsOfService = () => {
         <div className="space-y-8 text-muted-foreground text-sm leading-relaxed">
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">1. Acceptance of Terms</h2>
-            <p>By accessing and using SignVerse, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform.</p>
+            <p>By accessing and using SignVox, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">2. Description of Service</h2>
-            <p>SignVerse provides a bidirectional ASL translation platform that converts sign language to text/speech and text/speech to sign language animations. We also offer interactive ASL learning modules with progress tracking.</p>
+            <p>SignVox provides a bidirectional ASL translation platform that converts sign language to text/speech and text/speech to sign language animations. We also offer interactive ASL learning modules with progress tracking.</p>
           </section>
 
           <section>
@@ -45,17 +45,17 @@ const TermsOfService = () => {
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">5. Intellectual Property</h2>
-            <p>All content, AI models, and technology powering SignVerse are the intellectual property of the SignVerse team. You may not reproduce, distribute, or create derivative works without explicit permission.</p>
+            <p>All content, AI models, and technology powering SignVox are the intellectual property of the SignVox team. You may not reproduce, distribute, or create derivative works without explicit permission.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">6. Limitation of Liability</h2>
-            <p>SignVerse is provided "as is" without warranties. We are not liable for any damages arising from the use of our translation services. Our translations should not be relied upon for critical medical, legal, or emergency communications.</p>
+            <p>SignVox is provided "as is" without warranties. We are not liable for any damages arising from the use of our translation services. Our translations should not be relied upon for critical medical, legal, or emergency communications.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">7. Contact</h2>
-            <p>For questions about these terms, contact us at <span className="text-primary">legal@signverse.app</span>.</p>
+            <p>For questions about these terms, contact us at <span className="text-primary">legal@signvox.app</span>.</p>
           </section>
         </div>
       </div>

@@ -16,7 +16,7 @@ const PrivacyPolicy = () => {
           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
             <Hand className="w-4 h-4 text-primary" />
           </div>
-          <span className="text-xl font-bold tracking-tight">Sign<span className="text-primary">Verse</span></span>
+          <span className="text-xl font-bold tracking-tight">Sign<span className="text-primary">Vox</span></span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-bold mb-8">Privacy Policy</h1>
@@ -25,7 +25,7 @@ const PrivacyPolicy = () => {
         <div className="space-y-8 text-muted-foreground text-sm leading-relaxed">
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">1. Information We Collect</h2>
-            <p>SignVerse collects minimal data necessary to provide our ASL translation and learning services. This includes account information (name, email), usage data, and camera input processed locally for sign language recognition. We do not store video recordings of your signing sessions.</p>
+            <p>SignVox collects minimal data necessary to provide our ASL translation and learning services. This includes account information (name, email), usage data, and camera input processed locally for sign language recognition. We do not store video recordings of your signing sessions.</p>
           </section>
 
           <section>
@@ -50,7 +50,7 @@ const PrivacyPolicy = () => {
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">6. Contact Us</h2>
-            <p>If you have any questions about this Privacy Policy, please contact us at <span className="text-primary">privacy@signverse.app</span>.</p>
+            <p>If you have any questions about this Privacy Policy, please contact us at <span className="text-primary">privacy@signvox.app</span>.</p>
           </section>
         </div>
       </div>

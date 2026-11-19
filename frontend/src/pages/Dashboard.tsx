@@ -138,7 +138,7 @@ const Dashboard = () => {
               <Hand className="w-4 h-4 text-primary" />
             </div>
             <span className="text-lg font-bold tracking-tight">
-              Sign<span className="text-primary">Verse</span>
+              Sign<span className="text-primary">Vox</span>
             </span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -336,7 +336,7 @@ const Dashboard = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-5 w-5 text-primary shrink-0" aria-hidden />
                 <h2 id="dash-about-heading" className="text-lg font-semibold tracking-tight">
-                  About SignVerse
+                  About SignVox
                 </h2>
               </div>
               <p className="text-sm text-gray-400 max-w-3xl leading-relaxed">

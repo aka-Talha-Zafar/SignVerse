@@ -5,7 +5,7 @@ const users = [
   {
     icon: Ear,
     title: "Deaf & Hard-of-Hearing",
-    description: "Express yourself freely in any conversation. SignVerse translates your signs into text and speech in real-time.",
+    description: "Express yourself freely in any conversation. SignVox translates your signs into text and speech in real-time.",
   },
   {
     icon: Users,

@@ -1,6 +1,7 @@
 /** Learning progress types + pure helpers + guest localStorage (used when signed out). */
 
-export const STORAGE_KEY = "signverse_learning_progress";
+export const STORAGE_KEY = "signvox_learning_progress";
+const LEGACY_STORAGE_KEY = "signverse_learning_progress";
 
 export interface QuizResult {
   score: number;
@@ -117,7 +118,15 @@ export function mergeGuestIntoRemote(remote: LearningProgress, guest: LearningPr
 
 export function loadGuestProgress(): LearningProgress {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacyRaw) {
+        localStorage.setItem(STORAGE_KEY, legacyRaw);
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        raw = legacyRaw;
+      }
+    }
     if (!raw) return defaultProgress();
     return normalizeProgress(JSON.parse(raw));
   } catch {
