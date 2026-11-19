@@ -1,5 +1,3 @@
-import { ASL_PUBLIC_REFERENCE_SVG } from "./learningData";
-
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";
 /**
  * Alphabet + learning routes. Defaults to the same origin as `API_BASE` so production (e.g. Vercel)
@@ -212,5 +210,16 @@ export function getAlphabetImageUrl(letter: string): string {
 
 /** Used when the API has no dataset or bundled refs (see LearnEasy tiered loading). */
 export function getAlphabetImageUrlFallback(letter: string): string {
-  return ASL_PUBLIC_REFERENCE_SVG[letter.toUpperCase()] || "";
+  const normalized = letter.toUpperCase();
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+      <rect width="320" height="320" rx="24" fill="#18181b"/>
+      <circle cx="160" cy="128" r="54" fill="#d4d4d8"/>
+      <rect x="118" y="150" width="84" height="112" rx="38" fill="#d4d4d8"/>
+      <rect x="76" y="118" width="34" height="98" rx="17" fill="#d4d4d8" transform="rotate(-18 93 167)"/>
+      <rect x="210" y="118" width="34" height="98" rx="17" fill="#d4d4d8" transform="rotate(18 227 167)"/>
+      <circle cx="160" cy="132" r="18" fill="#fafafa"/>
+      <text x="160" y="294" text-anchor="middle" font-family="Arial, sans-serif" font-size="46" font-weight="700" fill="#34d399">${normalized}</text>
+    </svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }

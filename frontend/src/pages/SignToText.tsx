@@ -119,20 +119,47 @@ export default function SignToText() {
       return;
     }
     setIsTranslating(true);
+    const target = languageRef.current;
     try {
-      const res = await fetch(`${API_BASE}/api/translate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, target: languageRef.current }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.translated && data.translated !== text) {
-          setTranslatedText(data.translated);
+      let translated = "";
+      try {
+        const res = await fetch(`${API_BASE}/api/translate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, target }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.translated && data.translated !== text && !data.error) {
+            translated = data.translated;
+          }
         }
+      } catch {
+        // Continue to the browser-side Google Translate fallback.
+      }
+
+      if (!translated) {
+        const googleTarget = target === "zh" ? "zh-CN" : target;
+        const googleUrl =
+          "https://translate.googleapis.com/translate_a/single" +
+          `?client=gtx&sl=en&tl=${encodeURIComponent(googleTarget)}&dt=t` +
+          `&q=${encodeURIComponent(text)}`;
+        const googleRes = await fetch(googleUrl);
+        if (!googleRes.ok) throw new Error("Translation request failed");
+        const googleData = await googleRes.json();
+        translated = Array.isArray(googleData?.[0])
+          ? googleData[0].map((segment: unknown[]) => segment?.[0] || "").join("")
+          : "";
+      }
+
+      if (translated) {
+        setTranslatedText(translated);
+        setError("");
+      } else {
+        throw new Error("No translation returned");
       }
     } catch {
-      // translation is best-effort
+      setError("Translation unavailable. Your English result is still shown.");
     } finally {
       setIsTranslating(false);
     }
