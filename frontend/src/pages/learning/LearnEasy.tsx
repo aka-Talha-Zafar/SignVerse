@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { CheckCircle, X } from "lucide-react";
 import ProgressHeader from "./ProgressHeader";
-import { ALPHABETS, ASL_ALPHABET_DESCRIPTIONS } from "@/lib/learningData";
+import { ALPHABETS, ASL_ALPHABET_DESCRIPTIONS, ASL_PUBLIC_REFERENCE_SVG } from "@/lib/learningData";
 import { useLearningProgress } from "@/contexts/LearningProgressContext";
 import { getAlphabetImageUrl, getAlphabetImageUrlFallback } from "@/lib/learningApi";
 
@@ -27,9 +27,8 @@ export default function LearnEasy() {
   const imageSrc = useMemo(() => {
     if (!selectedLetter) return "";
     if (loadTier === 0) return getAlphabetImageUrl(selectedLetter);
-    if (loadTier === 1)
-      return `${import.meta.env.BASE_URL}learning/alphabet/${selectedLetter}.svg`;
-    return getAlphabetImageUrlFallback(selectedLetter);
+    if (loadTier === 1) return ASL_PUBLIC_REFERENCE_SVG[selectedLetter];
+    return ASL_PUBLIC_REFERENCE_SVG[selectedLetter] || getAlphabetImageUrlFallback(selectedLetter);
   }, [selectedLetter, loadTier]);
 
   const handleLetterImageError = () => {

@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Trophy, RotateCcw, ArrowRight, ImageOff } from "lucide-react";
-import { ALPHABETS, shuffleArray } from "@/lib/learningData";
+import { ALPHABETS, ASL_PUBLIC_REFERENCE_SVG, shuffleArray } from "@/lib/learningData";
 import { useLearningProgress } from "@/contexts/LearningProgressContext";
 import { getAlphabetImageUrl, getAlphabetImageUrlFallback } from "@/lib/learningApi";
 
@@ -46,9 +46,8 @@ function AlphabetMcqTile({
 
   const src = useMemo(() => {
     if (loadTier === 0) return getAlphabetImageUrl(letter);
-    if (loadTier === 1)
-      return `${import.meta.env.BASE_URL}learning/alphabet/${letter}.jpg`;
-    return getAlphabetImageUrlFallback(letter);
+    if (loadTier === 1) return ASL_PUBLIC_REFERENCE_SVG[letter];
+    return ASL_PUBLIC_REFERENCE_SVG[letter] || getAlphabetImageUrlFallback(letter);
   }, [letter, loadTier]);
 
   const wrongPick = revealed && selected && letter !== correctLetter;

@@ -20,9 +20,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY app.py learning_backend.py text_to_sign_backend.py /home/user/
 #
 
-# Easy-mode ref images live under static/alphabet_refs/.
+# Easy-mode refs are provided by the frontend from Wikimedia ASL reference SVGs.
 RUN mkdir -p /home/user/static/alphabet_refs
-COPY static/alphabet_refs/ /home/user/static/alphabet_refs/
 
 # Give full ownership to user
 RUN chown -R user:user /home/user
