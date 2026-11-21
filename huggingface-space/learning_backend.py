@@ -1,11 +1,11 @@
 """
-SignVerse Learning Backend
+SignVox Learning Backend
 ==========================
 All learning-only HTTP routes and alphabet model loading live here — separate from Sign-to-Text logic in app.py.
 
 Modes:
   1) Standalone Space / local:  python learning_backend.py   (uvicorn serves `app`)
-  2) Same process as app.py:    SignVerse repo wires this at the bottom of `app.py` via
+  2) Same process as app.py:    SignVox repo wires this at the bottom of `app.py` via
      `integrate_learning_into_signverse(app)` (after setting SIGNVERSE_LEARNING_INTEGRATED=1).
 
      That removes the legacy POST /api/learning/predict route from `app` and mounts this module's
@@ -655,14 +655,23 @@ def _alphabet_forward_logits(model: nn.Module, x: torch.Tensor) -> torch.Tensor:
 def _load_letter_images(letter: str) -> list[str]:
     if letter in _image_cache:
         return _image_cache[letter]
+    images = []
     letter_dir = os.path.join(DATASET_DIR, letter.upper())
-    if not os.path.isdir(letter_dir):
+    if os.path.isdir(letter_dir):
+        for fname in os.listdir(letter_dir):
+            if fname.lower().endswith((".jpg", ".jpeg", ".png")):
+                images.append(os.path.join(letter_dir, fname))
+
+    refs_dir = os.path.join(os.path.dirname(__file__), "static", "alphabet_refs")
+    if os.path.isdir(refs_dir):
+        for ext in ("jpg", "jpeg", "png", "webp"):
+            candidate = os.path.join(refs_dir, f"{letter.upper()}.{ext}")
+            if os.path.isfile(candidate):
+                images.append(candidate)
+
+    if not images:
         _image_cache[letter] = []
         return []
-    images = []
-    for fname in os.listdir(letter_dir):
-        if fname.lower().endswith((".jpg", ".jpeg", ".png")):
-            images.append(os.path.join(letter_dir, fname))
     _image_cache[letter] = images
     return images
 
@@ -773,7 +782,7 @@ def load_alphabet_models():
         log.warning("signverse_asl_classifier.pt not found under %s", MODEL_DIR)
 
 
-# ── Routes (mounted on standalone `app` or on main SignVerse `app` via integrate) ──
+# ── Routes (mounted on standalone `app` or on main SignVox `app` via integrate) ──
 
 
 @learning_router.get("/api/learning/health")
@@ -885,7 +894,15 @@ def alphabet_image(letter: str):
             detail=f"No images for '{letter}'. Set ASL_ALPHABET_DATASET_DIR to the Kaggle asl_alphabet_train folder.",
         )
     chosen = random.choice(images)
-    return FileResponse(chosen, media_type="image/jpeg", headers={"Cache-Control": "no-cache"})
+    media_type = "image/jpeg"
+    suffix = os.path.splitext(chosen)[1].lower()
+    if suffix == ".png":
+        media_type = "image/png"
+    elif suffix == ".webp":
+        media_type = "image/webp"
+    elif suffix == ".svg":
+        media_type = "image/svg+xml"
+    return FileResponse(chosen, media_type=media_type, headers={"Cache-Control": "no-cache"})
 
 
 def _remove_route_by_path_and_method(main_app: FastAPI, path: str, method: str) -> int:
@@ -906,7 +923,7 @@ def _remove_route_by_path_and_method(main_app: FastAPI, path: str, method: str) 
 
 def integrate_learning_into_signverse(main_app: FastAPI) -> None:
     """
-    Attach this module's learning routes to the main SignVerse FastAPI `app`.
+    Attach this module's learning routes to the main SignVox FastAPI `app`.
 
     Removes the existing POST /api/learning/predict route from `main_app` (typically defined in app.py)
     so there is no duplicate path, then includes `learning_router`.
@@ -934,7 +951,7 @@ def integrate_learning_into_signverse(main_app: FastAPI) -> None:
 
 def create_standalone_learning_app() -> FastAPI:
     """Used for `learning_backend:app` when this file is the Space entrypoint."""
-    a = FastAPI(title="SignVerse Learning Backend", version="1.2")
+    a = FastAPI(title="SignVox Learning Backend", version="1.2")
     a.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -955,7 +972,7 @@ def create_standalone_learning_app() -> FastAPI:
 
     @a.get("/")
     def _root():
-        return {"service": "SignVerse Learning Backend", "docs": "/docs"}
+        return {"service": "SignVox Learning Backend", "docs": "/docs"}
 
     return a
 

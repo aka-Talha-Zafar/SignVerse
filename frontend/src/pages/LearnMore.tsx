@@ -168,11 +168,11 @@ const LearnMore = () => {
         {/* Team */}
         <AnimatedSection title="The Team">
           <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-            SignVox is a Final Year Project developed at <span className="text-foreground font-medium">Lahore Garrison University</span>, supervised by <span className="text-foreground font-medium">M. Mugees Asif</span>.
+            Supervised by <span className="text-foreground font-medium">Muhammad Zeeshan</span>.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { name: "Uzair Moazzam", role: "Developer — AI/ML Pipeline & Frontend" },
+              { name: "Faizan Ali", role: "Developer — AI/ML Pipeline & Frontend" },
               { name: "Talha Zafar", role: "Developer — AI/ML & System Integration" },
             ].map((m) => (
               <div key={m.name} className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border hover:border-primary/20 transition-all duration-300 group hover:scale-[1.02]">

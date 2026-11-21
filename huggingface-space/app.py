@@ -1,5 +1,5 @@
 """
-SignVerse FastAPI Backend — v6.2
+SignVox FastAPI Backend — v6.2
 ================================
 v6.2 — Translation & record-based flow:
   - POST /api/translate endpoint (Google Translate, free, all languages)
@@ -33,16 +33,16 @@ logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s [%(levelname)s] %(name)s — %(message)s")
 log = logging.getLogger("signverse")
 
-app = FastAPI(title="SignVerse API", version="6.2")
+app = FastAPI(title="SignVox API", version="6.2")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
 
 DEMO_USERS = [
-    {"email":"admin@signverse.com",       "password":"admin123", "firstName":"Admin", "role":"admin"},
-    {"email":"user@signverse.com",        "password":"user123",  "firstName":"User",  "role":"user"},
-    {"email":"demo@signverse.com",        "password":"demo123",  "firstName":"Demo",  "role":"user"},
-    {"email":"fa22-bscs-212@lgu.edu.pk",  "password":"talha123", "firstName":"Talha", "role":"admin"},
-    {"email":"fa22-bscs-203@lgu.edu.pk",  "password":"uzair123", "firstName":"Uzair", "role":"admin"},
+    {"email":"admin@signvox.com",         "password":"admin123", "firstName":"Admin", "role":"admin"},
+    {"email":"user@signvox.com",          "password":"user123",  "firstName":"User",  "role":"user"},
+    {"email":"demo@signvox.com",          "password":"demo123",  "firstName":"Demo",  "role":"user"},
+    {"email":"talha@signvox.com",         "password":"talha123", "firstName":"Talha", "role":"admin"},
+    {"email":"faizan@signvox.com",        "password":"faizan123", "firstName":"Faizan", "role":"admin"},
 ]
 
 MODEL_DIR  = os.environ.get("MODEL_DIR", "./models")
@@ -1014,7 +1014,7 @@ class LearningPredictRequest(BaseModel):
 # ══════════════════════════════════════════════════════════════════════════════
 @app.get("/")
 def root():
-    return {"message":"SignVerse API v6.2","docs":"/docs"}
+    return {"message":"SignVox API v6.2","docs":"/docs"}
 
 @app.get("/api/health")
 def health():
@@ -1260,30 +1260,51 @@ def translate_text(req: TranslateRequest):
 
     import urllib.request, urllib.parse
     lang_code = _LANG_MAP.get(target, target)
-    try:
-        encoded = urllib.parse.quote(text)
-        url = (
+    providers = [
+        (
             "https://translate.googleapis.com/translate_a/single"
-            f"?client=gtx&sl=en&tl={lang_code}&dt=t&q={encoded}"
-        )
-        req_obj = urllib.request.Request(url, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                          "AppleWebKit/537.36 (KHTML, like Gecko) "
-                          "Chrome/120.0.0.0 Safari/537.36",
-        })
-        with urllib.request.urlopen(req_obj, timeout=6) as resp:
-            data = json.loads(resp.read().decode())
-        # Response is nested arrays: [[["translated","original",...],...],...] 
-        parts = [seg[0] for seg in data[0] if seg and seg[0]]
-        translated = "".join(parts)
-        if not translated:
-            translated = text
-        log.info(f"Translated '{text}' → '{translated}' (en→{lang_code})")
-        return {"translated": translated, "source": "en", "target": target}
-    except Exception as e:
-        log.warning(f"Translation to {lang_code} failed: {e}")
-        return {"translated": text, "source": "en", "target": target,
-                "error": "Translation service unavailable"}
+            f"?client=gtx&sl=en&tl={lang_code}&dt=t&q={urllib.parse.quote(text)}"
+        ),
+        (
+            "https://translate.google.com/translate_a/single"
+            f"?client=gt&sl=en&tl={lang_code}&dt=t&q={urllib.parse.quote(text)}"
+        ),
+        (
+            "https://api.mymemory.translated.net/get"
+            f"?q={urllib.parse.quote(text)}&langpair=en%7C{lang_code}"
+        ),
+    ]
+    last_error = ""
+    for url in providers:
+        try:
+            req_obj = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/json",
+            })
+            with urllib.request.urlopen(req_obj, timeout=12) as resp:
+                data = json.loads(resp.read().decode())
+
+            if "translate.googleapis.com" in url or "translate.google.com" in url:
+                segments = data[0] if isinstance(data, list) and data else []
+                translated = "".join(
+                    str(seg[0]) for seg in segments
+                    if isinstance(seg, list) and seg and seg[0]
+                )
+            else:
+                translated = str(data.get("responseData", {}).get("translatedText", "")).strip()
+
+            if translated and translated.lower() != text.lower():
+                log.info(f"Translated '{text}' → '{translated}' (en→{lang_code})")
+                return {"translated": translated, "source": "en", "target": target}
+        except Exception as exc:
+            last_error = str(exc)
+            log.warning(f"Translation provider failed for {lang_code}: {exc}")
+
+    log.warning(f"All translation providers failed for {lang_code}: {last_error}")
+    return {"translated": text, "source": "en", "target": target,
+            "error": "Translation service unavailable"}
 
 
 @app.get("/api/tts")

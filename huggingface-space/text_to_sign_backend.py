@@ -93,7 +93,7 @@ def _http_download_hub_file(url: str, dest_path: str) -> bool:
             pass
 
     headers = {
-        "User-Agent": "SignVerse-TextToSign/1.0 (urllib; full GET, no Range)",
+        "User-Agent": "SignVox-TextToSign/1.0 (urllib; full GET, no Range)",
         "Accept": "*/*",
     }
     tok = (os.environ.get("HF_TOKEN") or "").strip()

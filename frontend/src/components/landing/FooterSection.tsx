@@ -38,9 +38,6 @@ const FooterSection = () => {
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mt-3">
               A bidirectional ASL translation and learning platform — making communication accessible for everyone.
             </p>
-            <p className="text-xs text-muted-foreground mt-3">
-              Final Year Project · Lahore Garrison University
-            </p>
             <div className="flex gap-2.5 mt-5">
               {[
                 { Icon: Github, label: "GitHub" },
@@ -108,7 +105,7 @@ const FooterSection = () => {
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-5">Team</h4>
             <div className="space-y-4">
               {[
-                { name: "Uzair Moazzam", role: "AI/ML Pipeline & Frontend", initials: "UM" },
+                { name: "Faizan Ali", role: "AI/ML Pipeline & Frontend", initials: "FA" },
                 { name: "Talha Zafar", role: "AI/ML & System Integration", initials: "TZ" },
               ].map((m) => (
                 <div key={m.name} className="flex items-center gap-3 group">
@@ -123,7 +120,7 @@ const FooterSection = () => {
               ))}
               <div className="pt-2 border-t border-border/50">
                 <p className="text-xs text-muted-foreground">
-                  Supervised by <span className="text-primary font-medium">M. Mugees Asif</span>
+                  Supervised by <span className="text-primary font-medium">Muhammad Zeeshan</span>
                 </p>
               </div>
             </div>

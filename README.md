@@ -1,8 +1,8 @@
-# SignVerse
+# SignVox
 
 **A Bidirectional American Sign Language (ASL) Translation and Learning Platform**
 
-SignVerse bridges the communication gap between the Deaf/HoH community and hearing individuals through real-time AI-powered sign language recognition, animated sign generation, and structured ASL learning — all in a browser with no installation required.
+SignVox bridges the communication gap between the Deaf/HoH community and hearing individuals through real-time AI-powered sign language recognition, animated sign generation, and structured ASL learning — all in a browser with no installation required.
 
 ---
 
@@ -24,7 +24,7 @@ Additional capabilities:
 
 ## Architecture
 
-SignVerse is a three-tier decoupled web application:
+SignVox is a three-tier decoupled web application:
 
 ```
 ┌─────────────────────┐     HTTPS/REST      ┌──────────────────────────────┐
@@ -116,7 +116,7 @@ SignVerse is a three-tier decoupled web application:
 ## Project Structure
 
 ```
-SignVerse/
+SignVox/
 ├── frontend/                   # React SPA
 │   ├── src/
 │   │   ├── pages/              # Route-level components
@@ -270,11 +270,11 @@ All endpoints accept and return `application/json`. Full interactive docs at `/d
 | Name | ID | Role |
 |---|---|---|
 | Talha Zafar | BSCS-212-E | Full-Stack Development, AI Pipeline, Deployment |
-| Uzair Moazzam | BSCS-203-E | Frontend Development, Learning Module, UI/UX |
+| Faizan Ali | BSCS-203-E | Frontend Development, Learning Module, UI/UX |
 
 
 ---
 
 ## License
 
-This project was developed as an academic Final Year Project. All rights reserved by the authors and Lahore Garrison University.
+All rights reserved by the authors.
