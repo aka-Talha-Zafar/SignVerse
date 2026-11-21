@@ -659,12 +659,12 @@ def _load_letter_images(letter: str) -> list[str]:
     letter_dir = os.path.join(DATASET_DIR, letter.upper())
     if os.path.isdir(letter_dir):
         for fname in os.listdir(letter_dir):
-            if fname.lower().endswith((".jpg", ".jpeg", ".png")):
+            if fname.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".svg")):
                 images.append(os.path.join(letter_dir, fname))
 
     refs_dir = os.path.join(os.path.dirname(__file__), "static", "alphabet_refs")
     if os.path.isdir(refs_dir):
-        for ext in ("jpg", "jpeg", "png", "webp"):
+        for ext in ("svg", "jpg", "jpeg", "png", "webp"):
             candidate = os.path.join(refs_dir, f"{letter.upper()}.{ext}")
             if os.path.isfile(candidate):
                 images.append(candidate)
@@ -894,9 +894,11 @@ def alphabet_image(letter: str):
             detail=f"No images for '{letter}'. Set ASL_ALPHABET_DATASET_DIR to the Kaggle asl_alphabet_train folder.",
         )
     chosen = random.choice(images)
-    media_type = "image/jpeg"
+    media_type = "image/svg+xml"
     suffix = os.path.splitext(chosen)[1].lower()
-    if suffix == ".png":
+    if suffix == ".jpg" or suffix == ".jpeg":
+        media_type = "image/jpeg"
+    elif suffix == ".png":
         media_type = "image/png"
     elif suffix == ".webp":
         media_type = "image/webp"

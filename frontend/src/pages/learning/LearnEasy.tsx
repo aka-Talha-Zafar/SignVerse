@@ -28,7 +28,7 @@ export default function LearnEasy() {
     if (!selectedLetter) return "";
     if (loadTier === 0) return getAlphabetImageUrl(selectedLetter);
     if (loadTier === 1)
-      return `${import.meta.env.BASE_URL}learning/alphabet/${selectedLetter}.jpg`;
+      return `${import.meta.env.BASE_URL}learning/alphabet/${selectedLetter}.svg`;
     return getAlphabetImageUrlFallback(selectedLetter);
   }, [selectedLetter, loadTier]);
 
@@ -124,9 +124,8 @@ export default function LearnEasy() {
                       {ASL_ALPHABET_DESCRIPTIONS[selectedLetter]}
                     </p>
                     <p className="text-xs text-gray-600 mt-3 text-center">
-                      No image could be loaded (API, optional files in public/learning/alphabet/, or public
-                      reference). Check that the learning API is reachable and see INSTRUCTIONS in the Space
-                      static/alphabet_refs folder for dataset or bundled photos.
+                      No image could be loaded. Check that the learning API is reachable and that bundled
+                      alphabet assets are present in public/learning/alphabet/.
                     </p>
                   </div>
                 )}

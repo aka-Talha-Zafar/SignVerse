@@ -1,0 +1,69 @@
+===== Application Startup at 2026-11-21 02:31:21 =====
+
+2026-11-21 02:32:23,655 [INFO] signverse-learning-backend — integrate_learning_into_signverse: removed 1 prior route(s) for POST /api/learning/predict
+2026-11-21 02:32:23,656 [INFO] signverse — integrate_text_to_sign_into_signverse: removed 0 prior route(s) for POST /api/text-to-sign
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2026-11-21 02:32:23,740 [INFO] signverse — Downloading asl_best.pt...
+2026-11-21 02:32:24,207 [INFO] signverse —   asl_best.pt downloaded
+2026-11-21 02:32:24,207 [INFO] signverse — Downloading sign_to_idx.json...
+2026-11-21 02:32:24,246 [INFO] signverse —   sign_to_idx.json downloaded
+2026-11-21 02:32:24,246 [INFO] signverse — Downloading signverse_asl_classifier.pt...
+2026-11-21 02:32:24,633 [INFO] signverse —   signverse_asl_classifier.pt downloaded
+2026-11-21 02:32:24,633 [INFO] signverse — Downloading class_mapping.json...
+2026-11-21 02:32:24,666 [INFO] signverse —   class_mapping.json downloaded
+/usr/local/lib/python3.11/site-packages/torch/nn/modules/transformer.py:286: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
+2026-11-21 02:32:24,692 [INFO] signverse — ASL v5 loaded — 250 classes
+2026-11-21 02:32:24,692 [INFO] signverse — Alphabet classifier + mapping: loaded by learning_backend only (single copy in RAM)
+2026-11-21 02:32:24,709 [INFO] signverse — MediaPipe Holistic ready (static_image_mode=True)
+2026-11-21 02:32:24,709 [INFO] signverse — Bigram LM ready — 162 sentences, 63 vocab, 123 bigrams
+2026-11-21 02:32:24,709 [INFO] signverse — Startup complete | asl=True | holistic=True | bigram_lm=True
+2026-11-21 02:32:24,710 [WARNING] signverse-learning-backend — class_mapping.json has only 3 entries (expected ~29 for ASL). Will try to extract from checkpoint.
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+2026-11-21 02:32:24,717 [INFO] signverse-learning-backend — signverse_asl_classifier.pt: root=dict keys=['epoch', 'model_state_dict', 'optimizer_state_dict', 'val_acc', 'val_loss', 'classes', 'class_to_idx', 'config'] tensor_values=0
+2026-11-21 02:32:24,717 [INFO] signverse-learning-backend — Using inverted class_to_idx from checkpoint (has 29 classes)
+2026-11-21 02:32:24,717 [INFO] signverse-learning-backend — Attempting to load alphabet classifier with n_classes=29
+2026-11-21 02:32:24,717 [INFO] signverse-learning-backend — Found model config in checkpoint: ['img_size', 'num_classes']
+2026-11-21 02:32:24,717 [INFO] signverse-learning-backend — State dict 'model_state_dict': total=65 has_conv_4d=True fc_key_hits=16 sample_4d=['features.0.weight', 'features.3.weight', 'features.8.weight', 'features.11.weight', 'features.16.weight']
+2026-11-21 02:32:24,717 [INFO] signverse-learning-backend —   Sample fc keys: ['classifier.1.weight', 'classifier.1.bias', 'classifier.2.weight']
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1795228344.779476      19 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1795228344.803446      19 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1795228344.807843      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1795228344.807991      20 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1795228344.808913      33 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1795228344.815613      33 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1795228344.825213      25 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1795228344.827334      24 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+2026-11-21 02:32:26,265 [INFO] signverse-learning-backend — State dict layout: tensors=65 has_conv_4d=1 conv4d_weights=7 fc_key_hits=16 bn_key_hits=0
+2026-11-21 02:32:26,265 [INFO] signverse-learning-backend — Convolutional weights present — loading full CNN (not FC-only shortcut)
+2026-11-21 02:32:26,265 [WARNING] signverse-learning-backend — ASL CNN: could not infer Linear head from checkpoint (hint n_classes=29). 2D weight tensors: [('classifier.1.weight', 512, 256), ('classifier.5.weight', 256, 512), ('classifier.9.weight', 29, 256)]
+2026-11-21 02:32:26,265 [ERROR] signverse-learning-backend — Could not build a runnable module from signverse_asl_classifier.pt. Expected: full nn.Module pickle, torchvision backbone state_dict, or a flat Kaggle-style Sequential (custom CNN auto-detect). Tried multiple architectures.
+2026-11-21 02:32:26,266 [INFO] signverse-learning-backend — Learning (integrated) ready | alphabet=False | dataset_dir_exists=False
+2026-11-21 02:32:26,266 [INFO] signverse — Text-to-sign (integrated) prefetch scheduled (database may load from Hub)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:7860 (Press CTRL+C to quit)
+2026-11-21 02:32:26,276 [INFO] signverse — text-to-sign: HTTP GET (full file) https://huggingface.co/spaces/TalhaZafar7406/signverse-api/resolve/main/database.json
+2026-11-21 02:32:26,674 [INFO] signverse — text-to-sign: … 64 MB received
+2026-11-21 02:32:26,796 [INFO] signverse — text-to-sign: … 128 MB received
+2026-11-21 02:32:26,988 [INFO] signverse — text-to-sign: … 192 MB received
+2026-11-21 02:32:27,107 [INFO] signverse — text-to-sign: … 256 MB received
+INFO:     10.16.37.183:20463 - "GET /api/health HTTP/1.1" 200 OK
+2026-11-21 02:32:27,360 [INFO] signverse — text-to-sign: … 320 MB received
+2026-11-21 02:32:27,399 [INFO] signverse — text-to-sign: HTTP download complete (341.0 MB)
+2026-11-21 02:32:27,399 [INFO] signverse — text-to-sign: loading database from /home/user/database.json …
+2026-11-21 02:32:44,200 [INFO] signverse — text-to-sign: loaded 15655 gloss entries
+2026-11-21 02:32:44,201 [INFO] signverse — Text-to-sign (integrated) prefetch done | database_loaded=True
+INFO:     10.16.26.69:43945 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.16.10.247:25323 - "GET /?__theme=system HTTP/1.1" 200 OK
+INFO:     10.16.10.247:37496 - "POST /api/text-to-sign HTTP/1.1" 200 OK
+INFO:     10.16.19.217:33265 - "POST /api/text-to-sign HTTP/1.1" 200 OK
+INFO:     10.16.37.183:65131 - "POST /api/text-to-sign HTTP/1.1" 200 OK
+INFO:     10.16.10.247:53158 - "POST /api/text-to-sign HTTP/1.1" 200 OK
+INFO:     10.16.19.217:10282 - "POST /api/text-to-sign HTTP/1.1" 200 OK
+INFO:     10.16.10.247:22739 - "POST /api/text-to-sign HTTP/1.1" 200 OK
+INFO:     10.16.26.69:27004 - "GET /api/learning/alphabet/image/C HTTP/1.1" 404 Not Found
+INFO:     10.16.37.183:31226 - "GET /api/learning/alphabet/image/D HTTP/1.1" 404 Not Found
+INFO:     10.16.10.247:57691 - "GET /?__theme=system HTTP/1.1" 200 OK
+INFO:     10.16.10.247:43524 - "GET /?__theme=system HTTP/1.1" 200 OK
