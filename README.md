@@ -84,10 +84,10 @@ SignVox is a three-tier decoupled web application:
 ### Text-to-Sign Pipeline
 
 1. English input processed by rule-based `to_asl()` — removes articles/auxiliaries, fronts time markers
-2. Each ASL gloss token looked up in `database.json` (pre-generated keyframe library from How2Sign + Google ASL)
-3. Clips concatenated with 7 quadratic eased transition frames for smooth word-to-word motion
-4. Gaussian temporal smoothing (radius=2, sigma=1.0) suppresses dataset noise
-5. Frontend renders 2D stick-figure avatar on `<canvas>` at ~60 fps with sub-frame interpolation
+2. Each ASL gloss token is looked up in `database.json` (pre-generated keyframe library from How2Sign + Google ASL)
+3. Supported clips are concatenated with eased transition frames; missing points hold the nearest available endpoint instead of jumping to the origin
+4. Unsupported or malformed vocabulary entries are returned as `unsupported_words` instead of being silently omitted
+5. Frontend renders the validated 2D keypoint frames on `<canvas>` at ~60 fps
 
 ### Learning Module
 
@@ -235,7 +235,7 @@ node server.js     # Demo login endpoint at http://localhost:3001
 |---|---|---|
 | `/api/sign-to-text` | POST | Classify a batch of base64 JPEG frames → top-3 ASL sign predictions |
 | `/api/sign-to-sentence` | POST | Sentence-mode classification with boundary detection + Viterbi decoding |
-| `/api/text-to-sign` | POST | English text → ASL gloss → smoothed keyframe animation JSON |
+| `/api/text-to-sign` | POST | English text → ASL gloss → keyframe animation JSON, with unsupported words reported |
 | `/api/learning/predict` | POST | Single JPEG frame → A–Z fingerspelling prediction (CNN) |
 | `/api/translate` | POST | English text → target language via Google Translate |
 | `/api/tts` | POST | Text → base64 audio via Google TTS |

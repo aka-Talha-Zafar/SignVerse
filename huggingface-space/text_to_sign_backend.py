@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import re
 import threading
@@ -274,24 +275,65 @@ def to_asl(s: str) -> str:
 
 
 def is_missing(pt: List[float]) -> bool:
-    return abs(pt[0]) < 0.001 and abs(pt[1]) < 0.001
+    if len(pt) < 2:
+        return True
+    try:
+        x, y = float(pt[0]), float(pt[1])
+    except (TypeError, ValueError):
+        return True
+    return not math.isfinite(x) or not math.isfinite(y) or (abs(x) < 0.001 and abs(y) < 0.001)
+
+
+def _resolve_clips(tokens: List[str], words_db: Dict[str, Any]) -> tuple[List[Any], List[str]]:
+    by_token = {str(key).strip().upper(): value for key, value in words_db.items()}
+    clips: List[Any] = []
+    unsupported: List[str] = []
+
+    for token in tokens:
+        clip = by_token.get(token)
+        valid_frames = (
+            [
+                frame
+                for frame in clip
+                if isinstance(frame, list)
+                and len(frame) >= 75
+                and all(isinstance(point, list) and len(point) >= 2 for point in frame[:75])
+            ]
+            if isinstance(clip, list)
+            else []
+        )
+        if not valid_frames:
+            unsupported.append(token)
+            continue
+        clips.append(valid_frames)
+
+    return clips, unsupported
+
+
+def _transition_point(first: List[float], second: List[float]) -> List[float]:
+    first_missing = is_missing(first)
+    second_missing = is_missing(second)
+    if first_missing and not second_missing:
+        return [second[0], second[1]]
+    if second_missing and not first_missing:
+        return [first[0], first[1]]
+    if first_missing and second_missing:
+        return [0.0, 0.0]
+    return [
+        first[0] * 0.5 + second[0] * 0.5,
+        first[1] * 0.5 + second[1] * 0.5,
+    ]
 
 
 def build_anim(tokens: List[str], words_db: Dict[str, Any]) -> Optional[List[Any]]:
     seq: List[Any] = []
     tf = 5
-    clips: List[Any] = []
-
-    for tok in tokens:
-        real_key = next((k for k in words_db.keys() if k.strip().upper() == tok), None)
-        if real_key:
-            clips.append(words_db[real_key])
+    clips, _ = _resolve_clips(tokens, words_db)
 
     if not clips:
         return None
 
-    for f in clips[0]:
-        seq.append(f)
+    seq.extend(clips[0])
 
     for i in range(1, len(clips)):
         c1 = clips[i - 1][-1]
@@ -304,7 +346,7 @@ def build_anim(tokens: List[str], words_db: Dict[str, Any]) -> Optional[List[Any
 
             for kp in range(75):
                 if is_missing(c1[kp]) or is_missing(c2[kp]):
-                    trans_frame.append([0.0, 0.0])
+                    trans_frame.append(_transition_point(c1[kp], c2[kp]))
                 else:
                     trans_frame.append(
                         [
@@ -314,8 +356,8 @@ def build_anim(tokens: List[str], words_db: Dict[str, Any]) -> Optional[List[Any
                     )
             seq.append(trans_frame)
 
-        for f in clips[i]:
-            seq.append(f)
+        for frame in clips[i]:
+            seq.append(frame)
 
     return seq
 
@@ -337,15 +379,25 @@ def translate_text_to_sign_payload(text: str) -> Dict[str, Any]:
 
     gloss = to_asl(text)
     tokens = [x for x in gloss.split(" ") if x]
+    _, unsupported = _resolve_clips(tokens, WORDS_DB)
     sequence = build_anim(tokens, WORDS_DB)
 
     if not sequence:
         raise HTTPException(
             status_code=404,
-            detail=f"No animation data in vocabulary for this input (gloss: {gloss or '(empty)'}).",
+            detail=(
+                f"No animation data in vocabulary for this input "
+                f"(unsupported: {', '.join(unsupported) or 'none'}; "
+                f"gloss: {gloss or '(empty)'})."
+            ),
         )
 
-    return {"gloss": gloss, "frames": sequence, "fps": 20}
+    return {
+        "gloss": gloss,
+        "frames": sequence,
+        "fps": 20,
+        "unsupported_words": unsupported,
+    }
 
 
 class TextToSignRequest(BaseModel):

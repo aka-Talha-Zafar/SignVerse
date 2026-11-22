@@ -19,6 +19,7 @@ export default function TextToSign() {
   const [fpsRate,      setFpsRate]      = useState(20);
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const [isLooping,    setIsLooping]    = useState(true);
+  const [unsupportedWords, setUnsupportedWords] = useState<string[]>([]);
 
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>();
@@ -71,6 +72,7 @@ export default function TextToSign() {
     setIsLoading(true);
     setIsPlaying(false);
     setFrames([]);
+    setUnsupportedWords([]);
     engine.current.anim = [];
     engine.current.fi = 0;
     engine.current.accumulator = 0;
@@ -92,6 +94,7 @@ export default function TextToSign() {
       if (!data.frames?.length) throw new Error("No animation data returned");
 
       setFrames(data.frames);
+      setUnsupportedWords(Array.isArray(data.unsupported_words) ? data.unsupported_words : []);
       setFpsRate(data.fps || 20);
       
       engine.current.anim = data.frames;
@@ -170,6 +173,11 @@ export default function TextToSign() {
           {error && (
             <div className="bg-red-900/40 border border-red-700 rounded-xl px-4 py-3 text-red-300 text-sm flex items-start gap-2">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" /> {error}
+            </div>
+          )}
+          {unsupportedWords.length > 0 && !error && (
+            <div className="bg-amber-900/30 border border-amber-700/60 rounded-xl px-4 py-3 text-amber-200 text-sm">
+              Not available in the current sign library: {unsupportedWords.join(", ")}.
             </div>
           )}
         </div>
