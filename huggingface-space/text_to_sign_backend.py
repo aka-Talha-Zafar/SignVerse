@@ -24,7 +24,6 @@ _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _DEFAULT_DB = os.path.join(_BASE_DIR, "database.json")
 
 WORDS_DB: Optional[Dict[str, Any]] = None
-WORDS_DB_SOURCE: Optional[str] = None
 _DB_LOCK = threading.Lock()
 _LOAD_ERROR: Optional[str] = None
 
@@ -46,13 +45,7 @@ AUX = {
 
 
 def _db_path() -> str:
-    override = os.environ.get("TEXT_TO_SIGN_DATABASE")
-    if override:
-        return override
-    google_db = os.path.join(_BASE_DIR, "google_asl_database.json")
-    if os.path.isfile(google_db):
-        return google_db
-    return _DEFAULT_DB
+    return os.environ.get("TEXT_TO_SIGN_DATABASE", _DEFAULT_DB)
 
 
 def _ensure_writable_scratch() -> None:
@@ -206,15 +199,7 @@ def _resolve_database_path() -> Optional[str]:
     if os.path.isfile(path):
         return path
 
-    preferred_name = (
-        "google_asl_database.json"
-        if os.path.isfile(os.path.join(_BASE_DIR, "google_asl_database.json"))
-        else "database.json"
-    )
-    fn = (
-        os.environ.get("TEXT_TO_SIGN_HF_FILENAME", preferred_name).strip()
-        or preferred_name
-    )
+    fn = os.environ.get("TEXT_TO_SIGN_HF_FILENAME", "database.json").strip() or "database.json"
 
     repo = (os.environ.get("TEXT_TO_SIGN_HF_REPO") or "").strip()
     if repo:
@@ -235,7 +220,7 @@ def _resolve_database_path() -> Optional[str]:
 
 def load_words_database() -> None:
     """Load JSON gloss→animation map into memory (call once at startup)."""
-    global WORDS_DB, WORDS_DB_SOURCE, _LOAD_ERROR
+    global WORDS_DB, _LOAD_ERROR
     with _DB_LOCK:
         # Succeeded earlier — skip. Failed earlier (_LOAD_ERROR set) — retry.
         if WORDS_DB is not None and _LOAD_ERROR is None:
@@ -251,7 +236,6 @@ def load_words_database() -> None:
             log.info("text-to-sign: loading database from %s …", path)
             with open(path, "r", encoding="utf-8") as f:
                 WORDS_DB = json.load(f)
-            WORDS_DB_SOURCE = path
             log.info(
                 "text-to-sign: loaded %s gloss entries",
                 len(WORDS_DB) if isinstance(WORDS_DB, dict) else "?",
@@ -455,7 +439,6 @@ def translate_text_to_sign_payload(text: str) -> Dict[str, Any]:
         "frames": sequence,
         "fps": 20,
         "unsupported_words": unsupported,
-        "database": os.path.basename(WORDS_DB_SOURCE) if WORDS_DB_SOURCE else "unknown",
     }
 
 
