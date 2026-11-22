@@ -2,7 +2,14 @@
 export type MannequinFrame = number[][];
 
 export function isMissingPt(pt: number[]) {
-  return Math.abs(pt[0]) < 0.001 && Math.abs(pt[1]) < 0.001;
+  if (!Array.isArray(pt) || pt.length < 2) return true;
+  const x = Number(pt[0]);
+  const y = Number(pt[1]);
+  return (
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    (Math.abs(x) < 0.001 && Math.abs(y) < 0.001)
+  );
 }
 
 /** True if `frames` from /api/text-to-sign are 75×[x,y] keypoints (not MediaPipe landmark objects). */
@@ -161,9 +168,12 @@ export function drawMannequinFrame(
   ctx.lineJoin = "round";
   armLines.forEach(([s, e]) => {
     if (isMissingPt(currentFrame[s]) || isMissingPt(currentFrame[e])) return;
+    const start = B(currentFrame[s]);
+    const end = B(currentFrame[e]);
+    if (Math.hypot(end.x - start.x, end.y - start.y) > SCALE * 0.75) return;
     ctx.beginPath();
-    ctx.moveTo(B(currentFrame[s]).x, B(currentFrame[s]).y);
-    ctx.lineTo(B(currentFrame[e]).x, B(currentFrame[e]).y);
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
     ctx.stroke();
   });
 
@@ -178,8 +188,8 @@ export function drawMannequinFrame(
   const armColor = "rgba(148, 163, 184, 0.8)";
 
   [
-    { offset: 33, wrist: 15 },
-    { offset: 54, wrist: 16 },
+    { offset: 33, wrist: 15, palmColor: "#38BDF8" },
+    { offset: 54, wrist: 16, palmColor: "#F472B6" },
   ].forEach((hand) => {
     if (isMissingPt(currentFrame[hand.offset]) || isMissingPt(currentFrame[hand.wrist])) return;
 
@@ -191,6 +201,9 @@ export function drawMannequinFrame(
       const pt = B(currentFrame[index]);
       return { x: pt.x + dx, y: pt.y + dy };
     };
+    const palmPoints = [1, 5, 9, 13, 17].map((joint) =>
+      glued(hand.offset + joint),
+    );
 
     ctx.beginPath();
     ctx.moveTo(wristPx.x, wristPx.y);
@@ -198,6 +211,22 @@ export function drawMannequinFrame(
     ctx.strokeStyle = armColor;
     ctx.lineWidth = Math.max(4, SCALE * 0.014);
     ctx.stroke();
+
+    if (palmPoints.every((point) =>
+      Number.isFinite(point.x) && Number.isFinite(point.y),
+    )) {
+      ctx.beginPath();
+      ctx.moveTo(palmPoints[0].x, palmPoints[0].y);
+      for (let i = 1; i < palmPoints.length; i++) {
+        ctx.lineTo(palmPoints[i].x, palmPoints[i].y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = `${hand.palmColor}55`;
+      ctx.fill();
+      ctx.strokeStyle = hand.palmColor;
+      ctx.lineWidth = Math.max(3, SCALE * 0.009);
+      ctx.stroke();
+    }
 
     ctx.strokeStyle = handColor;
     ctx.lineWidth = Math.max(4, SCALE * 0.012);

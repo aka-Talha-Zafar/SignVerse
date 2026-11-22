@@ -24,6 +24,7 @@ _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _DEFAULT_DB = os.path.join(_BASE_DIR, "database.json")
 
 WORDS_DB: Optional[Dict[str, Any]] = None
+WORDS_DB_SOURCE: Optional[str] = None
 _DB_LOCK = threading.Lock()
 _LOAD_ERROR: Optional[str] = None
 
@@ -45,7 +46,13 @@ AUX = {
 
 
 def _db_path() -> str:
-    return os.environ.get("TEXT_TO_SIGN_DATABASE", _DEFAULT_DB)
+    override = os.environ.get("TEXT_TO_SIGN_DATABASE")
+    if override:
+        return override
+    google_db = os.path.join(_BASE_DIR, "google_asl_database.json")
+    if os.path.isfile(google_db):
+        return google_db
+    return _DEFAULT_DB
 
 
 def _ensure_writable_scratch() -> None:
@@ -199,7 +206,15 @@ def _resolve_database_path() -> Optional[str]:
     if os.path.isfile(path):
         return path
 
-    fn = os.environ.get("TEXT_TO_SIGN_HF_FILENAME", "database.json").strip() or "database.json"
+    preferred_name = (
+        "google_asl_database.json"
+        if os.path.isfile(os.path.join(_BASE_DIR, "google_asl_database.json"))
+        else "database.json"
+    )
+    fn = (
+        os.environ.get("TEXT_TO_SIGN_HF_FILENAME", preferred_name).strip()
+        or preferred_name
+    )
 
     repo = (os.environ.get("TEXT_TO_SIGN_HF_REPO") or "").strip()
     if repo:
@@ -220,7 +235,7 @@ def _resolve_database_path() -> Optional[str]:
 
 def load_words_database() -> None:
     """Load JSON gloss→animation map into memory (call once at startup)."""
-    global WORDS_DB, _LOAD_ERROR
+    global WORDS_DB, WORDS_DB_SOURCE, _LOAD_ERROR
     with _DB_LOCK:
         # Succeeded earlier — skip. Failed earlier (_LOAD_ERROR set) — retry.
         if WORDS_DB is not None and _LOAD_ERROR is None:
@@ -236,6 +251,7 @@ def load_words_database() -> None:
             log.info("text-to-sign: loading database from %s …", path)
             with open(path, "r", encoding="utf-8") as f:
                 WORDS_DB = json.load(f)
+            WORDS_DB_SOURCE = path
             log.info(
                 "text-to-sign: loaded %s gloss entries",
                 len(WORDS_DB) if isinstance(WORDS_DB, dict) else "?",
@@ -325,6 +341,48 @@ def _transition_point(first: List[float], second: List[float]) -> List[float]:
     ]
 
 
+def _sanitize_and_smooth_frames(frames: List[Any]) -> List[Any]:
+    """Clamp malformed points and suppress frame-to-frame landmark jitter."""
+    sanitized: List[List[List[float]]] = []
+
+    for frame in frames:
+        clean_frame: List[List[float]] = []
+        for point in frame[:75]:
+            try:
+                x = float(point[0])
+                y = float(point[1])
+            except (TypeError, ValueError, IndexError):
+                clean_frame.append([0.0, 0.0])
+                continue
+
+            if not math.isfinite(x) or not math.isfinite(y):
+                clean_frame.append([0.0, 0.0])
+                continue
+
+            x = max(-1.5, min(1.5, x))
+            y = max(-1.5, min(1.5, y))
+            clean_frame.append([x, y])
+        sanitized.append(clean_frame)
+
+    if len(sanitized) < 3:
+        return sanitized
+
+    smoothed = [frame.copy() for frame in sanitized]
+    for frame_index in range(1, len(sanitized) - 1):
+        for point_index in range(75):
+            previous = sanitized[frame_index - 1][point_index]
+            current = sanitized[frame_index][point_index]
+            following = sanitized[frame_index + 1][point_index]
+
+            if not is_missing(previous) and not is_missing(current) and not is_missing(following):
+                smoothed[frame_index][point_index] = [
+                    previous[0] * 0.20 + current[0] * 0.60 + following[0] * 0.20,
+                    previous[1] * 0.20 + current[1] * 0.60 + following[1] * 0.20,
+                ]
+
+    return smoothed
+
+
 def build_anim(tokens: List[str], words_db: Dict[str, Any]) -> Optional[List[Any]]:
     seq: List[Any] = []
     tf = 5
@@ -359,7 +417,7 @@ def build_anim(tokens: List[str], words_db: Dict[str, Any]) -> Optional[List[Any
         for frame in clips[i]:
             seq.append(frame)
 
-    return seq
+    return _sanitize_and_smooth_frames(seq)
 
 
 def translate_text_to_sign_payload(text: str) -> Dict[str, Any]:
@@ -397,6 +455,7 @@ def translate_text_to_sign_payload(text: str) -> Dict[str, Any]:
         "frames": sequence,
         "fps": 20,
         "unsupported_words": unsupported,
+        "database": os.path.basename(WORDS_DB_SOURCE) if WORDS_DB_SOURCE else "unknown",
     }
 
 

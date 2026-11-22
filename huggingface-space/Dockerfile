@@ -14,10 +14,8 @@ RUN useradd -m -u 1000 user
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Copy API modules. database.json is loaded at runtime (HTTP from the Hub; avoids Docker COPY
-# when the large file is not in every git clone). Optional faster cold start:
-#   COPY database.json /home/user/
-COPY app.py learning_backend.py text_to_sign_backend.py /home/user/
+# Copy API modules. The Google-only keyframe database is copied when generated locally.
+COPY app.py learning_backend.py text_to_sign_backend.py google_asl_database.json /home/user/
 #
 
 # Easy-mode refs are provided by the frontend from Wikimedia ASL reference SVGs.
