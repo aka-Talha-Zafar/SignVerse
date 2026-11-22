@@ -1,3 +1,4 @@
+// Updated project
 import { Link } from "react-router-dom";
 import { ArrowLeft, Hand } from "lucide-react";
 

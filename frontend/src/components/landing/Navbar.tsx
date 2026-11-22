@@ -1,3 +1,4 @@
+// Updated project
 import { useEffect, useState } from "react";
 import { Hand, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";

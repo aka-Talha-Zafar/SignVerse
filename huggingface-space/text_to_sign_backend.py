@@ -1,3 +1,4 @@
+# Updated project
 """
 Text-to-sign: English → ASL gloss → keyframe sequences from database.json.
 

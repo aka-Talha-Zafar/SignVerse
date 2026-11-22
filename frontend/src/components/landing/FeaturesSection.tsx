@@ -1,3 +1,4 @@
+// Updated project
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import { Camera, Type, GraduationCap } from "lucide-react";
 import { useRef } from "react";

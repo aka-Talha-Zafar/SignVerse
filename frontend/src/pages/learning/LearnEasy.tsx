@@ -1,3 +1,4 @@
+// Updated project
 import { useState, useEffect, useMemo } from "react";
 import { CheckCircle, X } from "lucide-react";
 import ProgressHeader from "./ProgressHeader";

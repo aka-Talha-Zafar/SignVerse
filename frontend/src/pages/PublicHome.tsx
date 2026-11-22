@@ -1,3 +1,4 @@
+// Updated project
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Index from "./Index";

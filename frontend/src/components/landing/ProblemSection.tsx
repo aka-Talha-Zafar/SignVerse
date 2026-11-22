@@ -1,3 +1,4 @@
+// Updated project
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import { useEffect, useState, useRef } from "react";
 

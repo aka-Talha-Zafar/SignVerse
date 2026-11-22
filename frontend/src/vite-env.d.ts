@@ -1,3 +1,4 @@
+// Updated project
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {

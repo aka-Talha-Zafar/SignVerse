@@ -1,3 +1,4 @@
+// Updated project
 import { Link } from "react-router-dom";
 import { Hand, ArrowLeft, Camera, Type, GraduationCap, ArrowLeftRight, MessageSquareText, Layers, Ear, Users, BookOpen, CheckCircle2 } from "lucide-react";
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";

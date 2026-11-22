@@ -1,3 +1,4 @@
+// Updated project
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import { Video, Cpu, Brain, MessageSquare } from "lucide-react";
 

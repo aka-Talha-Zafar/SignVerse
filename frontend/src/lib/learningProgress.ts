@@ -1,3 +1,4 @@
+// Updated project
 /** Learning progress types + pure helpers + guest localStorage (used when signed out). */
 
 export const STORAGE_KEY = "signvox_learning_progress";

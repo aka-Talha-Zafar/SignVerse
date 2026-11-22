@@ -1,3 +1,4 @@
+// Updated project
 import { Link, useNavigate } from "react-router-dom";
 import {
   Hand, Camera, Type, BookOpen, ArrowRight, TrendingUp,

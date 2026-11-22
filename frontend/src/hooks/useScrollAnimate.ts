@@ -1,3 +1,4 @@
+// Updated project
 import { useEffect, useRef } from "react";
 
 export function useScrollAnimate() {

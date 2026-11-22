@@ -1,3 +1,4 @@
+// Updated project
 import { Link } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import ProgressHeader from "./ProgressHeader";

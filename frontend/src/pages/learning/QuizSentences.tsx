@@ -1,3 +1,4 @@
+// Updated project
 import { useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Trophy, RotateCcw, ArrowRight } from "lucide-react";

@@ -1,3 +1,4 @@
+// Updated project
 import FloatingOrbs from "./FloatingOrbs";
 import { Link } from "react-router-dom";
 

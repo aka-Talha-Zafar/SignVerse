@@ -1,3 +1,4 @@
+// Updated project
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Camera, CameraOff, Circle, Square, Loader2, CheckCircle, XCircle } from "lucide-react";
 

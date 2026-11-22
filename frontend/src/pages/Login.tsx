@@ -1,3 +1,4 @@
+// Updated project
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Hand, Eye, EyeOff, AlertCircle, ArrowLeft, Mail, Lock, ArrowRight } from "lucide-react";

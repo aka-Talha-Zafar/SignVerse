@@ -1,3 +1,4 @@
+// Updated project
 import { Link } from "react-router-dom";
 import { BookOpen, Brain, ArrowRight, Trophy, Sparkles } from "lucide-react";
 import ProgressHeader from "./ProgressHeader";

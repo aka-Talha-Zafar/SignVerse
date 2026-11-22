@@ -1,3 +1,4 @@
+// Updated project
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import { ArrowLeftRight, MessageSquareText, Layers } from "lucide-react";
 

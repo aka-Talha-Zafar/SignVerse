@@ -1,3 +1,4 @@
+// Updated project
 /** Normalized 75×2 keypoint frames from POST /api/text-to-sign (same as Text to Sign page). */
 export type MannequinFrame = number[][];
 

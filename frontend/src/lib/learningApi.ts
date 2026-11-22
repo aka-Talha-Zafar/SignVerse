@@ -1,3 +1,4 @@
+// Updated project
 import { ASL_PUBLIC_REFERENCE_SVG } from "@/lib/learningData";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://talhazafar7406-signverse-api.hf.space";

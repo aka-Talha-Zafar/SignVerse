@@ -1,3 +1,4 @@
+// Updated project
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, CheckCircle, Star, Award, Target } from "lucide-react";
 import {

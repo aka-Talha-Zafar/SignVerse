@@ -1,3 +1,4 @@
+// Updated project
 export const ALPHABETS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 /**

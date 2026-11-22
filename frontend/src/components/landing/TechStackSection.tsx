@@ -1,3 +1,4 @@
+// Updated project
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import stackFastapi from "@/assets/stack-fastapi.svg";
 import stackBertEncdec from "@/assets/stack-bert-encdec.svg";

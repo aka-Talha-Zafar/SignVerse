@@ -1,3 +1,4 @@
+// Updated project
 import { useScrollAnimate } from "@/hooks/useScrollAnimate";
 import { Ear, Users, BookOpen } from "lucide-react";
 

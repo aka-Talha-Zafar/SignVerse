@@ -1,3 +1,4 @@
+<!-- Updated project -->
 # SignVox
 
 A modern web application built with React, TypeScript, and Tailwind CSS.

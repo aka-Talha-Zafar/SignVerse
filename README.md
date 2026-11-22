@@ -141,8 +141,6 @@ SignVox/
 │   ├── app.py                  # FastAPI app + ASLModel + full Sign-to-Text pipeline
 │   ├── text_to_sign_backend.py # to_asl() + keyframe lookup + Gaussian smoothing
 │   ├── learning_backend.py     # CNN alphabet classifier endpoint
-│   ├── learning_api.py         # Learning route registration glue
-│   ├── database.json           # Pre-generated ASL keyframe library (~50 MB)
 │   ├── requirements.txt        # Python dependencies
 │   └── Dockerfile              # Container spec for HF Spaces deployment
 │

@@ -1,3 +1,4 @@
+// Updated project
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Pause, RotateCcw, Loader2, SkipForward, SkipBack } from "lucide-react";
 import { fetchAvatarFrames } from "@/lib/learningApi";
